@@ -13,4 +13,11 @@ class NewsRepository {
     suspend fun getTopHeadlines(): Response<NewsResponse> {
         return apiService.getTopHeadlines()
     }
+    suspend fun getTechCrunchHeadlines(): Response<NewsResponse> {
+        return apiService.getTechCrunchHeadlines()
+    }
+
+    suspend fun searchNews(query: String): Response<NewsResponse> {
+        return apiService.searchNews(query = query)
+    }
 }
