@@ -15,7 +15,7 @@
 
         <!-- Splash Activity -->
         <activity
-            android:name=".Screens.SplashActivity"
+            android:name=".Screens.Activities.SplashActivity"
             android:theme="@style/Theme.NewsApp.Splash"
             android:exported="true"
             android:hardwareAccelerated="true">

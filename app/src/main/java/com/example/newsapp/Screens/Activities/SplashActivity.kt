@@ -1,11 +1,12 @@
-package com.example.newsapp.Screens
+package com.example.newsapp.Screens.Activities
 
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
-import com.example.newsapp.MainActivity  // MainActivity will be your home
+import com.example.newsapp.MainActivity
 import com.example.newsapp.R
 import com.example.newsapp.databinding.ActivitySplashBinding
 
@@ -19,7 +20,7 @@ override fun onCreate(savedInstanceState: Bundle?) {
     setContentView(binding.root)
 
     // Start bounce animation
-    val anim = android.view.animation.AnimationUtils.loadAnimation(this, R.anim.splash_anim)
+    val anim = AnimationUtils.loadAnimation(this, R.anim.splash_anim)
     binding.ivNewsIcon.startAnimation(anim)
 
     // Navigate to MainActivity after 5 seconds
@@ -34,6 +35,3 @@ override fun onCreate(savedInstanceState: Bundle?) {
         }, SPLASH_DURATION)
     }
 }
-
-
-
