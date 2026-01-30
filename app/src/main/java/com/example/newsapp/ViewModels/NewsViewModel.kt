@@ -6,8 +6,6 @@ import com.example.newsapp.Data.models.Article
 import com.example.newsapp.Data.models.NewsResponse
 import com.example.newsapp.Data.Repository.NewsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -76,7 +74,7 @@ class NewsViewModel @Inject constructor(
 
     private fun setupSearchPipeline() {
         _searchEvents
-            .debounce(500) // Wait 500ms after last keystroke
+            .debounce(400)
             .distinctUntilChanged() // Only emit if query changed
             .filter { query -> query.isNotEmpty() } // Skip empty queries
             .onEach { query ->

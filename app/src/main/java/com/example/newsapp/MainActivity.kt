@@ -7,7 +7,6 @@ import android.text.TextWatcher
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
@@ -58,11 +57,12 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
-
     private fun setupRecyclerView() {
         newsAdapter = NewsAdapter(emptyList())
-        binding.recyclerView.layoutManager = LinearLayoutManager(this)
-        binding.recyclerView.adapter = newsAdapter
+        binding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = newsAdapter
+        }
     }
 
     private fun setupSearchFunctionality() {
@@ -167,33 +167,60 @@ class MainActivity : AppCompatActivity() {
                 binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
             }
         }
+            // Observe FILTERED news data - GOOD use of apply
+            lifecycleScope.launch {
+                newsViewModel.filteredNews.collect { articles ->
+                    newsAdapter = NewsAdapter(articles)
+                    binding.recyclerView.adapter = newsAdapter
 
-        // Observe FILTERED news data
-        lifecycleScope.launch {
-            newsViewModel.filteredNews.collect { articles ->
-                newsAdapter = NewsAdapter(articles)
-                binding.recyclerView.adapter = newsAdapter
+                    updateFilterSummary()
 
-                updateFilterSummary()
+                    // GOOD: Use apply for view visibility toggling
+                    binding.apply {
+                        if (articles.isEmpty()) {
+                            llEmptyState.visibility = View.VISIBLE
+                            recyclerView.visibility = View.GONE
 
-                // Show/hide empty state
-                if (articles.isEmpty()) {
-                    binding.llEmptyState.visibility = View.VISIBLE
-                    binding.recyclerView.visibility = View.GONE
-
-                    val query = binding.etSearch.text.toString()
-                    if (query.isNotEmpty()) {
-                        // Use the explicit TextView ID
-                        binding.tvEmptyState.text = "No results for '$query'"
-                    } else {
-                        binding.tvEmptyState.text = "No articles found with current filters"
+                            val query = etSearch.text.toString()
+                            tvEmptyState.text = if (query.isNotEmpty()) {
+                                "No results for '$query'"
+                            } else {
+                                "No articles found with current filters"
+                            }
+                        } else {
+                            llEmptyState.visibility = View.GONE
+                            recyclerView.visibility = View.VISIBLE
+                        }
                     }
-                } else {
-                    binding.llEmptyState.visibility = View.GONE
-                    binding.recyclerView.visibility = View.VISIBLE
                 }
             }
-        }
+
+//        // Observe FILTERED news data
+//        lifecycleScope.launch {
+//            newsViewModel.filteredNews.collect { articles ->
+//                newsAdapter = NewsAdapter(articles)
+//                binding.recyclerView.adapter = newsAdapter
+//
+//                updateFilterSummary()
+//
+//                // Show/hide empty state
+//                if (articles.isEmpty()) {
+//                    binding.llEmptyState.visibility = View.VISIBLE
+//                    binding.recyclerView.visibility = View.GONE
+//
+//                    val query = binding.etSearch.text.toString()
+//                    if (query.isNotEmpty()) {
+//                        // Use the explicit TextView ID
+//                        binding.tvEmptyState.text = "No results for '$query'"
+//                    } else {
+//                        binding.tvEmptyState.text = "No articles found with current filters"
+//                    }
+//                } else {
+//                    binding.llEmptyState.visibility = View.GONE
+//                    binding.recyclerView.visibility = View.VISIBLE
+//                }
+//            }
+//        }
 
 
         // Observe filter changes
