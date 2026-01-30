@@ -5,26 +5,25 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.example.newsapp.ViewModels.NewsViewModel
 import com.example.newsapp.databinding.FragmentFilterBinding
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class FilterFragment : Fragment() {
 
     private lateinit var binding: FragmentFilterBinding
-    private lateinit var newsViewModel: NewsViewModel  // FIXED
+    private val newsViewModel: NewsViewModel by viewModels({ requireActivity() })
     private var filterListener: FilterListener? = null
 
     interface FilterListener {
         fun onFiltersApplied()
         fun onCloseFilter()
     }
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        // Initialize ViewModel using requireActivity()
-        newsViewModel = ViewModelProvider(requireActivity()).get(NewsViewModel::class.java)
-    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -51,10 +50,12 @@ class FilterFragment : Fragment() {
             val chip = com.google.android.material.chip.Chip(requireContext()).apply {
                 text = category
                 isCheckable = true
-                // Check if this category is selected
-                newsViewModel.selectedCategories.value?.let { selectedCats ->
-                    isChecked = selectedCats.contains(category)
+
+                // Check if this category is selected using StateFlow value
+                if (newsViewModel.selectedCategories.value.contains(category)) {
+                    isChecked = true
                 }
+
                 setOnCheckedChangeListener { _, _ ->
                     applyFilters()
                 }
@@ -64,9 +65,12 @@ class FilterFragment : Fragment() {
     }
 
     private fun observeSources() {
-        newsViewModel.availableSources.observe(viewLifecycleOwner, Observer { sources ->
-            setupSourceChips(sources.toList())
-        })
+        // Use lifecycleScope to collect StateFlow
+        lifecycleScope.launch {
+            newsViewModel.availableSources.collect { sources ->
+                setupSourceChips(sources.toList())
+            }
+        }
     }
 
     private fun setupSourceChips(sources: List<String>) {
@@ -79,10 +83,12 @@ class FilterFragment : Fragment() {
             val chip = com.google.android.material.chip.Chip(requireContext()).apply {
                 text = source
                 isCheckable = true
-                // Check if this source is selected
-                newsViewModel.selectedSources.value?.let { selectedSrcs ->
-                    isChecked = selectedSrcs.contains(source)
+
+                // Check if this source is selected using StateFlow value
+                if (newsViewModel.selectedSources.value.contains(source)) {
+                    isChecked = true
                 }
+
                 setOnCheckedChangeListener { _, _ ->
                     applyFilters()
                 }
@@ -95,18 +101,19 @@ class FilterFragment : Fragment() {
         binding.btnApply.setOnClickListener {
             applyFilters()
             filterListener?.onFiltersApplied()
-            filterListener?.onCloseFilter()  // ADD THIS LINE
+            filterListener?.onCloseFilter()
         }
 
         binding.btnClear.setOnClickListener {
             clearAllSelections()
-            filterListener?.onCloseFilter()  // ADD THIS LINE
+            filterListener?.onCloseFilter()
         }
 
         binding.btnClose.setOnClickListener {
             filterListener?.onCloseFilter()
         }
     }
+
     private fun getSelectedCategories(): List<String> {
         val selected = mutableListOf<String>()
         for (i in 0 until binding.chipGroupCategory.childCount) {
@@ -132,8 +139,10 @@ class FilterFragment : Fragment() {
     private fun applyFilters() {
         val selectedCategories = getSelectedCategories()
         val selectedSources = getSelectedSources()
+
+        // Update ViewModel state
         newsViewModel.applyFilters(selectedCategories, selectedSources)
-        filterListener?.onCloseFilter()  // Auto-close after applying
+        filterListener?.onCloseFilter()
     }
 
     private fun clearAllSelections() {

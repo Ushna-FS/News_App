@@ -178,6 +178,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvFilterSummary"
         app:layout_constraintVertical_bias="1.0" />
+
     <!-- Empty State View -->
     <LinearLayout
         android:id="@+id/llEmptyState"
@@ -190,6 +191,28 @@
         app:layout_constraintTop_toBottomOf="@id/tvFilterSummary"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Add explicit ImageView for empty state icon -->
+        <ImageView
+            android:id="@+id/ivEmptyState"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/ic_error"
+            android:contentDescription="Empty state"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- Add explicit TextView for empty state message -->
+        <TextView
+            android:id="@+id/tvEmptyState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No articles found"
+            android:textSize="16sp"
+            android:textColor="@color/gray_medium"
+            android:textAlignment="center"
+            android:gravity="center"/>
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

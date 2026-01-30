@@ -12,14 +12,17 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.Screens.Fragments.FilterFragment
 import com.example.newsapp.adapters.NewsAdapter
 import com.example.newsapp.databinding.ActivityMainBinding
 import com.example.newsapp.ViewModels.NewsViewModel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
@@ -57,7 +60,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        newsAdapter = NewsAdapter()
+        newsAdapter = NewsAdapter(emptyList())
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = newsAdapter
     }
@@ -159,61 +162,86 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun setupObservers() {
-        // Observe loading state
-        newsViewModel.isLoading.observe(this, Observer { isLoading ->
-            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-        })
+        lifecycleScope.launch {
+            newsViewModel.isLoading.collect { isLoading ->
+                binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            }
+        }
 
         // Observe FILTERED news data
-        newsViewModel.filteredNewsLiveData.observe(this, Observer { articles ->
-            newsAdapter = NewsAdapter(articles)
-            binding.recyclerView.adapter = newsAdapter
+        lifecycleScope.launch {
+            newsViewModel.filteredNews.collect { articles ->
+                newsAdapter = NewsAdapter(articles)
+                binding.recyclerView.adapter = newsAdapter
 
-            updateFilterSummary()
+                updateFilterSummary()
 
-            // Show/hide empty state
-            if (articles.isEmpty()) {
-                binding.llEmptyState.visibility = View.VISIBLE
-                binding.recyclerView.visibility = View.GONE
+                // Show/hide empty state
+                if (articles.isEmpty()) {
+                    binding.llEmptyState.visibility = View.VISIBLE
+                    binding.recyclerView.visibility = View.GONE
 
-                val query = binding.etSearch.text.toString()
-                if (query.isNotEmpty()) {
-                    val emptyStateText = binding.llEmptyState.getChildAt(1) as TextView
-                    emptyStateText.text = "No results for '$query'"
+                    val query = binding.etSearch.text.toString()
+                    if (query.isNotEmpty()) {
+                        // Use the explicit TextView ID
+                        binding.tvEmptyState.text = "No results for '$query'"
+                    } else {
+                        binding.tvEmptyState.text = "No articles found with current filters"
+                    }
                 } else {
-                    val emptyStateText = binding.llEmptyState.getChildAt(1) as TextView
-                    emptyStateText.text = "No articles found with current filters"
+                    binding.llEmptyState.visibility = View.GONE
+                    binding.recyclerView.visibility = View.VISIBLE
                 }
-            } else {
-                binding.llEmptyState.visibility = View.GONE
-                binding.recyclerView.visibility = View.VISIBLE
             }
-        })
+        }
+
 
         // Observe filter changes
-        newsViewModel.selectedCategories.observe(this, Observer { categories ->
-            updateFilterSummary()
-        })
-
-        newsViewModel.selectedSources.observe(this, Observer { sources ->
-            updateFilterSummary()
-        })
-
-        // Observe search query
-        newsViewModel.searchQuery.observe(this, Observer { query ->
-            if (query.isNotEmpty()) {
-                binding.toolbar.title = "Search: $query"
-            } else {
+        lifecycleScope.launch {
+            newsViewModel.selectedCategories.collect { categories ->
                 updateFilterSummary()
             }
-        })
+        }
+
+        lifecycleScope.launch {
+            newsViewModel.selectedSources.collect { sources ->
+                updateFilterSummary()
+            }
+        }
+
+        // Observe search query
+        lifecycleScope.launch {
+            newsViewModel.searchQuery.collect { query ->
+                if (query.isNotEmpty()) {
+                    binding.toolbar.title = "Search: $query"
+                } else {
+                    updateFilterSummary()
+                }
+            }
+        }
 
         // Observe errors
-        newsViewModel.errorMessage.observe(this, Observer { error ->
-            if (error.isNotEmpty()) {
-                Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+        lifecycleScope.launch {
+            newsViewModel.errorMessage.collect { error ->
+                if (error.isNotEmpty()) {
+                    Toast.makeText(this@MainActivity, error, Toast.LENGTH_LONG).show()
+                }
             }
-        })
+        }
+
+        // Observe sort type
+        lifecycleScope.launch {
+            newsViewModel.sortType.collect {
+                updateSortButtonHighlight()
+            }
+        }
+
+        // Observe hasUserSelectedSort
+        lifecycleScope.launch {
+            newsViewModel.hasUserSelectedSort.collect {
+                updateSortButtonHighlight()
+            }
+        }
     }
 
     private fun updateFilterButtonHighlight() {
@@ -249,8 +277,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateSortButtonHighlight() {
-        val sortType = newsViewModel.sortType.value
-        val hasUserSelected = newsViewModel.hasUserSelectedSort.value ?: false
+        val hasUserSelected = newsViewModel.hasUserSelectedSort.value
 
         if (hasUserSelected) {
             // Highlight for ANY user selection
@@ -260,7 +287,7 @@ class MainActivity : AppCompatActivity() {
                 strokeColor = getColorStateList(R.color.blueMain)
                 setBackgroundColor(resources.getColor(R.color.blueMain, theme))
 
-                text = when (sortType) {
+                text = when (newsViewModel.sortType.value) {
                     NewsViewModel.SortType.NEWEST_FIRST -> "Newest"
                     NewsViewModel.SortType.OLDEST_FIRST -> "Oldest"
                     else -> "Sort By"
@@ -278,7 +305,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    //  sort menu
+    // sort menu
     private fun showSortMenu() {
         val items = arrayOf("Newest First", "Oldest First", "Reset to Default")
 
@@ -298,7 +325,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateFilterSummary() {
         val filterSummary = newsViewModel.getFilterSummary()
-        val totalArticles = newsViewModel.filteredNewsLiveData.value?.size ?: 0
+        val totalArticles = newsViewModel.filteredNews.value.size
 
         // Update toolbar title
         if (binding.etSearch.text.isNullOrEmpty()) {

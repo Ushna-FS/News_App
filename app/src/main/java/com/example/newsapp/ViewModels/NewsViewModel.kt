@@ -1,87 +1,164 @@
 package com.example.newsapp.ViewModels
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.newsapp.Data.models.Article
 import com.example.newsapp.Data.models.NewsResponse
 import com.example.newsapp.Data.Repository.NewsRepository
-import com.example.newsapp.Data.models.Article
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class NewsViewModel : ViewModel() {
+@HiltViewModel
+class NewsViewModel @Inject constructor(
+    private val repository: NewsRepository
+) : ViewModel() {
 
-    private val repository = NewsRepository()
+    // MutableStateFlow for UI STATE
+    private val _filteredNews = MutableStateFlow<List<Article>>(emptyList())
+    val filteredNews: StateFlow<List<Article>> = _filteredNews.asStateFlow()
 
-    // LiveData for individual sources
-    private val _businessNews = MutableLiveData<NewsResponse>()
-    private val _techCrunchNews = MutableLiveData<NewsResponse>()
-    // Combined LiveData for display
-    private val _allNewsLiveData = MutableLiveData<List<Article>>()
+    private val _selectedCategories = MutableStateFlow(listOf("Business", "Technology"))
+    val selectedCategories: StateFlow<List<String>> = _selectedCategories.asStateFlow()
 
-    // LiveData for filtered news
-    private val _filteredNewsLiveData = MutableLiveData<List<Article>>()
-    val filteredNewsLiveData: LiveData<List<Article>> get() = _filteredNewsLiveData
+    private val _selectedSources = MutableStateFlow<List<String>>(emptyList())
+    val selectedSources: StateFlow<List<String>> = _selectedSources.asStateFlow()
 
-    // Filter state
-    private val _selectedCategories = MutableLiveData<List<String>>(listOf("Business", "Technology"))
-    val selectedCategories: LiveData<List<String>> get() = _selectedCategories
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private val _selectedSources = MutableLiveData<List<String>>(emptyList())
-    val selectedSources: LiveData<List<String>> get() = _selectedSources
+    private val _errorMessage = MutableStateFlow("")
+    val errorMessage: StateFlow<String> = _errorMessage.asStateFlow()
 
-    // LiveData for loading state
-    private val _isLoading = MutableLiveData<Boolean>()
-    val isLoading: LiveData<Boolean> get() = _isLoading
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    // LiveData for error messages
-    private val _errorMessage = MutableLiveData<String>()
-    val errorMessage: LiveData<String> get() = _errorMessage
+    private val _availableSources = MutableStateFlow<Set<String>>(emptySet())
+    val availableSources: StateFlow<Set<String>> = _availableSources.asStateFlow()
 
-    // Search query
-    private val _searchQuery = MutableLiveData<String>("")
-    val searchQuery: LiveData<String> get() = _searchQuery
+    private val _sortType = MutableStateFlow(SortType.NEWEST_FIRST)
+    val sortType: StateFlow<SortType> = _sortType.asStateFlow()
 
-    // Search job for debounce
-    private var searchJob: Job? = null
+    private val _hasUserSelectedSort = MutableStateFlow(false)
+    val hasUserSelectedSort: StateFlow<Boolean> = _hasUserSelectedSort.asStateFlow()
 
-    // Track if we've fetched both sources
-    private var businessFetched = false
-    private var techCrunchFetched = false
+    // MutableSharedFlow for SEARCH EVENTS
+    private val _searchEvents = MutableSharedFlow<String>(
+        replay = 0,
+        extraBufferCapacity = 64
+    )
 
-    // All available sources from API
-    private val _availableSources = MutableLiveData<Set<String>>(emptySet())
-    val availableSources: LiveData<Set<String>> get() = _availableSources
+    // Private mutable data
+    private val _businessNews = MutableStateFlow<NewsResponse?>(null)
+    private val _techCrunchNews = MutableStateFlow<NewsResponse?>(null)
+    private val _allNews = MutableStateFlow<List<Article>>(emptyList())
 
-    enum class SortType {
-        NEWEST_FIRST, OLDEST_FIRST
+    init {
+        // When any filter changes, auto-apply filters
+        combine(
+            _allNews,
+            _selectedCategories,
+            _selectedSources,
+            _sortType
+        ) { allNews, categories, sources, sortType ->
+            applyFiltersInternal(allNews, categories, sources, sortType)
+        }.onEach { filtered ->
+            _filteredNews.value = filtered
+        }.launchIn(viewModelScope)
+
+        setupSearchPipeline()
     }
-    private val _sortType = MutableLiveData<SortType>(SortType.NEWEST_FIRST)
-    val sortType: LiveData<SortType> get() = _sortType
-    private val _hasUserSelectedSort = MutableLiveData<Boolean>(false)
-    val hasUserSelectedSort: LiveData<Boolean> get() = _hasUserSelectedSort
+
+    enum class SortType { NEWEST_FIRST, OLDEST_FIRST }
+
+    private fun setupSearchPipeline() {
+        _searchEvents
+            .debounce(500) // Wait 500ms after last keystroke
+            .distinctUntilChanged() // Only emit if query changed
+            .filter { query -> query.isNotEmpty() } // Skip empty queries
+            .onEach { query ->
+                performSearch(query)
+            }
+            .launchIn(viewModelScope)
+    }
+
+    //search function
+    fun searchNews(query: String) {
+        // Update UI state immediately
+        _searchQuery.value = query
+
+        // Emit to SharedFlow for debounced processing
+        viewModelScope.launch {
+            _searchEvents.emit(query)
+        }
+
+        // If query is empty, clear search results immediately
+        if (query.isEmpty()) {
+            clearSearchResults()
+        }
+    }
+
+    //PERFORM ACTUAL SEARCH
+    private suspend fun performSearch(query: String) {
+        _isLoading.value = true
+        try {
+            val response = repository.searchNews(query)
+            if (response.isSuccessful) {
+                response.body()?.let { searchResults ->
+                    // Apply current filters to search results
+                    val filtered = applyFiltersInternal(
+                        searchResults.articles,
+                        _selectedCategories.value,
+                        _selectedSources.value,
+                        _sortType.value
+                    )
+                    _filteredNews.value = filtered
+                    _errorMessage.value = "" // Clear any previous errors
+                }
+            } else {
+                _errorMessage.value = "No results found for '$query'"
+                _filteredNews.value = emptyList()
+            }
+        } catch (e: Exception) {
+            _errorMessage.value = "Search error: ${e.message}"
+            _filteredNews.value = emptyList()
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    // CLEAR SEARCH RESULTS
+    private fun clearSearchResults() {
+        _filteredNews.value = applyFiltersInternal(
+            _allNews.value,
+            _selectedCategories.value,
+            _selectedSources.value,
+            _sortType.value
+        )
+        _errorMessage.value = ""
+    }
 
     fun fetchTopHeadlines() {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val response = repository.getTopHeadlines()
-                if (response.isSuccessful && response.body() != null) {
-                    val newsResponse = response.body()!!
-                    _businessNews.value = newsResponse
-                    businessFetched = true
-
-                    // Extract sources from business news
-                    extractSources(newsResponse.articles)
-
-                    combineNewsIfReady()
+                if (response.isSuccessful) {
+                    response.body()?.let { newsResponse ->
+                        _businessNews.value = newsResponse
+                        extractSources(newsResponse.articles)
+                        combineNewsIfReady()
+                    }
                 } else {
                     _errorMessage.value = "Failed to fetch business news"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Business Error: ${e.message}"
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -91,175 +168,101 @@ class NewsViewModel : ViewModel() {
             _isLoading.value = true
             try {
                 val response = repository.getTechCrunchHeadlines()
-                if (response.isSuccessful && response.body() != null) {
-                    val newsResponse = response.body()!!
-                    _techCrunchNews.value = newsResponse
-                    techCrunchFetched = true
-
-                    // Extract sources from tech news
-                    extractSources(newsResponse.articles)
-
-                    combineNewsIfReady()
+                if (response.isSuccessful) {
+                    response.body()?.let { newsResponse ->
+                        _techCrunchNews.value = newsResponse
+                        extractSources(newsResponse.articles)
+                        combineNewsIfReady()
+                    }
                 } else {
                     _errorMessage.value = "Failed to fetch TechCrunch news"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "TechCrunch Error: ${e.message}"
-            }
-        }
-    }
-
-    private fun extractSources(articles: List<Article>) {
-        val currentSources = _availableSources.value?.toMutableSet() ?: mutableSetOf()
-        articles.forEach { article ->
-            article.source.name.let { sourceName ->
-                currentSources.add(sourceName)
-            }
-        }
-        _availableSources.value = currentSources
-    }
-
-    private fun combineNewsIfReady() {
-        if (businessFetched && techCrunchFetched) {
-            val businessArticles = _businessNews.value?.articles ?: emptyList()
-            val techArticles = _techCrunchNews.value?.articles ?: emptyList()
-
-            // Combine and sort by latest
-            val combined = (businessArticles + techArticles).sortedByDescending {
-                it.publishedAt
-            }
-
-            _allNewsLiveData.value = combined
-            applyFilters()
-            _isLoading.value = false
-        }
-    }
-
-    // Update applyFilters() to include sorting
-    fun applyFilters(categories: List<String>? = null, sources: List<String>? = null, sort: SortType? = null) {
-        // Update filter state if provided
-        categories?.let { _selectedCategories.value = it }
-        sources?.let { _selectedSources.value = it }
-        sort?.let { _sortType.value = it }
-
-        val allArticles = _allNewsLiveData.value ?: emptyList()
-
-        if (allArticles.isEmpty()) return
-
-        var filtered = allArticles
-
-        // Filter by category
-        val selectedCats = _selectedCategories.value ?: emptyList()
-        if (selectedCats.isNotEmpty()) {
-            filtered = filtered.filter { article ->
-                when {
-                    article.source.name.contains("TechCrunch", ignoreCase = true) == true ->
-                        selectedCats.any { it.equals("Technology", ignoreCase = true) }
-                    else -> selectedCats.any { it.equals("Business", ignoreCase = true) }
-                }
-            }
-        }
-
-        // Filter by source
-        val selectedSrcs = _selectedSources.value ?: emptyList()
-        if (selectedSrcs.isNotEmpty()) {
-            filtered = filtered.filter { article ->
-                selectedSrcs.any { source ->
-                    article.source.name.contains(source, ignoreCase = true) == true
-                }
-            }
-        }
-
-        // APPLY SORTING
-        filtered = when (_sortType.value) {
-            SortType.NEWEST_FIRST -> filtered.sortedByDescending { it.publishedAt }
-            SortType.OLDEST_FIRST -> filtered.sortedBy { it.publishedAt }
-            else -> filtered
-        }
-
-        _filteredNewsLiveData.value = filtered
-    }
-
-    fun setSortType(sortType: SortType) {
-        _hasUserSelectedSort.value = true  // User made a selection
-        applyFilters(sort = sortType)
-    }
-    fun resetSort() {
-        _hasUserSelectedSort.value = false
-        _sortType.value = SortType.NEWEST_FIRST
-        applyFilters()
-    }
-
-
-    // Search news function
-    fun searchNews(query: String) {
-        _searchQuery.value = query
-
-        searchJob?.cancel()
-
-        if (query.isEmpty()) {
-            // When search is cleared, show filtered news again
-            applyFilters()
-            return
-        }
-
-        searchJob = viewModelScope.launch {
-            delay(500)
-
-            _isLoading.value = true
-            try {
-                val response = repository.searchNews(query)
-                if (response.isSuccessful && response.body() != null) {
-                    val searchResults = response.body()!!.articles
-
-                    // Apply filters to search results too
-                    var filtered = searchResults
-
-                    // Filter by category
-                    val selectedCats = _selectedCategories.value ?: emptyList()
-                    if (selectedCats.isNotEmpty()) {
-                        filtered = filtered.filter { article ->
-                            when {
-                                article.source.name?.contains("TechCrunch", ignoreCase = true) == true ->
-                                    selectedCats.any { it.equals("Technology", ignoreCase = true) }
-                                else -> selectedCats.any { it.equals("Business", ignoreCase = true) }
-                            }
-                        }
-                    }
-
-                    // Filter by source
-                    val selectedSrcs = _selectedSources.value ?: emptyList()
-                    if (selectedSrcs.isNotEmpty()) {
-                        filtered = filtered.filter { article ->
-                            selectedSrcs.any { source ->
-                                article.source.name?.contains(source, ignoreCase = true) == true
-                            }
-                        }
-                    }
-
-                    _filteredNewsLiveData.value = filtered
-                } else {
-                    _errorMessage.value = "No results found for '$query'"
-                    _filteredNewsLiveData.value = emptyList()
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = "Search error: ${e.message}"
-                _filteredNewsLiveData.value = emptyList()
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    fun clearSearch() {
-        _searchQuery.value = ""
-        applyFilters()
+    private fun combineNewsIfReady() {
+        val businessArticles = _businessNews.value?.articles ?: emptyList()
+        val techArticles = _techCrunchNews.value?.articles ?: emptyList()
+
+        // Combine only if we have articles
+        val combined = (businessArticles + techArticles)
+
+        if (combined.isNotEmpty()) {
+            val sorted = combined.sortedByDescending { it.publishedAt }
+            _allNews.value = sorted
+        }
     }
 
-    // Get current filter summary
+    private fun extractSources(articles: List<Article>) {
+        val currentSources = _availableSources.value.toMutableSet()
+        articles.forEach { article ->
+            article.source?.name?.let { sourceName ->
+                if (sourceName.isNotEmpty()) {
+                    currentSources.add(sourceName)
+                }
+            }
+        }
+        _availableSources.value = currentSources
+    }
+
+    private fun applyFiltersInternal(
+        allArticles: List<Article>,
+        categories: List<String>,
+        sources: List<String>,
+        sortType: SortType
+    ): List<Article> {
+        var filtered = allArticles
+
+        // Filter by category
+        if (categories.isNotEmpty()) {
+            filtered = filtered.filter { article ->
+                when {
+                    article.source.name.contains("TechCrunch", ignoreCase = true) ->
+                        categories.any { it.equals("Technology", ignoreCase = true) }
+                    else -> categories.any { it.equals("Business", ignoreCase = true) }
+                }
+            }
+        }
+
+        // Filter by source
+        if (sources.isNotEmpty()) {
+            filtered = filtered.filter { article ->
+                sources.any { source ->
+                    article.source.name.contains(source, ignoreCase = true)
+                }
+            }
+        }
+
+        // Apply sorting
+        return when (sortType) {
+            SortType.NEWEST_FIRST -> filtered.sortedByDescending { it.publishedAt }
+            SortType.OLDEST_FIRST -> filtered.sortedBy { it.publishedAt }
+        }
+    }
+
+    fun setSortType(sortType: SortType) {
+        _hasUserSelectedSort.value = true
+        _sortType.value = sortType
+    }
+
+    fun resetSort() {
+        _hasUserSelectedSort.value = false
+        _sortType.value = SortType.NEWEST_FIRST
+    }
+
+    fun clearSearch() {
+        _searchQuery.value = ""
+        clearSearchResults()
+    }
+
     fun getFilterSummary(): String {
-        val categories = _selectedCategories.value ?: emptyList()
-        val sources = _selectedSources.value ?: emptyList()
+        val categories = _selectedCategories.value
+        val sources = _selectedSources.value
 
         return when {
             categories.isEmpty() && sources.isEmpty() -> "All News"
@@ -268,5 +271,10 @@ class NewsViewModel : ViewModel() {
             sources.isNotEmpty() && categories.isEmpty() -> "${sources.size} Sources"
             else -> "${categories.joinToString(", ")} (${sources.size} sources)"
         }
+    }
+
+    fun applyFilters(categories: List<String>, sources: List<String>) {
+        _selectedCategories.value = categories
+        _selectedSources.value = sources
     }
 }
