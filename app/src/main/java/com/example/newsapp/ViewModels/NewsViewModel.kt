@@ -17,14 +17,9 @@ class NewsViewModel : ViewModel() {
 
     // LiveData for individual sources
     private val _businessNews = MutableLiveData<NewsResponse>()
-    val businessNews: LiveData<NewsResponse> get() = _businessNews
-
     private val _techCrunchNews = MutableLiveData<NewsResponse>()
-    val techCrunchNews: LiveData<NewsResponse> get() = _techCrunchNews
-
     // Combined LiveData for display
     private val _allNewsLiveData = MutableLiveData<List<Article>>()
-    val allNewsLiveData: LiveData<List<Article>> get() = _allNewsLiveData
 
     // LiveData for filtered news
     private val _filteredNewsLiveData = MutableLiveData<List<Article>>()
@@ -59,6 +54,14 @@ class NewsViewModel : ViewModel() {
     // All available sources from API
     private val _availableSources = MutableLiveData<Set<String>>(emptySet())
     val availableSources: LiveData<Set<String>> get() = _availableSources
+
+    enum class SortType {
+        NEWEST_FIRST, OLDEST_FIRST
+    }
+    private val _sortType = MutableLiveData<SortType>(SortType.NEWEST_FIRST)
+    val sortType: LiveData<SortType> get() = _sortType
+    private val _hasUserSelectedSort = MutableLiveData<Boolean>(false)
+    val hasUserSelectedSort: LiveData<Boolean> get() = _hasUserSelectedSort
 
     fun fetchTopHeadlines() {
         viewModelScope.launch {
@@ -109,7 +112,7 @@ class NewsViewModel : ViewModel() {
     private fun extractSources(articles: List<Article>) {
         val currentSources = _availableSources.value?.toMutableSet() ?: mutableSetOf()
         articles.forEach { article ->
-            article.source.name?.let { sourceName ->
+            article.source.name.let { sourceName ->
                 currentSources.add(sourceName)
             }
         }
@@ -132,11 +135,12 @@ class NewsViewModel : ViewModel() {
         }
     }
 
-    // NEW: Apply filters function
-    fun applyFilters(categories: List<String>? = null, sources: List<String>? = null) {
+    // Update applyFilters() to include sorting
+    fun applyFilters(categories: List<String>? = null, sources: List<String>? = null, sort: SortType? = null) {
         // Update filter state if provided
         categories?.let { _selectedCategories.value = it }
         sources?.let { _selectedSources.value = it }
+        sort?.let { _sortType.value = it }
 
         val allArticles = _allNewsLiveData.value ?: emptyList()
 
@@ -149,7 +153,7 @@ class NewsViewModel : ViewModel() {
         if (selectedCats.isNotEmpty()) {
             filtered = filtered.filter { article ->
                 when {
-                    article.source.name?.contains("TechCrunch", ignoreCase = true) == true ->
+                    article.source.name.contains("TechCrunch", ignoreCase = true) == true ->
                         selectedCats.any { it.equals("Technology", ignoreCase = true) }
                     else -> selectedCats.any { it.equals("Business", ignoreCase = true) }
                 }
@@ -161,20 +165,31 @@ class NewsViewModel : ViewModel() {
         if (selectedSrcs.isNotEmpty()) {
             filtered = filtered.filter { article ->
                 selectedSrcs.any { source ->
-                    article.source.name?.contains(source, ignoreCase = true) == true
+                    article.source.name.contains(source, ignoreCase = true) == true
                 }
             }
+        }
+
+        // APPLY SORTING
+        filtered = when (_sortType.value) {
+            SortType.NEWEST_FIRST -> filtered.sortedByDescending { it.publishedAt }
+            SortType.OLDEST_FIRST -> filtered.sortedBy { it.publishedAt }
+            else -> filtered
         }
 
         _filteredNewsLiveData.value = filtered
     }
 
-    // NEW: Clear filters
-    fun clearFilters() {
-        _selectedCategories.value = listOf("Business", "Technology")
-        _selectedSources.value = emptyList()
+    fun setSortType(sortType: SortType) {
+        _hasUserSelectedSort.value = true  // User made a selection
+        applyFilters(sort = sortType)
+    }
+    fun resetSort() {
+        _hasUserSelectedSort.value = false
+        _sortType.value = SortType.NEWEST_FIRST
         applyFilters()
     }
+
 
     // Search news function
     fun searchNews(query: String) {

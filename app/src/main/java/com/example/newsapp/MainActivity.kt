@@ -1,5 +1,6 @@
 package com.example.newsapp
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -17,6 +18,7 @@ import com.example.newsapp.Screens.Fragments.FilterFragment
 import com.example.newsapp.adapters.NewsAdapter
 import com.example.newsapp.databinding.ActivityMainBinding
 import com.example.newsapp.ViewModels.NewsViewModel
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class MainActivity : AppCompatActivity() {
 
@@ -37,6 +39,7 @@ class MainActivity : AppCompatActivity() {
         setupBackPressHandler()
         setupFilterButton()
         fetchNews()
+        setupSortButton()
     }
 
     private fun setupBackPressHandler() {
@@ -154,6 +157,7 @@ class MainActivity : AppCompatActivity() {
         newsViewModel.fetchTechCrunchHeadlines()
     }
 
+    @SuppressLint("SetTextI18n")
     private fun setupObservers() {
         // Observe loading state
         newsViewModel.isLoading.observe(this, Observer { isLoading ->
@@ -211,6 +215,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
+
     private fun updateFilterButtonHighlight() {
         val filterSummary = newsViewModel.getFilterSummary()
         val isFilterActive = filterSummary != "All News"
@@ -237,6 +242,59 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupSortButton() {
+        binding.btnSort.setOnClickListener {
+            showSortMenu()
+        }
+    }
+
+    private fun updateSortButtonHighlight() {
+        val sortType = newsViewModel.sortType.value
+        val hasUserSelected = newsViewModel.hasUserSelectedSort.value ?: false
+
+        if (hasUserSelected) {
+            // Highlight for ANY user selection
+            binding.btnSort.apply {
+                setTextColor(resources.getColor(R.color.white, theme))
+                iconTint = getColorStateList(R.color.white)
+                strokeColor = getColorStateList(R.color.blueMain)
+                setBackgroundColor(resources.getColor(R.color.blueMain, theme))
+
+                text = when (sortType) {
+                    NewsViewModel.SortType.NEWEST_FIRST -> "Newest"
+                    NewsViewModel.SortType.OLDEST_FIRST -> "Oldest"
+                    else -> "Sort By"
+                }
+            }
+        } else {
+            // Default (no user selection yet)
+            binding.btnSort.apply {
+                setTextColor(resources.getColor(R.color.blueMain, theme))
+                iconTint = getColorStateList(R.color.blueMain)
+                strokeColor = getColorStateList(R.color.blueMain)
+                setBackgroundColor(resources.getColor(android.R.color.transparent, theme))
+                text = "Sort By"
+            }
+        }
+    }
+
+    //  sort menu
+    private fun showSortMenu() {
+        val items = arrayOf("Newest First", "Oldest First", "Reset to Default")
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Sort Articles")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> newsViewModel.setSortType(NewsViewModel.SortType.NEWEST_FIRST)
+                    1 -> newsViewModel.setSortType(NewsViewModel.SortType.OLDEST_FIRST)
+                    2 -> newsViewModel.resetSort()  // Reset to default
+                }
+                updateSortButtonHighlight()
+                updateFilterSummary()
+            }
+            .show()
+    }
 
     private fun updateFilterSummary() {
         val filterSummary = newsViewModel.getFilterSummary()
@@ -259,5 +317,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         updateFilterButtonHighlight()
+        updateSortButtonHighlight()
     }
 }
