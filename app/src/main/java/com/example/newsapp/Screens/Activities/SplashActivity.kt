@@ -3,44 +3,57 @@ package com.example.newsapp.Screens.Activities
 import android.content.Intent
 import android.os.Bundle
 import android.view.animation.AnimationUtils
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.newsapp.MainActivity
 import com.example.newsapp.R
 import com.example.newsapp.databinding.ActivitySplashBinding
-import kotlinx.coroutines.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import dagger.hilt.android.AndroidEntryPoint
 
+
+@AndroidEntryPoint
 class SplashActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySplashBinding
-    private val SPLASH_DURATION: Long = 5000  // 5 seconds
-    private val activityScope = CoroutineScope(Dispatchers.Main + Job())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Start bounce animation
-        val anim = AnimationUtils.loadAnimation(this, R.anim.splash_anim)
-        binding.ivNewsIcon.startAnimation(anim)
+        // Disable back press properly
+        onBackPressedDispatcher.addCallback(this) {
+            // Do nothing (back disabled during splash)
+        }
 
-        // Navigate to MainActivity after 5 seconds using coroutines
-        navigateToHome()
-    }
+        // Start animation immediately
+        startAnimations()
 
-    private fun navigateToHome() {
-        activityScope.launch {
-            delay(SPLASH_DURATION)  // Suspend for 5 seconds
-
-            val intent = Intent(this@SplashActivity, MainActivity::class.java)
-            startActivity(intent)
-            finish()  // Remove splash from back stack
+        lifecycleScope.launch {
+            delay(3000L)
+            navigateToMain()
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        // Cancel coroutines when activity is destroyed to prevent memory leaks
-        activityScope.cancel()
+    private fun startAnimations() {
+
+        val logoAnim = AnimationUtils.loadAnimation(this, R.anim.splash_anim)
+        binding.ivNewsIcon.startAnimation(logoAnim)
+
+        val textAnim = AnimationUtils.loadAnimation(this, R.anim.slide_in_left)
+        binding.tvAppName.startAnimation(textAnim)
+    }
+
+    private fun navigateToMain() {
+        startActivity(Intent(this, MainActivity::class.java))
+        overridePendingTransition(
+            android.R.anim.fade_in,
+            android.R.anim.fade_out
+        )
+        finish()
     }
 }

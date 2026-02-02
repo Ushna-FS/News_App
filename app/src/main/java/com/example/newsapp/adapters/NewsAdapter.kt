@@ -10,7 +10,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class NewsAdapter(
-    private val articles: List<Article> = emptyList()
+    private var articles: List<Article>,
+    private val onItemClick: (Article) -> Unit = {}
 ) : RecyclerView.Adapter<NewsAdapter.NewsViewHolder>() {
 
     class NewsViewHolder(val binding: ItemNewsArticleBinding) :
@@ -46,6 +47,10 @@ class NewsAdapter(
         }
     }
 
+    fun updateArticles(newArticles: List<Article>) {
+        articles = newArticles
+        notifyDataSetChanged()
+    }
     override fun getItemCount(): Int = articles.size
 
     private fun formatDate(publishedAt: String): String {
