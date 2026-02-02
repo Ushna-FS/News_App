@@ -3,9 +3,9 @@ package com.example.newsapp.ViewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.newsapp.Data.models.Article
-import com.example.newsapp.Data.models.NewsResponse
 import com.example.newsapp.Data.Repository.NewsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -15,7 +15,20 @@ class NewsViewModel @Inject constructor(
     private val repository: NewsRepository
 ) : ViewModel() {
 
-    // MutableStateFlow for UI STATE
+    // Current page state
+    private val _currentPage = MutableStateFlow(1)
+    private val _pageSize = MutableStateFlow(5)
+    private val _hasMorePages = MutableStateFlow(true)
+    val hasMorePages: StateFlow<Boolean> = _hasMorePages.asStateFlow()
+
+    // Track loading more separately
+    private val _isLoadingMore = MutableStateFlow(false)
+    val isLoadingMore: StateFlow<Boolean> = _isLoadingMore.asStateFlow()
+
+    // Paginated data
+    private val _paginatedNews = MutableStateFlow<List<Article>>(emptyList())
+
+    // Rest of your existing code...
     private val _filteredNews = MutableStateFlow<List<Article>>(emptyList())
     val filteredNews: StateFlow<List<Article>> = _filteredNews.asStateFlow()
 
@@ -50,8 +63,8 @@ class NewsViewModel @Inject constructor(
     )
 
     // Private mutable data
-    private val _businessNews = MutableStateFlow<NewsResponse?>(null)
-    private val _techCrunchNews = MutableStateFlow<NewsResponse?>(null)
+    private val _businessNews = MutableStateFlow<List<Article>>(emptyList()) // Changed from NewsResponse
+    private val _techCrunchNews = MutableStateFlow<List<Article>>(emptyList()) // Changed from NewsResponse
     private val _allNews = MutableStateFlow<List<Article>>(emptyList())
 
     init {
@@ -75,37 +88,121 @@ class NewsViewModel @Inject constructor(
     private fun setupSearchPipeline() {
         _searchEvents
             .debounce(400)
-            .distinctUntilChanged() // Only emit if query changed
-            .filter { query -> query.isNotEmpty() } // Skip empty queries
+            .distinctUntilChanged()
+            .filter { query -> query.isNotEmpty() }
             .onEach { query ->
-                performSearch(query)
+                // Reset page when searching new query
+                _currentPage.value = 1
+                _paginatedNews.value = emptyList()
+                performSearch(query, 1)
             }
             .launchIn(viewModelScope)
     }
 
-    //search function
-    fun searchNews(query: String) {
-        // Update UI state immediately
-        _searchQuery.value = query
 
-        // Emit to SharedFlow for debounced processing
+
+    fun loadMoreNews() {
+        if (_isLoadingMore.value || !_hasMorePages.value || _isLoading.value) return
+
         viewModelScope.launch {
-            _searchEvents.emit(query)
-        }
+            _isLoadingMore.value = true
 
-        // If query is empty, clear search results immediately
-        if (query.isEmpty()) {
-            clearSearchResults()
+            // ✅ 3-4 second loading delay
+            delay(3500L)
+
+            val nextPage = _currentPage.value + 1
+
+            try {
+                when {
+                    _searchQuery.value.isNotEmpty() -> {
+                        loadMoreSearchResults(nextPage)
+                    }
+                    else -> {
+                        loadMoreHeadlines(nextPage)
+                    }
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Error loading more articles: ${e.message}"
+            } finally {
+                _isLoadingMore.value = false
+            }
         }
     }
 
-    //PERFORM ACTUAL SEARCH
-    private suspend fun performSearch(query: String) {
+    private suspend fun loadMoreHeadlines(page: Int) {
+        // Business news
+        val businessResponse = repository.getTopHeadlines(
+            page = page,
+            pageSize = _pageSize.value  // ✅ Use pageSize
+        )
+        if (businessResponse.isSuccessful) {
+            businessResponse.body()?.let { newsResponse ->
+                val newArticles = newsResponse.articles
+                // ✅ Prevent duplicates
+                val existingUrls = _businessNews.value.map { it.url }.toSet()
+                val uniqueNewArticles = newArticles.filterNot { existingUrls.contains(it.url) }
+
+                _businessNews.value = _businessNews.value + uniqueNewArticles
+                // ✅ Better hasMorePages logic
+                _hasMorePages.value = uniqueNewArticles.size >= _pageSize.value
+                _currentPage.value = page
+                extractSources(uniqueNewArticles)
+            }
+        }
+        val techResponse = repository.getTechCrunchHeadlines(
+            page = page,
+            pageSize = _pageSize.value  // ✅ Use pageSize
+        )
+        if (techResponse.isSuccessful) {
+            techResponse.body()?.let { newsResponse ->
+                val newArticles = newsResponse.articles
+                val existingUrls = _techCrunchNews.value.map { it.url }.toSet()
+                val uniqueNewArticles = newArticles.filterNot { existingUrls.contains(it.url) }
+
+                _techCrunchNews.value = _techCrunchNews.value + uniqueNewArticles
+                _hasMorePages.value = uniqueNewArticles.size >= _pageSize.value
+                extractSources(uniqueNewArticles)
+            }
+        }
+
+        combineNewsIfReady()
+    }
+    private suspend fun loadMoreSearchResults(page: Int) {
+        val response = repository.searchNews(
+            _searchQuery.value,
+            page = page,
+            pageSize = _pageSize.value  // ✅ Use pageSize
+        )
+        if (response.isSuccessful) {
+            response.body()?.let { searchResults ->
+                val newArticles = searchResults.articles
+                val existingUrls = _paginatedNews.value.map { it.url }.toSet()
+                val uniqueNewArticles = newArticles.filterNot { existingUrls.contains(it.url) }
+
+                _paginatedNews.value = _paginatedNews.value + uniqueNewArticles
+                _hasMorePages.value = uniqueNewArticles.size >= _pageSize.value
+                _currentPage.value = page
+
+                val filtered = applyFiltersInternal(
+                    _paginatedNews.value,
+                    _selectedCategories.value,
+                    _selectedSources.value,
+                    _sortType.value
+                )
+                _filteredNews.value = filtered
+            }
+        }
+    }
+    private suspend fun performSearch(query: String, page: Int = 1) {
         _isLoading.value = true
         try {
-            val response = repository.searchNews(query)
+            val response = repository.searchNews(query, page = page)
             if (response.isSuccessful) {
                 response.body()?.let { searchResults ->
+                    _paginatedNews.value = searchResults.articles
+                    _hasMorePages.value = searchResults.articles.size >= _pageSize.value
+                    _currentPage.value = page
+
                     // Apply current filters to search results
                     val filtered = applyFiltersInternal(
                         searchResults.articles,
@@ -114,7 +211,7 @@ class NewsViewModel @Inject constructor(
                         _sortType.value
                     )
                     _filteredNews.value = filtered
-                    _errorMessage.value = "" // Clear any previous errors
+                    _errorMessage.value = ""
                 }
             } else {
                 _errorMessage.value = "No results found for '$query'"
@@ -128,33 +225,33 @@ class NewsViewModel @Inject constructor(
         }
     }
 
-    // CLEAR SEARCH RESULTS
-    private fun clearSearchResults() {
-        _filteredNews.value = applyFiltersInternal(
-            _allNews.value,
-            _selectedCategories.value,
-            _selectedSources.value,
-            _sortType.value
-        )
-        _errorMessage.value = ""
-    }
-
     fun fetchTopHeadlines() {
         viewModelScope.launch {
             _isLoading.value = true
+            _currentPage.value = 1
+            _businessNews.value = emptyList()
+            _techCrunchNews.value = emptyList()
+
             try {
-                val response = repository.getTopHeadlines()
-                if (response.isSuccessful) {
-                    response.body()?.let { newsResponse ->
-                        _businessNews.value = newsResponse
+                val businessResponse = repository.getTopHeadlines(page = 1)
+                if (businessResponse.isSuccessful) {
+                    businessResponse.body()?.let { newsResponse ->
+                        _businessNews.value = newsResponse.articles
                         extractSources(newsResponse.articles)
-                        combineNewsIfReady()
                     }
-                } else {
-                    _errorMessage.value = "Failed to fetch business news"
                 }
+
+                val techResponse = repository.getTechCrunchHeadlines(page = 1)
+                if (techResponse.isSuccessful) {
+                    techResponse.body()?.let { newsResponse ->
+                        _techCrunchNews.value = newsResponse.articles
+                        extractSources(newsResponse.articles)
+                    }
+                }
+
+                combineNewsIfReady()
             } catch (e: Exception) {
-                _errorMessage.value = "Business Error: ${e.message}"
+                _errorMessage.value = "Error: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -165,15 +262,14 @@ class NewsViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val response = repository.getTechCrunchHeadlines()
+                val response = repository.getTechCrunchHeadlines(page = _currentPage.value)
                 if (response.isSuccessful) {
                     response.body()?.let { newsResponse ->
-                        _techCrunchNews.value = newsResponse
+                        val newArticles = _techCrunchNews.value + newsResponse.articles
+                        _techCrunchNews.value = newArticles
                         extractSources(newsResponse.articles)
                         combineNewsIfReady()
                     }
-                } else {
-                    _errorMessage.value = "Failed to fetch TechCrunch news"
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "TechCrunch Error: ${e.message}"
@@ -182,12 +278,11 @@ class NewsViewModel @Inject constructor(
             }
         }
     }
-
     private fun combineNewsIfReady() {
-        val businessArticles = _businessNews.value?.articles ?: emptyList()
-        val techArticles = _techCrunchNews.value?.articles ?: emptyList()
+        val businessArticles = _businessNews.value
+        val techArticles = _techCrunchNews.value
 
-        // Combine only if we have articles
+        // Combine all articles
         val combined = (businessArticles + techArticles)
 
         if (combined.isNotEmpty()) {
@@ -196,6 +291,7 @@ class NewsViewModel @Inject constructor(
         }
     }
 
+    // Rest of your existing methods remain the same...
     private fun extractSources(articles: List<Article>) {
         val currentSources = _availableSources.value.toMutableSet()
         articles.forEach { article ->
@@ -253,9 +349,35 @@ class NewsViewModel @Inject constructor(
         _sortType.value = SortType.NEWEST_FIRST
     }
 
+    fun searchNews(query: String) {
+        // Update UI state immediately
+        _searchQuery.value = query
+
+        // Emit to SharedFlow for debounced processing
+        viewModelScope.launch {
+            _searchEvents.emit(query)
+        }
+
+        // If query is empty, clear search results immediately
+        if (query.isEmpty()) {
+            clearSearch()
+        }
+    }
     fun clearSearch() {
         _searchQuery.value = ""
+        _paginatedNews.value = emptyList()
+        _currentPage.value = 1
         clearSearchResults()
+    }
+
+    private fun clearSearchResults() {
+        _filteredNews.value = applyFiltersInternal(
+            _allNews.value,
+            _selectedCategories.value,
+            _selectedSources.value,
+            _sortType.value
+        )
+        _errorMessage.value = ""
     }
 
     fun getFilterSummary(): String {

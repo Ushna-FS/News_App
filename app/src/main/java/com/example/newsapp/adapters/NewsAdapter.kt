@@ -6,44 +6,92 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.newsapp.Data.models.Article
 import com.example.newsapp.databinding.ItemNewsArticleBinding
+import com.example.newsapp.databinding.ItemLoadingBinding
 import java.text.SimpleDateFormat
 import java.util.*
 
 class NewsAdapter(
-    private var articles: List<Article>,
-    private val onItemClick: (Article) -> Unit = {}
-) : RecyclerView.Adapter<NewsAdapter.NewsViewHolder>() {
+    private var articles: List<Article> = emptyList(),
+    private val onItemClick: (Article) -> Unit = {},
+    private val onLoadMore: () -> Unit = {}
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    class NewsViewHolder(val binding: ItemNewsArticleBinding) :
-        RecyclerView.ViewHolder(binding.root)
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NewsViewHolder {
-        val binding = ItemNewsArticleBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-        return NewsViewHolder(binding)
+    companion object {
+        private const val VIEW_TYPE_ITEM = 0
+        private const val VIEW_TYPE_LOADING = 1
     }
 
-    override fun onBindViewHolder(holder: NewsViewHolder, position: Int) {
-        val article = articles[position]
+    private var isLoading = false
+    private var hasMorePages = true
 
-        // Set data using ViewBinding
-        holder.binding.tvNewsTitle.text = article.title
-        holder.binding.tvNewsDescription.text = article.description ?: "No description available"
-        holder.binding.tvNewsSource.text = article.source.name
-        holder.binding.tvNewsTime.text = formatDate(article.publishedAt)
+    fun setHasMorePages(hasMore: Boolean) {
+        this.hasMorePages = hasMore
+    }
 
-        // Load image with Glide
-        article.urlToImage?.let { imageUrl ->
-            Glide.with(holder.itemView.context)
-                .load(imageUrl)
-                .placeholder(com.example.newsapp.R.drawable.ic_newspaper)
-                .error(com.example.newsapp.R.drawable.ic_error)
-                .into(holder.binding.ivNewsImage)
-        } ?: run {
-            holder.binding.ivNewsImage.setImageResource(com.example.newsapp.R.drawable.ic_newspaper)
+    inner class NewsViewHolder(val binding: ItemNewsArticleBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun bind(article: Article) {
+            // Set data using ViewBinding
+            binding.tvNewsTitle.text = article.title
+            binding.tvNewsDescription.text = article.description ?: "No description available"
+            binding.tvNewsSource.text = article.source.name
+            binding.tvNewsTime.text = formatDate(article.publishedAt)
+
+            // Load image with Glide
+            article.urlToImage?.let { imageUrl ->
+                Glide.with(itemView.context)
+                    .load(imageUrl)
+                    .placeholder(com.example.newsapp.R.drawable.ic_newspaper)
+                    .error(com.example.newsapp.R.drawable.ic_error)
+                    .into(binding.ivNewsImage)
+            } ?: run {
+                binding.ivNewsImage.setImageResource(com.example.newsapp.R.drawable.ic_newspaper)
+            }
+
+            itemView.setOnClickListener {
+                onItemClick(article)
+            }
+        }
+    }
+
+    inner class LoadingViewHolder(val binding: ItemLoadingBinding) :
+        RecyclerView.ViewHolder(binding.root)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return if (viewType == VIEW_TYPE_ITEM) {
+            val binding = ItemNewsArticleBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            NewsViewHolder(binding)
+        } else {
+            val binding = ItemLoadingBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+            LoadingViewHolder(binding)
+        }
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return if (position < articles.size) VIEW_TYPE_ITEM else VIEW_TYPE_LOADING
+    }
+
+    override fun getItemCount(): Int {
+        return articles.size + if (isLoading) 1 else 0
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        if (holder is NewsViewHolder && position < articles.size) {
+            holder.bind(articles[position])
+
+            // Load more when reaching 5th last item
+            if (position == articles.size - 5 && !isLoading && hasMorePages) {
+                onLoadMore()
+            }
         }
     }
 
@@ -51,7 +99,19 @@ class NewsAdapter(
         articles = newArticles
         notifyDataSetChanged()
     }
-    override fun getItemCount(): Int = articles.size
+
+
+
+    fun setLoading(loading: Boolean) {
+        if (isLoading != loading) {
+            isLoading = loading
+            if (loading) {
+                notifyItemInserted(articles.size)
+            } else {
+                notifyItemRemoved(articles.size)
+            }
+        }
+    }
 
     private fun formatDate(publishedAt: String): String {
         return try {

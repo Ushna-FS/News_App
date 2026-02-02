@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.newsapp.R
 import com.example.newsapp.ViewModels.NewsViewModel
 import com.example.newsapp.adapters.NewsAdapter
@@ -57,17 +58,58 @@ class DiscoverFragment : Fragment() {
         setupFilterButton()
         setupSortButton()
         fetchNews()
+        setupScrollListener()
     }
 
     // ---------------- RecyclerView ----------------
 
+
+//    private fun setupRecyclerView() {
+//        newsAdapter = NewsAdapter(emptyList())
+//        binding.recyclerView.apply {
+//            layoutManager = LinearLayoutManager(requireContext())
+//            adapter = newsAdapter
+//        }
+//    }
+
+    // In setupRecyclerView():
     private fun setupRecyclerView() {
-        newsAdapter = NewsAdapter(emptyList())
+        newsAdapter = NewsAdapter(
+            articles = emptyList(),
+            onItemClick = { article ->
+                // Handle article click
+            },
+            onLoadMore = {
+                // ✅ NEW: Load more when reaching end
+                newsViewModel.loadMoreNews()
+            }
+        )
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = newsAdapter
+            setHasFixedSize(true)
         }
     }
+
+    // ✅ NEW: Add scroll listener
+    private fun setupScrollListener() {
+        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val visibleItemCount = layoutManager.childCount
+                val totalItemCount = layoutManager.itemCount
+                val firstVisibleItem = layoutManager.findFirstVisibleItemPosition()
+
+                if (!newsViewModel.isLoadingMore.value &&
+                    (visibleItemCount + firstVisibleItem) >= totalItemCount - 5) {
+                    newsViewModel.loadMoreNews()
+                }
+            }
+        })
+    }
+
 
     // ---------------- Search ----------------
 
@@ -230,6 +272,11 @@ class DiscoverFragment : Fragment() {
                 }
             }
         }
+        lifecycleScope.launch {
+            newsViewModel.hasMorePages.collect { hasMore ->
+                newsAdapter.setHasMorePages(hasMore)
+            }
+        }
 
         lifecycleScope.launch {
             newsViewModel.selectedCategories.collect {
@@ -270,6 +317,13 @@ class DiscoverFragment : Fragment() {
         lifecycleScope.launch {
             newsViewModel.hasUserSelectedSort.collect {
                 updateSortButtonHighlight()
+            }
+        }
+
+// ✅ NEW: Add observer for isLoadingMore
+        lifecycleScope.launch {
+            newsViewModel.isLoadingMore.collect { isLoadingMore ->
+                newsAdapter.setLoading(isLoadingMore)
             }
         }
     }

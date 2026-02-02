@@ -1,6 +1,5 @@
 package com.example.newsapp.Screens.Fragments
 
-
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.newsapp.R
 import com.example.newsapp.adapters.NewsAdapter
 import com.example.newsapp.databinding.FragmentHomeBinding
@@ -38,15 +38,20 @@ class HomeFragment : Fragment() {
 
         setupRecyclerView()
         setupObservers()
+        setupScrollListener()
         fetchNews()
 
         binding.textWelcome.text = getString(R.string.home_user)
     }
 
     private fun setupRecyclerView() {
-        newsAdapter = NewsAdapter(emptyList()) { article ->
-            // Handle article click (open details, bookmark, etc.)
-        }
+        newsAdapter = NewsAdapter(
+            articles = emptyList(),
+            onItemClick = { article ->
+                // Handle article click
+            },
+            onLoadMore = {}  // ✅ Empty - fragment handles it
+        )
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = newsAdapter
@@ -54,11 +59,64 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun setupScrollListener() {
+        var loadingTriggered = false  // ✅ Prevent duplicate triggers
+
+        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                if (dy <= 0) return  // ✅ Only trigger on scrolling down
+
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val visibleItemCount = layoutManager.childCount
+                val totalItemCount = layoutManager.itemCount
+                val firstVisibleItem = layoutManager.findFirstVisibleItemPosition()
+                val lastVisibleItem = firstVisibleItem + visibleItemCount
+
+                // ✅ Load more when reaching 5th last item
+                val shouldLoadMore = lastVisibleItem >= totalItemCount - 5
+
+                if (shouldLoadMore &&
+                    !newsViewModel.isLoadingMore.value &&
+                    !newsViewModel.isLoading.value &&
+                    newsViewModel.hasMorePages.value &&
+                    !loadingTriggered) {
+
+                    loadingTriggered = true
+                    newsViewModel.loadMoreNews()
+
+                    // ✅ Reset after delay
+                    recyclerView.postDelayed({
+                        loadingTriggered = false
+                    }, 4000)  // 4 seconds (loader duration)
+                }
+            }
+        })
+    }
+    // ✅ NEW: Add scroll listener for better pagination control
+//    private fun setupScrollListener() {
+//        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+//            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+//                super.onScrolled(recyclerView, dx, dy)
+//
+//                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+//                val visibleItemCount = layoutManager.childCount
+//                val totalItemCount = layoutManager.itemCount
+//                val firstVisibleItem = layoutManager.findFirstVisibleItemPosition()
+//
+//                // Load more when reaching the end
+//                if (!newsViewModel.isLoadingMore.value &&
+//                    (visibleItemCount + firstVisibleItem) >= totalItemCount - 5) {
+//                    newsViewModel.loadMoreNews()
+//                }
+//            }
+//        })
+//    }
+
     private fun fetchNews() {
-        lifecycleScope.launch {
-            newsViewModel.fetchTopHeadlines()
-            newsViewModel.fetchTechCrunchHeadlines()
-        }
+        newsViewModel.fetchTopHeadlines()
+        newsViewModel.fetchTechCrunchHeadlines()
     }
 
     private fun setupObservers() {
@@ -75,11 +133,24 @@ class HomeFragment : Fragment() {
             newsViewModel.isLoading.collect { isLoading ->
                 binding.apply {
                     progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-                    recyclerView.visibility = if (isLoading) View.GONE else View.VISIBLE
+                    if (isLoading) {
+                        recyclerView.visibility = View.GONE
+                    }
                 }
             }
         }
 
+        // ✅ NEW: Observe loading more state
+        lifecycleScope.launch {
+            newsViewModel.isLoadingMore.collect { isLoadingMore ->
+                newsAdapter.setLoading(isLoadingMore)
+            }
+        }
+        lifecycleScope.launch {
+            newsViewModel.hasMorePages.collect { hasMore ->
+                newsAdapter.setHasMorePages(hasMore)
+            }
+        }
         // Observe errors
         lifecycleScope.launch {
             newsViewModel.errorMessage.collect { error ->
@@ -95,7 +166,7 @@ class HomeFragment : Fragment() {
         binding.apply {
             when {
                 articles.isEmpty() -> {
-                    textEmpty.text =getString( R.string.no_articles_found)
+                    textEmpty.text = getString(R.string.no_articles_found)
                     textEmpty.visibility = View.VISIBLE
                     recyclerView.visibility = View.GONE
                 }
