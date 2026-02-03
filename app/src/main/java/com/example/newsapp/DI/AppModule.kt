@@ -1,6 +1,7 @@
 package com.example.newsapp.DI
 
-
+import com.example.newsapp.data.Repository.BookmarkRepository
+import com.example.newsapp.data.Repository.NewsRepository
 import com.example.newsapp.data.api.ApiService
 import dagger.Module
 import dagger.Provides
@@ -22,5 +23,17 @@ object AppModule {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ApiService::class.java)
+    }
+
+    @Singleton
+    @Provides
+    fun provideNewsRepository(apiService: ApiService): NewsRepository {
+        return NewsRepository(apiService)
+    }
+
+    @Singleton
+    @Provides
+    fun provideBookmarkRepository(bookmarkDao: com.example.newsapp.data.local.BookmarkDao): BookmarkRepository {
+        return BookmarkRepository(bookmarkDao)
     }
 }

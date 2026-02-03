@@ -3,8 +3,10 @@ package com.example.newsapp.ViewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.*
+import com.example.newsapp.data.Repository.BookmarkRepository
 import com.example.newsapp.data.Repository.NewsRepository
 import com.example.newsapp.data.Repository.SortType
+import com.example.newsapp.data.local.BookmarkedArticle
 import com.example.newsapp.data.models.Article
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -14,9 +16,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NewsViewModel @Inject constructor(
-    private val repository: NewsRepository
+    private val repository: NewsRepository,
+    private val bookmarkRepository: BookmarkRepository
 ) : ViewModel() {
-
     // For HomeFragment - Only Business news
     val businessNewsPagingData: Flow<PagingData<Article>> =
         repository.getBusinessNewsStream()
@@ -123,4 +125,22 @@ class NewsViewModel @Inject constructor(
             else -> "${categories.joinToString(", ")} (${sources.size} sources)"
         }
     }
+    fun toggleBookmark(article: Article) {
+        viewModelScope.launch {
+            val isBookmarked = bookmarkRepository.isBookmarked(article.url ?: "")
+            if (isBookmarked) {
+                bookmarkRepository.removeBookmark(article)
+            } else {
+                bookmarkRepository.addBookmark(article)
+            }
+        }
+    }
+
+    fun isArticleBookmarked(url: String): Flow<Boolean> = flow {
+        val isBookmarked = bookmarkRepository.isBookmarked(url)
+        emit(isBookmarked)
+    }.flowOn(Dispatchers.IO)
+
+    val bookmarks: Flow<List<BookmarkedArticle>> = bookmarkRepository.getAllBookmarks()
+        .flowOn(Dispatchers.IO)
 }

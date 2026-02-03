@@ -36,7 +36,7 @@ class NewsRecyclerAdapter(
             tvNewsTitle.text = article.title
             tvNewsDescription.text =
                 article.description ?: itemView.context.getString(R.string.no_description_available)
-            tvNewsSource.text = article.source.name
+            tvNewsSource.text = article.source?.name ?: "Unknown" // FIXED: Added safe call
             tvNewsTime.text = formatDate(article.publishedAt)
 
             // Image loading
@@ -51,7 +51,8 @@ class NewsRecyclerAdapter(
             root.setOnClickListener {
                 onItemClick(article)
             }
-        }}
+        }
+    }
 
     class LoadingViewHolder(val binding: ItemLoadingBinding) :
         RecyclerView.ViewHolder(binding.root)
@@ -109,8 +110,11 @@ class NewsRecyclerAdapter(
         }
     }
 
-    private fun formatDate(publishedAt: String): String {
+    private fun formatDate(publishedAt: String?): String {
         return try {
+            // FIXED: Added null check before substringBefore
+            if (publishedAt.isNullOrEmpty()) return ""
+
             // Format: "2026-01-30T04:18:45Z" → "30 Jan, 4:18 AM"
             val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
             inputFormat.timeZone = TimeZone.getTimeZone("UTC")
@@ -119,8 +123,8 @@ class NewsRecyclerAdapter(
             val outputFormat = SimpleDateFormat("dd MMM, h:mm a", Locale.getDefault())
             outputFormat.format(date ?: Date())
         } catch (e: Exception) {
-            // Fallback: just show date part
-            publishedAt.substringBefore("T")
+            // Fallback: just show date part with safe call
+            publishedAt?.substringBefore("T") ?: "" // FIXED: Added safe call
         }
     }
 }

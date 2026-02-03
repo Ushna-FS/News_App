@@ -14,7 +14,6 @@ import com.example.newsapp.R
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.databinding.FragmentHomeBinding
 import com.example.newsapp.ViewModels.NewsViewModel
-import com.example.newsapp.adapters.NewsLoadStateAdapter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -52,13 +51,15 @@ class HomeFragment : Fragment() {
             },
             onExtractSource = { article ->
                 newsViewModel.extractSourceFromArticle(article)
-            }
+            },
+            viewModel = newsViewModel,
+            lifecycleOwner = viewLifecycleOwner
         )
 
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = newsAdapter.withLoadStateFooter(
-                footer = NewsLoadStateAdapter { newsAdapter.retry() }
+                footer = NewsPagingAdapter.NewsLoadStateAdapter { newsAdapter.retry() }
             )
             setHasFixedSize(true)
         }

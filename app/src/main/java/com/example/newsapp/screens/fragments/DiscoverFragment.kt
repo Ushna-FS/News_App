@@ -21,7 +21,6 @@ import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.R
 import com.example.newsapp.ViewModels.NewsViewModel
-import com.example.newsapp.adapters.NewsLoadStateAdapter
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.data.Repository.SortType
 import com.example.newsapp.databinding.FragmentDiscoverBinding
@@ -71,7 +70,9 @@ class DiscoverFragment : Fragment() {
             },
             onExtractSource = { article ->
                 newsViewModel.extractSourceFromArticle(article)
-            }
+            },
+            viewModel = newsViewModel,
+            lifecycleOwner = viewLifecycleOwner
         )
 
         newsAdapter.addLoadStateListener { loadState ->
@@ -134,7 +135,7 @@ class DiscoverFragment : Fragment() {
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = newsAdapter.withLoadStateFooter(
-                footer = NewsLoadStateAdapter { newsAdapter.retry() }
+                footer = NewsPagingAdapter.NewsLoadStateAdapter { newsAdapter.retry() }
             )
             setHasFixedSize(true)
         }
