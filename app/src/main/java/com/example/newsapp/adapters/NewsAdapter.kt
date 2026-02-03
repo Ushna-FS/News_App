@@ -4,14 +4,14 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.newsapp.data.models.Article
 import com.example.newsapp.R
+import com.example.newsapp.data.models.Article
 import com.example.newsapp.databinding.ItemNewsArticleBinding
 import com.example.newsapp.databinding.ItemLoadingBinding
 import java.text.SimpleDateFormat
 import java.util.*
 
-class NewsAdapter(
+class NewsRecyclerAdapter(
     private var articles: List<Article> = emptyList(),
     private val onItemClick: (Article) -> Unit = {},
     private val onLoadMore: () -> Unit = {}
@@ -29,7 +29,7 @@ class NewsAdapter(
         this.hasMorePages = hasMore
     }
 
-    inner class NewsViewHolder(val binding: ItemNewsArticleBinding) :
+    inner class ArticleViewHolder(val binding: ItemNewsArticleBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(article: Article) = with(binding) {
 
@@ -63,7 +63,7 @@ class NewsAdapter(
                 parent,
                 false
             )
-            NewsViewHolder(binding)
+            ArticleViewHolder(binding)
         } else {
             val binding = ItemLoadingBinding.inflate(
                 LayoutInflater.from(parent.context),
@@ -83,7 +83,7 @@ class NewsAdapter(
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        if (holder is NewsViewHolder && position < articles.size) {
+        if (holder is ArticleViewHolder && position < articles.size) {
             holder.bind(articles[position])
 
             // Load more when reaching 5th last item
@@ -97,8 +97,6 @@ class NewsAdapter(
         articles = newArticles
         notifyDataSetChanged()
     }
-
-
 
     fun setLoading(loading: Boolean) {
         if (isLoading != loading) {

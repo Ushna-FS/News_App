@@ -4,16 +4,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.newsapp.R
-import com.example.newsapp.adapters.NewsAdapter
+import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.databinding.FragmentHomeBinding
 import com.example.newsapp.ViewModels.NewsViewModel
+import com.example.newsapp.adapters.NewsLoadStateAdapter
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -21,8 +24,9 @@ class HomeFragment : Fragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-    private val newsViewModel: NewsViewModel by viewModels()
-    private lateinit var newsAdapter: NewsAdapter
+
+    private val newsViewModel: NewsViewModel by activityViewModels()
+    private lateinit var newsAdapter: NewsPagingAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,141 +42,90 @@ class HomeFragment : Fragment() {
 
         setupRecyclerView()
         setupObservers()
-        setupScrollListener()
-        fetchNews()
-
         binding.textWelcome.text = getString(R.string.home_user)
     }
 
     private fun setupRecyclerView() {
-        newsAdapter = NewsAdapter(
-            articles = emptyList(),
+        newsAdapter = NewsPagingAdapter(
             onItemClick = { article ->
                 // Handle article click
             },
-            onLoadMore = {}  // ✅ Empty - fragment handles it
+            onExtractSource = { article ->
+                newsViewModel.extractSourceFromArticle(article)
+            }
         )
+
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = newsAdapter
+            adapter = newsAdapter.withLoadStateFooter(
+                footer = NewsLoadStateAdapter { newsAdapter.retry() }
+            )
             setHasFixedSize(true)
         }
     }
 
-    private fun setupScrollListener() {
-        var loadingTriggered = false  // ✅ Prevent duplicate triggers
-
-        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-
-                if (dy <= 0) return  // ✅ Only trigger on scrolling down
-
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                val visibleItemCount = layoutManager.childCount
-                val totalItemCount = layoutManager.itemCount
-                val firstVisibleItem = layoutManager.findFirstVisibleItemPosition()
-                val lastVisibleItem = firstVisibleItem + visibleItemCount
-
-                // ✅ Load more when reaching 5th last item
-                val shouldLoadMore = lastVisibleItem >= totalItemCount - 5
-
-                if (shouldLoadMore &&
-                    !newsViewModel.isLoadingMore.value &&
-                    !newsViewModel.isLoading.value &&
-                    newsViewModel.hasMorePages.value &&
-                    !loadingTriggered) {
-
-                    loadingTriggered = true
-                    newsViewModel.loadMoreNews()
-
-                    // ✅ Reset after delay
-                    recyclerView.postDelayed({
-                        loadingTriggered = false
-                    }, 4000)  // 4 seconds (loader duration)
-                }
-            }
-        })
-    }
-    // ✅ NEW: Add scroll listener for better pagination control
-//    private fun setupScrollListener() {
-//        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-//            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-//                super.onScrolled(recyclerView, dx, dy)
-//
-//                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-//                val visibleItemCount = layoutManager.childCount
-//                val totalItemCount = layoutManager.itemCount
-//                val firstVisibleItem = layoutManager.findFirstVisibleItemPosition()
-//
-//                // Load more when reaching the end
-//                if (!newsViewModel.isLoadingMore.value &&
-//                    (visibleItemCount + firstVisibleItem) >= totalItemCount - 5) {
-//                    newsViewModel.loadMoreNews()
-//                }
-//            }
-//        })
-//    }
-
-    private fun fetchNews() {
-        newsViewModel.fetchTopHeadlines()
-        newsViewModel.fetchTechCrunchHeadlines()
-    }
-
     private fun setupObservers() {
-        // Observe news data
-        lifecycleScope.launch {
-            newsViewModel.filteredNews.collect { articles ->
-                newsAdapter.updateArticles(articles)
-                updateEmptyState(articles)
+        // Use Business news for HomeFragment
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsViewModel.businessNewsPagingData.collectLatest { pagingData ->
+                newsAdapter.submitData(pagingData)
             }
         }
 
-        // Observe loading state
-        lifecycleScope.launch {
-            newsViewModel.isLoading.collect { isLoading ->
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsAdapter.loadStateFlow.collectLatest { loadState ->
                 binding.apply {
-                    progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-                    if (isLoading) {
-                        recyclerView.visibility = View.GONE
+                    // Handle initial loading
+                    when (loadState.refresh) {
+                        is LoadState.Loading -> {
+                            progressBar.isVisible = true
+                            recyclerView.isVisible = false
+                            footerLoading.root.isVisible = false
+                        }
+                        is LoadState.Error -> {
+                            progressBar.isVisible = false
+                            textEmpty.text = getString(
+                                R.string.error,
+                                (loadState.refresh as LoadState.Error).error.message
+                            )
+                            textEmpty.isVisible = true
+                            recyclerView.isVisible = false
+                            footerLoading.root.isVisible = false
+                        }
+                        else -> {
+                            progressBar.isVisible = false
+                            textEmpty.isVisible = false
+                            recyclerView.isVisible = true
+                        }
                     }
-                }
-            }
-        }
 
-        // ✅ NEW: Observe loading more state
-        lifecycleScope.launch {
-            newsViewModel.isLoadingMore.collect { isLoadingMore ->
-                newsAdapter.setLoading(isLoadingMore)
-            }
-        }
-        lifecycleScope.launch {
-            newsViewModel.hasMorePages.collect { hasMore ->
-                newsAdapter.setHasMorePages(hasMore)
-            }
-        }
-        // Observe errors
-        lifecycleScope.launch {
-            newsViewModel.errorMessage.collect { error ->
-                if (error.isNotEmpty()) {
-                    binding.textEmpty.text = getString(R.string.error, error)
-                    binding.textEmpty.visibility = View.VISIBLE
-                }
-            }
-        }
-    }
+                    // Handle pagination loading
+                    when (loadState.append) {
+                        is LoadState.Loading -> {
+                            footerLoading.root.isVisible = true
+                        }
+                        is LoadState.Error -> {
+                            footerLoading.root.isVisible = true
+                            footerLoading.textError.text = (loadState.append as LoadState.Error).error.message
+                            footerLoading.textError.isVisible = true
+                            footerLoading.buttonRetry.isVisible = true
+                            footerLoading.buttonRetry.setOnClickListener {
+                                newsAdapter.retry()
+                            }
+                        }
+                        else -> {
+                            footerLoading.root.isVisible = false
+                        }
+                    }
 
-    private fun updateEmptyState(articles: List<com.example.newsapp.data.models.Article>) {
-        binding.apply {
-            when {
-                articles.isEmpty() -> {
-                    textEmpty.text = getString(R.string.no_articles_found)
-                    textEmpty.visibility = View.VISIBLE
-                    recyclerView.visibility = View.GONE
-                }
-                else -> {
-                    textEmpty.visibility = View.GONE
-                    recyclerView.visibility = View.VISIBLE
+                    // Show empty state
+                    if (loadState.refresh !is LoadState.Loading &&
+                        loadState.append.endOfPaginationReached &&
+                        newsAdapter.itemCount == 0) {
+                        textEmpty.text = getString(R.string.no_articles_found)
+                        textEmpty.isVisible = true
+                        recyclerView.isVisible = false
+                    }
                 }
             }
         }

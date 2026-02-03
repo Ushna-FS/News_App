@@ -13,17 +13,21 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.newsapp.R
 import com.example.newsapp.ViewModels.NewsViewModel
-import com.example.newsapp.adapters.NewsAdapter
+import com.example.newsapp.adapters.NewsLoadStateAdapter
+import com.example.newsapp.adapters.NewsPagingAdapter
+import com.example.newsapp.data.Repository.SortType
 import com.example.newsapp.databinding.FragmentDiscoverBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -32,12 +36,12 @@ class DiscoverFragment : Fragment() {
     private var _binding: FragmentDiscoverBinding? = null
     private val binding get() = _binding!!
 
-    // 🔥 SAME ViewModel as MainActivity
     private val newsViewModel: NewsViewModel by activityViewModels()
-
-    private lateinit var newsAdapter: NewsAdapter
+    private lateinit var newsAdapter: NewsPagingAdapter
     private var filterFragment: FilterFragment? = null
     private var isFilterOpen = false
+
+    private var isSearching = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -57,70 +61,93 @@ class DiscoverFragment : Fragment() {
         setupBackPressHandler()
         setupFilterButton()
         setupSortButton()
-        fetchNews()
-        setupScrollListener()
+        setupFilterFragment()
     }
 
-    // ---------------- RecyclerView ----------------
-
-
-//    private fun setupRecyclerView() {
-//        newsAdapter = NewsAdapter(emptyList())
-//        binding.recyclerView.apply {
-//            layoutManager = LinearLayoutManager(requireContext())
-//            adapter = newsAdapter
-//        }
-//    }
-
-    // In setupRecyclerView():
     private fun setupRecyclerView() {
-        newsAdapter = NewsAdapter(
-            articles = emptyList(),
+        newsAdapter = NewsPagingAdapter(
             onItemClick = { article ->
                 // Handle article click
             },
-            onLoadMore = {
-                // ✅ NEW: Load more when reaching end
-                newsViewModel.loadMoreNews()
+            onExtractSource = { article ->
+                newsViewModel.extractSourceFromArticle(article)
             }
         )
+
+        newsAdapter.addLoadStateListener { loadState ->
+            binding.apply {
+                // Initial load
+                when (loadState.refresh) {
+                    is LoadState.Loading -> {
+                        progressBar.isVisible = true
+                        recyclerView.isVisible = false
+                        llEmptyState.isVisible = false
+                        tvLoadingMore.isVisible = false
+                    }
+                    is LoadState.Error -> {
+                        progressBar.isVisible = false
+                        tvLoadingMore.isVisible = false
+                        llEmptyState.isVisible = true
+                        recyclerView.isVisible = false
+                        val error = (loadState.refresh as LoadState.Error).error
+                        tvEmptyState.text = "Error: ${error.message}"
+                    }
+                    else -> {
+                        progressBar.isVisible = false
+                    }
+                }
+
+                // Pagination load
+                when (loadState.append) {
+                    is LoadState.Loading -> {
+                        tvLoadingMore.isVisible = true
+                    }
+                    else -> {
+                        tvLoadingMore.isVisible = false
+                    }
+                }
+
+                // Empty state
+                val isEmpty = loadState.refresh !is LoadState.Loading &&
+                        loadState.append.endOfPaginationReached &&
+                        newsAdapter.itemCount == 0
+
+                if (isEmpty) {
+                    llEmptyState.isVisible = true
+                    recyclerView.isVisible = false
+                    val query = binding.etSearch.text.toString()
+                    tvEmptyState.text = if (query.isNotEmpty()) {
+                        "No results for '$query'"
+                    } else {
+                        "No articles found"
+                    }
+                } else {
+                    llEmptyState.isVisible = false
+                    recyclerView.isVisible = true
+                }
+
+                // Update summary
+                updateFilterSummary()
+            }
+        }
+
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = newsAdapter
+            adapter = newsAdapter.withLoadStateFooter(
+                footer = NewsLoadStateAdapter { newsAdapter.retry() }
+            )
             setHasFixedSize(true)
         }
     }
 
-    // ✅ NEW: Add scroll listener
-    private fun setupScrollListener() {
-        binding.recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
-
-                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-                val visibleItemCount = layoutManager.childCount
-                val totalItemCount = layoutManager.itemCount
-                val firstVisibleItem = layoutManager.findFirstVisibleItemPosition()
-
-                if (!newsViewModel.isLoadingMore.value &&
-                    (visibleItemCount + firstVisibleItem) >= totalItemCount - 5) {
-                    newsViewModel.loadMoreNews()
-                }
-            }
-        })
-    }
-
-
-    // ---------------- Search ----------------
-
     private fun setupSearchFunctionality() {
-
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                binding.ivClear.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
-                newsViewModel.searchNews(s.toString())
+                val query = s.toString()
+                binding.ivClear.visibility = if (query.isEmpty()) View.GONE else View.VISIBLE
+                newsViewModel.searchNews(query)
             }
 
             override fun afterTextChanged(s: Editable?) {}
@@ -129,7 +156,7 @@ class DiscoverFragment : Fragment() {
         binding.ivClear.setOnClickListener {
             binding.etSearch.text.clear()
             newsViewModel.clearSearch()
-            binding.etSearch.requestFocus()
+            hideKeyboard()
         }
 
         binding.etSearch.setOnEditorActionListener { _, actionId, _ ->
@@ -139,43 +166,147 @@ class DiscoverFragment : Fragment() {
                 true
             } else false
         }
+    }
 
-        binding.etSearch.setOnKeyListener { _, keyCode, event ->
-            if (keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                if (!binding.etSearch.text.isNullOrEmpty()) {
-                    binding.etSearch.text.clear()
-                    newsViewModel.clearSearch()
-                    return@setOnKeyListener true
+    private fun setupObservers() {
+        // CORRECTED: Simple flow switching
+        viewLifecycleOwner.lifecycleScope.launch {
+            // Collect search query
+            newsViewModel.searchQuery.collectLatest { query ->
+                isSearching = query.isNotEmpty()
+
+                if (query.isNotEmpty()) {
+                    // Search mode
+                    newsViewModel.searchNewsPagingData.collectLatest { pagingData ->
+                        newsAdapter.submitData(pagingData)
+                    }
+                } else {
+                    // Normal mode - show combined news
+                    newsViewModel.combinedNewsPagingData.collectLatest { pagingData ->
+                        newsAdapter.submitData(pagingData)
+                    }
                 }
             }
-            false
+        }
+
+        // Error observer
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsViewModel.errorMessage.collect { error ->
+                if (error.isNotEmpty()) {
+                    Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 
-    // ---------------- Back press ----------------
 
     private fun setupBackPressHandler() {
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             if (!binding.etSearch.text.isNullOrEmpty()) {
                 binding.etSearch.text.clear()
                 newsViewModel.clearSearch()
-                binding.etSearch.requestFocus()
+                hideKeyboard()
             }
         }
     }
 
-    // ---------------- Filter ----------------
+    @SuppressLint("SetTextI18n")
+    private fun updateFilterSummary() {
+        val filterSummary = newsViewModel.getFilterSummary()
+        val query = binding.etSearch.text.toString()
+        val itemCount = newsAdapter.itemCount
+
+        if (query.isNotEmpty()) {
+            binding.toolbar.title = "Search: '$query' ($itemCount articles)"
+        } else {
+            binding.toolbar.title = "$filterSummary ($itemCount articles)"
+        }
+
+        binding.tvFilterSummary.text = if (itemCount > 0) {
+            "Showing: $filterSummary • $itemCount articles"
+        } else {
+            "No articles found"
+        }
+
+        binding.tvFilterSummary.visibility = View.VISIBLE
+    }
+
+    private fun setupFilterFragment() {
+                filterFragment = childFragmentManager.findFragmentById(R.id.filterContainer) as? FilterFragment
+        filterFragment?.setFilterListener(object : FilterFragment.FilterListener {
+            override fun onFiltersApplied() {
+                // Filters were applied in FilterFragment
+                updateFilterSummary()
+            }
+            override fun onCloseFilter() {
+                closeFilterPanel()
+            }
+        })
+    }
 
     private fun setupFilterButton() {
-        binding.btnFilter.setOnClickListener {
+                binding.btnFilter.setOnClickListener {
             if (!isFilterOpen) openFilterPanel() else closeFilterPanel()
         }
     }
 
+    private fun showSortMenu() {
+    val items = arrayOf("Newest First", "Oldest First", "Reset to Default")
+
+    MaterialAlertDialogBuilder(requireContext())
+        .setTitle("Sort Articles")
+        .setItems(items) { _, which ->
+            when (which) {
+                0 -> newsViewModel.setSortType(SortType.NEWEST_FIRST)
+                1 -> newsViewModel.setSortType(SortType.OLDEST_FIRST)
+                2 -> newsViewModel.resetSort()
+            }
+            updateSortButtonHighlight()
+            updateFilterSummary()
+        }
+        .show()
+}
+
+    private fun updateSortButtonHighlight() {
+                val hasUserSelected = newsViewModel.hasUserSelectedSort.value
+
+        if (hasUserSelected) {
+            binding.btnSort.apply {
+                setTextColor(resources.getColor(R.color.white, requireContext().theme))
+                iconTint = resources.getColorStateList(R.color.white, requireContext().theme)
+                strokeColor = resources.getColorStateList(R.color.blueMain, requireContext().theme)
+                setBackgroundColor(resources.getColor(R.color.blueMain, requireContext().theme))
+
+                text = when (newsViewModel.sortType.value) {
+                    SortType.NEWEST_FIRST -> "Newest"
+                    SortType.OLDEST_FIRST -> "Oldest"
+                }
+            }
+        } else {
+            binding.btnSort.apply {
+                setTextColor(resources.getColor(R.color.blueMain, requireContext().theme))
+                iconTint = resources.getColorStateList(R.color.blueMain, requireContext().theme)
+                strokeColor = resources.getColorStateList(R.color.blueMain, requireContext().theme)
+                setBackgroundColor(resources.getColor(android.R.color.transparent, requireContext().theme))
+                text = "Sort By"
+            }
+        }
+    }
+    private fun closeFilterPanel() {
+        filterFragment?.let {
+            childFragmentManager.beginTransaction().remove(it).commit()
+        }
+        filterFragment = null
+        isFilterOpen = false
+        binding.btnFilter.text = "Filter"
+        binding.btnSort.visibility = View.VISIBLE
+    }
+
     private fun openFilterPanel() {
-        filterFragment = FilterFragment().apply {
+                filterFragment = FilterFragment().apply {
             setFilterListener(object : FilterFragment.FilterListener {
                 override fun onFiltersApplied() {
+                    // Refresh data when filters are applied
                     updateFilterSummary()
                 }
 
@@ -193,220 +324,11 @@ class DiscoverFragment : Fragment() {
         binding.btnFilter.text = "Close Filter"
         binding.btnSort.visibility = View.GONE
     }
-
-    private fun closeFilterPanel() {
-        filterFragment?.let {
-            childFragmentManager.beginTransaction().remove(it).commit()
-        }
-        filterFragment = null
-        isFilterOpen = false
-        binding.btnFilter.text = "Filter"
-        binding.btnSort.visibility = View.VISIBLE
-    }
-
-    // ---------------- Sort ----------------
-
     private fun setupSortButton() {
-        binding.btnSort.setOnClickListener { showSortMenu() }
+                binding.btnSort.setOnClickListener { showSortMenu() }
     }
-
-    private fun showSortMenu() {
-        val items = arrayOf("Newest First", "Oldest First", "Reset to Default")
-
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Sort Articles")
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> newsViewModel.setSortType(NewsViewModel.SortType.NEWEST_FIRST)
-                    1 -> newsViewModel.setSortType(NewsViewModel.SortType.OLDEST_FIRST)
-                    2 -> newsViewModel.resetSort()
-                }
-                updateSortButtonHighlight()
-                updateFilterSummary()
-            }
-            .show()
-    }
-
-    // ---------------- Data ----------------
-
-    private fun fetchNews() {
-        newsViewModel.fetchTopHeadlines()
-        newsViewModel.fetchTechCrunchHeadlines()
-    }
-
-    // ---------------- Observers (IDENTICAL LOGIC) ----------------
-
-    @SuppressLint("SetTextI18n")
-    private fun setupObservers() {
-
-        lifecycleScope.launch {
-            newsViewModel.isLoading.collect { isLoading ->
-                binding.progressBar.visibility =
-                    if (isLoading) View.VISIBLE else View.GONE
-            }
-        }
-
-        lifecycleScope.launch {
-            newsViewModel.filteredNews.collect { articles ->
-
-                newsAdapter = NewsAdapter(articles)
-                binding.recyclerView.adapter = newsAdapter
-
-                updateFilterSummary()
-
-                binding.apply {
-                    if (articles.isEmpty()) {
-                        llEmptyState.visibility = View.VISIBLE
-                        recyclerView.visibility = View.GONE
-
-                        val query = etSearch.text.toString()
-                        tvEmptyState.text = if (query.isNotEmpty()) {
-                            "No results for '$query'"
-                        } else {
-                            "No articles found with current filters"
-                        }
-                    } else {
-                        llEmptyState.visibility = View.GONE
-                        recyclerView.visibility = View.VISIBLE
-                    }
-                }
-            }
-        }
-        lifecycleScope.launch {
-            newsViewModel.hasMorePages.collect { hasMore ->
-                newsAdapter.setHasMorePages(hasMore)
-            }
-        }
-
-        lifecycleScope.launch {
-            newsViewModel.selectedCategories.collect {
-                updateFilterSummary()
-            }
-        }
-
-        lifecycleScope.launch {
-            newsViewModel.selectedSources.collect {
-                updateFilterSummary()
-            }
-        }
-
-        lifecycleScope.launch {
-            newsViewModel.searchQuery.collect { query ->
-                if (query.isNotEmpty()) {
-                    binding.toolbar.title = "Search: $query"
-                } else {
-                    updateFilterSummary()
-                }
-            }
-        }
-
-        lifecycleScope.launch {
-            newsViewModel.errorMessage.collect { error ->
-                if (error.isNotEmpty()) {
-                    Toast.makeText(requireContext(), error, Toast.LENGTH_LONG).show()
-                }
-            }
-        }
-
-        lifecycleScope.launch {
-            newsViewModel.sortType.collect {
-                updateSortButtonHighlight()
-            }
-        }
-
-        lifecycleScope.launch {
-            newsViewModel.hasUserSelectedSort.collect {
-                updateSortButtonHighlight()
-            }
-        }
-
-// ✅ NEW: Add observer for isLoadingMore
-        lifecycleScope.launch {
-            newsViewModel.isLoadingMore.collect { isLoadingMore ->
-                newsAdapter.setLoading(isLoadingMore)
-            }
-        }
-    }
-
-    // ---------------- UI Highlighting (SAME AS ACTIVITY) ----------------
-
-    private fun updateFilterButtonHighlight() {
-        val isFilterActive = newsViewModel.getFilterSummary() != "All News"
-
-        if (isFilterActive) {
-            binding.btnFilter.apply {
-                setTextColor(resources.getColor(R.color.white, requireContext().theme))
-                iconTint = resources.getColorStateList(R.color.white, requireContext().theme)
-                strokeColor = resources.getColorStateList(R.color.blueMain, requireContext().theme)
-                setBackgroundColor(resources.getColor(R.color.blueMain, requireContext().theme))
-            }
-        } else {
-            binding.btnFilter.apply {
-                setTextColor(resources.getColor(R.color.blueMain, requireContext().theme))
-                iconTint = resources.getColorStateList(R.color.blueMain, requireContext().theme)
-                strokeColor = resources.getColorStateList(R.color.blueMain, requireContext().theme)
-                setBackgroundColor(resources.getColor(android.R.color.transparent, requireContext().theme))
-                icon = resources.getDrawable(R.drawable.ic_filter, requireContext().theme)
-            }
-        }
-    }
-
-    private fun updateSortButtonHighlight() {
-        val hasUserSelected = newsViewModel.hasUserSelectedSort.value
-
-        if (hasUserSelected) {
-            binding.btnSort.apply {
-                setTextColor(resources.getColor(R.color.white, requireContext().theme))
-                iconTint = resources.getColorStateList(R.color.white, requireContext().theme)
-                strokeColor = resources.getColorStateList(R.color.blueMain, requireContext().theme)
-                setBackgroundColor(resources.getColor(R.color.blueMain, requireContext().theme))
-
-                text = when (newsViewModel.sortType.value) {
-                    NewsViewModel.SortType.NEWEST_FIRST -> "Newest"
-                    NewsViewModel.SortType.OLDEST_FIRST -> "Oldest"
-                    else -> "Sort By"
-                }
-            }
-        } else {
-            binding.btnSort.apply {
-                setTextColor(resources.getColor(R.color.blueMain, requireContext().theme))
-                iconTint = resources.getColorStateList(R.color.blueMain, requireContext().theme)
-                strokeColor = resources.getColorStateList(R.color.blueMain, requireContext().theme)
-                setBackgroundColor(resources.getColor(android.R.color.transparent, requireContext().theme))
-                text = "Sort By"
-            }
-        }
-    }
-
-    private fun updateFilterSummary() {
-        val filterSummary = newsViewModel.getFilterSummary()
-        val totalArticles = newsViewModel.filteredNews.value.size
-
-        if (binding.etSearch.text.isNullOrEmpty()) {
-            binding.toolbar.title = "$filterSummary ($totalArticles articles)"
-        } else {
-            binding.toolbar.title =
-                "Search: '${binding.etSearch.text}' ($totalArticles articles)"
-        }
-
-        binding.tvFilterSummary.text =
-            if (totalArticles > 0) {
-                "Showing: $filterSummary • $totalArticles articles"
-            } else {
-                "No articles found for: $filterSummary"
-            }
-
-        binding.tvFilterSummary.visibility = View.VISIBLE
-
-        updateFilterButtonHighlight()
-        updateSortButtonHighlight()
-    }
-
-    // ---------------- Utils ----------------
-
     private fun hideKeyboard() {
-        val imm =
-            requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(binding.root.windowToken, 0)
     }
 

@@ -48,10 +48,12 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_search"
+                android:contentDescription="@string/news_desc"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:tint="@color/blueMain" />
+
 
             <EditText
                 android:id="@+id/etSearch"
@@ -166,6 +168,20 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
+    <!-- Loading more (pagination text) -->
+    <TextView
+        android:id="@+id/tvLoadingMore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Loading more news..."
+        android:textSize="14sp"
+        android:textColor="@color/gray_medium"
+        android:visibility="gone"
+        android:layout_marginTop="6dp"
+        app:layout_constraintTop_toBottomOf="@id/tvFilterSummary"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 
     <!-- RecyclerView for News List -->
     <androidx.recyclerview.widget.RecyclerView
@@ -179,6 +195,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvFilterSummary"
         app:layout_constraintVertical_bias="1.0" />
+
 
     <!-- Empty State View -->
     <LinearLayout
@@ -203,6 +220,7 @@
             android:contentDescription="@string/empty_state"
             android:layout_marginBottom="16dp"/>
 
+
         <!-- Add explicit TextView for empty state message -->
         <TextView
             android:id="@+id/tvEmptyState"
@@ -213,6 +231,8 @@
             android:textColor="@color/gray_medium"
             android:textAlignment="center"
             android:gravity="center"/>
+
+
 
     </LinearLayout>
 
