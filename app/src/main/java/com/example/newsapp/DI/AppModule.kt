@@ -1,7 +1,7 @@
 package com.example.newsapp.DI
 
 
-import com.example.newsapp.Data.api.ApiService
+import com.example.newsapp.data.api.ApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -4,10 +4,10 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.example.newsapp.Screens.Fragments.BookmarksFragment
-import com.example.newsapp.Screens.Fragments.HomeFragment
+import com.example.newsapp.screens.fragments.BookmarksFragment
+import com.example.newsapp.screens.fragments.HomeFragment
 import com.example.newsapp.databinding.ActivityMainBinding
-import com.example.newsapp.Screens.Fragments.DiscoverFragment
+import com.example.newsapp.screens.fragments.DiscoverFragment
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

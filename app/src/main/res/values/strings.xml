@@ -24,4 +24,12 @@
     <string name="source_name">Source Name</string>
     <string name="home_user">Hello User! 👋</string>
     <string name="error">Error: %1$s</string>
+    <string name="no_description_available">No description available</string>
+    <string name="news_image">News image</string>
+    <string name="news_title_here">News Title Here</string>
+    <string name="news_desc">News description goes here with more details about the article content.</string>
+    <string name="source_get">CNN</string>
+    <string name="date">30 Jan , 4:18 AM</string>
+    <string name="business">Business</string>
+    <string name="technology">Technology</string>
 </resources>

@@ -2,8 +2,8 @@ package com.example.newsapp.ViewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.newsapp.Data.models.Article
-import com.example.newsapp.Data.Repository.NewsRepository
+import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.Repository.NewsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
@@ -142,7 +142,7 @@ class NewsViewModel @Inject constructor(
                 val existingUrls = _businessNews.value.map { it.url }.toSet()
                 val uniqueNewArticles = newArticles.filterNot { existingUrls.contains(it.url) }
 
-                _businessNews.value = _businessNews.value + uniqueNewArticles
+                _businessNews.value += uniqueNewArticles
                 // ✅ Better hasMorePages logic
                 _hasMorePages.value = uniqueNewArticles.size >= _pageSize.value
                 _currentPage.value = page
@@ -159,7 +159,7 @@ class NewsViewModel @Inject constructor(
                 val existingUrls = _techCrunchNews.value.map { it.url }.toSet()
                 val uniqueNewArticles = newArticles.filterNot { existingUrls.contains(it.url) }
 
-                _techCrunchNews.value = _techCrunchNews.value + uniqueNewArticles
+                _techCrunchNews.value += uniqueNewArticles
                 _hasMorePages.value = uniqueNewArticles.size >= _pageSize.value
                 extractSources(uniqueNewArticles)
             }
@@ -171,7 +171,7 @@ class NewsViewModel @Inject constructor(
         val response = repository.searchNews(
             _searchQuery.value,
             page = page,
-            pageSize = _pageSize.value  // ✅ Use pageSize
+            pageSize = _pageSize.value
         )
         if (response.isSuccessful) {
             response.body()?.let { searchResults ->
@@ -179,7 +179,7 @@ class NewsViewModel @Inject constructor(
                 val existingUrls = _paginatedNews.value.map { it.url }.toSet()
                 val uniqueNewArticles = newArticles.filterNot { existingUrls.contains(it.url) }
 
-                _paginatedNews.value = _paginatedNews.value + uniqueNewArticles
+                _paginatedNews.value += uniqueNewArticles
                 _hasMorePages.value = uniqueNewArticles.size >= _pageSize.value
                 _currentPage.value = page
 
@@ -193,17 +193,20 @@ class NewsViewModel @Inject constructor(
             }
         }
     }
+
     private suspend fun performSearch(query: String, page: Int = 1) {
         _isLoading.value = true
-        try {
-            val response = repository.searchNews(query, page = page)
+
+        runCatching {
+            repository.searchNews(query, page = page)
+        }.onSuccess { response ->
+
             if (response.isSuccessful) {
                 response.body()?.let { searchResults ->
                     _paginatedNews.value = searchResults.articles
                     _hasMorePages.value = searchResults.articles.size >= _pageSize.value
                     _currentPage.value = page
 
-                    // Apply current filters to search results
                     val filtered = applyFiltersInternal(
                         searchResults.articles,
                         _selectedCategories.value,
@@ -217,12 +220,13 @@ class NewsViewModel @Inject constructor(
                 _errorMessage.value = "No results found for '$query'"
                 _filteredNews.value = emptyList()
             }
-        } catch (e: Exception) {
+
+        }.onFailure { e ->
             _errorMessage.value = "Search error: ${e.message}"
             _filteredNews.value = emptyList()
-        } finally {
-            _isLoading.value = false
         }
+
+        _isLoading.value = false
     }
 
     fun fetchTopHeadlines() {

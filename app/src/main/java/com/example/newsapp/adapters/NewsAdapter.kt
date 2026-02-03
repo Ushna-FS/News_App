@@ -4,7 +4,8 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.newsapp.Data.models.Article
+import com.example.newsapp.data.models.Article
+import com.example.newsapp.R
 import com.example.newsapp.databinding.ItemNewsArticleBinding
 import com.example.newsapp.databinding.ItemLoadingBinding
 import java.text.SimpleDateFormat
@@ -30,32 +31,29 @@ class NewsAdapter(
 
     inner class NewsViewHolder(val binding: ItemNewsArticleBinding) :
         RecyclerView.ViewHolder(binding.root) {
+        fun bind(article: Article) = with(binding) {
 
-        fun bind(article: Article) {
-            // Set data using ViewBinding
-            binding.tvNewsTitle.text = article.title
-            binding.tvNewsDescription.text = article.description ?: "No description available"
-            binding.tvNewsSource.text = article.source.name
-            binding.tvNewsTime.text = formatDate(article.publishedAt)
+            tvNewsTitle.text = article.title
+            tvNewsDescription.text =
+                article.description ?: itemView.context.getString(R.string.no_description_available)
+            tvNewsSource.text = article.source.name
+            tvNewsTime.text = formatDate(article.publishedAt)
 
-            // Load image with Glide
-            article.urlToImage?.let { imageUrl ->
+            // Image loading
+            (article.urlToImage ?: "").let { imageUrl ->
                 Glide.with(itemView.context)
-                    .load(imageUrl)
-                    .placeholder(com.example.newsapp.R.drawable.ic_newspaper)
-                    .error(com.example.newsapp.R.drawable.ic_error)
-                    .into(binding.ivNewsImage)
-            } ?: run {
-                binding.ivNewsImage.setImageResource(com.example.newsapp.R.drawable.ic_newspaper)
+                    .load(imageUrl.ifEmpty { R.drawable.ic_newspaper })
+                    .placeholder(R.drawable.ic_newspaper)
+                    .error(R.drawable.ic_error)
+                    .into(ivNewsImage)
             }
 
-            itemView.setOnClickListener {
+            root.setOnClickListener {
                 onItemClick(article)
             }
-        }
-    }
+        }}
 
-    inner class LoadingViewHolder(val binding: ItemLoadingBinding) :
+    class LoadingViewHolder(val binding: ItemLoadingBinding) :
         RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {

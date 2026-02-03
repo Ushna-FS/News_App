@@ -1,7 +1,7 @@
-package com.example.newsapp.Data.Repository
+package com.example.newsapp.data.Repository
 
-import com.example.newsapp.Data.api.ApiService
-import com.example.newsapp.Data.models.NewsResponse
+import com.example.newsapp.data.api.ApiService
+import com.example.newsapp.data.models.NewsResponse
 import retrofit2.Response
 import javax.inject.Inject
 

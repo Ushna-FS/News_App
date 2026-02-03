@@ -1,5 +1,6 @@
-package com.example.newsapp.Screens.Fragments
+package com.example.newsapp.screens.fragments
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -81,7 +82,7 @@ class FilterFragment : Fragment() {
 
     // -------------------- CATEGORY CHIPS --------------------
     private fun setupCategoryChips() {
-        val categories = listOf("Business", "Technology")
+        val categories = listOf(getString(R.string.business), getString(R.string.technology))
 
         binding.chipGroupCategory.removeAllViews()
 
@@ -104,6 +105,7 @@ class FilterFragment : Fragment() {
         }
     }
 
+    @SuppressLint("UseCompatLoadingForColorStateLists")
     private fun updateCategoryChipVisual(chip: com.google.android.material.chip.Chip, isSelected: Boolean) {
         if (isSelected) {
             chip.chipBackgroundColor = resources.getColorStateList(R.color.blueMain)

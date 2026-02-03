@@ -21,7 +21,7 @@
             android:layout_width="match_parent"
             android:layout_height="200dp"
             android:scaleType="centerCrop"
-            android:contentDescription="News image"
+            android:contentDescription="@string/news_image"
             android:background="@color/lightBlue" />
 
         <!-- News Title -->
@@ -29,7 +29,7 @@
             android:id="@+id/tvNewsTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="News Title Here"
+            android:text="@string/news_title_here"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/black"
@@ -42,7 +42,7 @@
             android:id="@+id/tvNewsDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="News description goes here with more details about the article content."
+            android:text="@string/news_desc"
             android:textSize="15sp"
             android:textColor="@color/blueMain"
             android:layout_marginTop="8dp"

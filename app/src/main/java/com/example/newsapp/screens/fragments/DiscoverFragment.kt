@@ -1,4 +1,4 @@
-package com.example.newsapp.Screens.Fragments
+package com.example.newsapp.screens.fragments
 
 import android.annotation.SuppressLint
 import android.content.Context

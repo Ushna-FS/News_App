@@ -1,4 +1,4 @@
-package com.example.newsapp.Screens.Fragments
+package com.example.newsapp.screens.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -162,7 +162,7 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun updateEmptyState(articles: List<com.example.newsapp.Data.models.Article>) {
+    private fun updateEmptyState(articles: List<com.example.newsapp.data.models.Article>) {
         binding.apply {
             when {
                 articles.isEmpty() -> {

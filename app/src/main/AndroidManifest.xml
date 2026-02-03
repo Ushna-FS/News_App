@@ -15,7 +15,7 @@
 
         <!-- Splash Activity -->
         <activity
-            android:name=".Screens.Activities.SplashActivity"
+            android:name=".screens.activities.SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>

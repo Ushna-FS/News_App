@@ -1,4 +1,4 @@
-package com.example.newsapp.Screens.Activities
+package com.example.newsapp.screens.activities
 
 import android.content.Intent
 import android.os.Bundle
