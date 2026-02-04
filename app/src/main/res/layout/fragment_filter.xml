@@ -22,7 +22,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Filter News"
+            android:text="@string/filter_news"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="@color/blueMain" />
@@ -32,8 +32,8 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_close"
-            android:tint="@color/gray_medium"
-            android:contentDescription="Close" />
+            app:tint="@color/gray_medium"
+            android:contentDescription="@string/close" />
 
     </LinearLayout>
 
@@ -42,7 +42,7 @@
         android:id="@+id/tvCategories"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Categories"
+        android:text="@string/categories"
         android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="@color/black"
@@ -64,12 +64,13 @@
 
     </com.google.android.material.chip.ChipGroup>
 
+
     <!-- Sources Section -->
     <TextView
         android:id="@+id/tvSources"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Sources"
+        android:text="@string/sources"
         android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="@color/black"
@@ -77,19 +78,17 @@
         app:layout_constraintTop_toBottomOf="@id/chipGroupCategory"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/chipGroupSources"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvSources"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        app:singleSelection="false"
+        android:overScrollMode="never"
+        android:scrollbars="none"
         app:layout_constraintTop_toBottomOf="@id/tvSources"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Chips will be added programmatically -->
-
-    </com.google.android.material.chip.ChipGroup>
 
     <!-- Action Buttons -->
     <LinearLayout
@@ -99,7 +98,7 @@
         android:orientation="horizontal"
         android:gravity="center"
         android:layout_marginTop="32dp"
-        app:layout_constraintTop_toBottomOf="@id/chipGroupSources"
+        app:layout_constraintTop_toBottomOf="@id/rvSources"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
@@ -111,7 +110,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
-            android:text="Clear All"
+            android:text="@string/clear_all"
             android:textColor="@color/blueMain"
             app:strokeColor="@color/blueMain" />
 
@@ -121,7 +120,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Apply"
+            android:text="@string/apply"
             android:textColor="@color/white"
             app:backgroundTint="@color/blueMain" />
 
