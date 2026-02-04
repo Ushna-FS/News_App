@@ -106,7 +106,10 @@ class FilterFragment : Fragment() {
     }
 
     @SuppressLint("UseCompatLoadingForColorStateLists")
-    private fun updateCategoryChipVisual(chip: com.google.android.material.chip.Chip, isSelected: Boolean) {
+    private fun updateCategoryChipVisual(
+        chip: com.google.android.material.chip.Chip,
+        isSelected: Boolean
+    ) {
         if (isSelected) {
             chip.chipBackgroundColor = resources.getColorStateList(R.color.blueMain)
             chip.setTextColor(resources.getColor(R.color.white))
@@ -120,7 +123,8 @@ class FilterFragment : Fragment() {
     private fun getSelectedCategories(): List<String> {
         val selected = mutableListOf<String>()
         for (i in 0 until binding.chipGroupCategory.childCount) {
-            val chip = binding.chipGroupCategory.getChildAt(i) as com.google.android.material.chip.Chip
+            val chip =
+                binding.chipGroupCategory.getChildAt(i) as com.google.android.material.chip.Chip
             if (chip.isChecked) selected.add(chip.text.toString())
         }
         return selected
@@ -158,15 +162,18 @@ class FilterFragment : Fragment() {
     private fun clearAllSelections() {
         // Clear category chips
         for (i in 0 until binding.chipGroupCategory.childCount) {
-            val chip = binding.chipGroupCategory.getChildAt(i) as com.google.android.material.chip.Chip
+            val chip =
+                binding.chipGroupCategory.getChildAt(i) as com.google.android.material.chip.Chip
             chip.isChecked = false
             updateCategoryChipVisual(chip, false)
         }
 
         // Default selection: Business and Technology
         if (binding.chipGroupCategory.childCount >= 2) {
-            val businessChip = binding.chipGroupCategory.getChildAt(0) as com.google.android.material.chip.Chip
-            val techChip = binding.chipGroupCategory.getChildAt(1) as com.google.android.material.chip.Chip
+            val businessChip =
+                binding.chipGroupCategory.getChildAt(0) as com.google.android.material.chip.Chip
+            val techChip =
+                binding.chipGroupCategory.getChildAt(1) as com.google.android.material.chip.Chip
 
             businessChip.isChecked = true
             techChip.isChecked = true

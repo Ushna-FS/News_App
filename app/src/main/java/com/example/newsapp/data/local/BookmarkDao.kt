@@ -20,4 +20,7 @@ interface BookmarkDao {
 
     @Query("SELECT COUNT(*) FROM bookmarked_articles WHERE url = :url")
     suspend fun isArticleBookmarked(url: String): Int
+
+    @Query("DELETE FROM bookmarked_articles WHERE url = :url")
+    suspend fun deleteBookmarkByUrl(url: String)
 }

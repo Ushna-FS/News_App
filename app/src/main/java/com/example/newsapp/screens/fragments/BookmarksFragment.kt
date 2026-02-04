@@ -13,7 +13,8 @@ import com.example.newsapp.R
 import com.example.newsapp.ViewModels.NewsViewModel
 import com.example.newsapp.adapters.BookmarkAdapter
 import com.example.newsapp.data.local.BookmarkedArticle
-import com.example.newsapp.data.local.toArticle
+import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.models.Source
 import com.example.newsapp.databinding.FragmentBookmarksBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -38,10 +39,22 @@ class BookmarksFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        // No need to set text here - it's already set in XML
         setupRecyclerView()
         setupObservers()
+    }
+
+    // Extension function to convert BookmarkedArticle to Article
+    private fun BookmarkedArticle.toArticle(): Article {
+        return Article(
+            source = Source(id = null, name = this.sourceName),
+            author = this.author,
+            title = this.title,
+            description = this.description,
+            url = this.url,
+            urlToImage = this.urlToImage,
+            publishedAt = this.publishedAt,
+            content = this.content
+        )
     }
 
     private fun setupRecyclerView() {
@@ -56,7 +69,7 @@ class BookmarksFragment : Fragment() {
             }
         )
 
-        // Set up the RecyclerView
+        // Set up the RecyclerView - CORRECTED: use binding.recyclerViewBookmarks
         binding.recyclerViewBookmarks.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = bookmarkAdapter
@@ -65,16 +78,17 @@ class BookmarksFragment : Fragment() {
     }
 
     private fun setupObservers() {
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             newsViewModel.bookmarks.collect { bookmarks ->
                 // Convert BookmarkedArticle to Article for the adapter
                 val bookmarkedArticles = bookmarks.map { it.toArticle() }
                 bookmarkAdapter.submitList(bookmarkedArticles)
 
-                // Show/hide empty state and RecyclerView
+                // Show/hide empty state and RecyclerView - CORRECTED: use proper binding references
                 val hasBookmarks = bookmarks.isNotEmpty()
                 binding.textEmpty.isVisible = !hasBookmarks
-                binding.recyclerViewBookmarks.isVisible = hasBookmarks
+                binding.recyclerViewBookmarks.isVisible =
+                    hasBookmarks // This is the correct binding
             }
         }
     }

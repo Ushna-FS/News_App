@@ -39,14 +39,17 @@ class MainActivity : AppCompatActivity() {
                     showFragment(homeFragment)
                     true
                 }
+
                 R.id.discover -> {
                     showFragment(discoverFragment)
                     true
                 }
+
                 R.id.bookmarks -> {
                     showFragment(bookmarksFragment)
                     true
                 }
+
                 else -> false
             }
         }

@@ -6,19 +6,27 @@ import com.example.newsapp.data.local.BookmarkedArticle
 import com.example.newsapp.data.local.toBookmarkedArticle
 import com.example.newsapp.data.models.Article
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import javax.inject.Inject
 
 class BookmarkRepository @Inject constructor(
     private val bookmarkDao: BookmarkDao
-) {
+){
+    private val _bookmarkUpdates = MutableSharedFlow<String>()
+    val bookmarkUpdates: SharedFlow<String> = _bookmarkUpdates.asSharedFlow()
+
     suspend fun addBookmark(article: Article) {
         bookmarkDao.insertBookmark(article.toBookmarkedArticle())
+        _bookmarkUpdates.emit(article.url ?: "")
     }
 
     suspend fun removeBookmark(article: Article) {
         val bookmarkedArticle = bookmarkDao.getBookmarkByUrl(article.url ?: "")
         bookmarkedArticle?.let {
             bookmarkDao.deleteBookmark(it)
+            _bookmarkUpdates.emit(article.url ?: "")
         }
     }
 

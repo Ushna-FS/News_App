@@ -28,7 +28,11 @@ class NewsRepository @Inject constructor(
         return apiService.getTechCrunchHeadlines(page = page, pageSize = pageSize)
     }
 
-    suspend fun searchNews(query: String, page: Int = 1, pageSize: Int = 5): Response<NewsResponse> {
+    suspend fun searchNews(
+        query: String,
+        page: Int = 1,
+        pageSize: Int = 5
+    ): Response<NewsResponse> {
         return apiService.searchNews(query = query, page = page, pageSize = pageSize)
     }
 
@@ -151,6 +155,7 @@ class FilteredCombinedNewsPagingSource(
                 SortType.NEWEST_FIRST -> filteredArticles.sortedByDescending {
                     parseDate(it.publishedAt)
                 }
+
                 SortType.OLDEST_FIRST -> filteredArticles.sortedBy {
                     parseDate(it.publishedAt)
                 }
@@ -176,19 +181,22 @@ class FilteredCombinedNewsPagingSource(
                 val formats = listOf(
                     "yyyy-MM-dd'T'HH:mm:ss'Z'",
                     "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                    "yyyy-MM-dd HH:mm:ss"
+                    "yyyy-MM-dd HH:mm:ss",
+                    "yyyy-MM-dd"  // Added date-only format
                 )
                 for (format in formats) {
                     try {
-                        return SimpleDateFormat(format, Locale.getDefault()).parse(dateString) ?: Date(0)
+                        val sdf = SimpleDateFormat(format, Locale.getDefault())
+                        sdf.timeZone = TimeZone.getTimeZone("UTC") // Added timezone
+                        return sdf.parse(dateString) ?: Date(0)
                     } catch (e: Exception) {
                         continue
                     }
                 }
-                Date(0)
+                Date(Long.MIN_VALUE)
             }
         } catch (e: Exception) {
-            Date(0)
+            Date(Long.MIN_VALUE)
         }
     }
 }

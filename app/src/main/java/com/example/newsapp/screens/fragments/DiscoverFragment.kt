@@ -85,6 +85,7 @@ class DiscoverFragment : Fragment() {
                         llEmptyState.isVisible = false
                         tvLoadingMore.isVisible = false
                     }
+
                     is LoadState.Error -> {
                         progressBar.isVisible = false
                         tvLoadingMore.isVisible = false
@@ -93,6 +94,7 @@ class DiscoverFragment : Fragment() {
                         val error = (loadState.refresh as LoadState.Error).error
                         tvEmptyState.text = "Error: ${error.message}"
                     }
+
                     else -> {
                         progressBar.isVisible = false
                     }
@@ -103,6 +105,7 @@ class DiscoverFragment : Fragment() {
                     is LoadState.Loading -> {
                         tvLoadingMore.isVisible = true
                     }
+
                     else -> {
                         tvLoadingMore.isVisible = false
                     }
@@ -233,12 +236,14 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun setupFilterFragment() {
-                filterFragment = childFragmentManager.findFragmentById(R.id.filterContainer) as? FilterFragment
+        filterFragment =
+            childFragmentManager.findFragmentById(R.id.filterContainer) as? FilterFragment
         filterFragment?.setFilterListener(object : FilterFragment.FilterListener {
             override fun onFiltersApplied() {
                 // Filters were applied in FilterFragment
                 updateFilterSummary()
             }
+
             override fun onCloseFilter() {
                 closeFilterPanel()
             }
@@ -246,30 +251,30 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun setupFilterButton() {
-                binding.btnFilter.setOnClickListener {
+        binding.btnFilter.setOnClickListener {
             if (!isFilterOpen) openFilterPanel() else closeFilterPanel()
         }
     }
 
     private fun showSortMenu() {
-    val items = arrayOf("Newest First", "Oldest First", "Reset to Default")
+        val items = arrayOf("Newest First", "Oldest First", "Reset to Default")
 
-    MaterialAlertDialogBuilder(requireContext())
-        .setTitle("Sort Articles")
-        .setItems(items) { _, which ->
-            when (which) {
-                0 -> newsViewModel.setSortType(SortType.NEWEST_FIRST)
-                1 -> newsViewModel.setSortType(SortType.OLDEST_FIRST)
-                2 -> newsViewModel.resetSort()
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Sort Articles")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> newsViewModel.setSortType(SortType.NEWEST_FIRST)
+                    1 -> newsViewModel.setSortType(SortType.OLDEST_FIRST)
+                    2 -> newsViewModel.resetSort()
+                }
+                updateSortButtonHighlight()
+                updateFilterSummary()
             }
-            updateSortButtonHighlight()
-            updateFilterSummary()
-        }
-        .show()
-}
+            .show()
+    }
 
     private fun updateSortButtonHighlight() {
-                val hasUserSelected = newsViewModel.hasUserSelectedSort.value
+        val hasUserSelected = newsViewModel.hasUserSelectedSort.value
 
         if (hasUserSelected) {
             binding.btnSort.apply {
@@ -288,11 +293,17 @@ class DiscoverFragment : Fragment() {
                 setTextColor(resources.getColor(R.color.blueMain, requireContext().theme))
                 iconTint = resources.getColorStateList(R.color.blueMain, requireContext().theme)
                 strokeColor = resources.getColorStateList(R.color.blueMain, requireContext().theme)
-                setBackgroundColor(resources.getColor(android.R.color.transparent, requireContext().theme))
+                setBackgroundColor(
+                    resources.getColor(
+                        android.R.color.transparent,
+                        requireContext().theme
+                    )
+                )
                 text = "Sort By"
             }
         }
     }
+
     private fun closeFilterPanel() {
         filterFragment?.let {
             childFragmentManager.beginTransaction().remove(it).commit()
@@ -304,7 +315,7 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun openFilterPanel() {
-                filterFragment = FilterFragment().apply {
+        filterFragment = FilterFragment().apply {
             setFilterListener(object : FilterFragment.FilterListener {
                 override fun onFiltersApplied() {
                     // Refresh data when filters are applied
@@ -325,11 +336,14 @@ class DiscoverFragment : Fragment() {
         binding.btnFilter.text = "Close Filter"
         binding.btnSort.visibility = View.GONE
     }
+
     private fun setupSortButton() {
-                binding.btnSort.setOnClickListener { showSortMenu() }
+        binding.btnSort.setOnClickListener { showSortMenu() }
     }
+
     private fun hideKeyboard() {
-        val imm = requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm =
+            requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(binding.root.windowToken, 0)
     }
 

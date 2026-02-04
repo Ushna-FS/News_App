@@ -3,6 +3,7 @@ package com.example.newsapp.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -79,6 +80,30 @@ class BookmarkAdapter(
             }
 
             bookmarkIcon.setOnClickListener {
+                // Toggle visual state immediately
+                val currentDrawable = bookmarkIcon.drawable
+                val isCurrentlyFilled = currentDrawable.constantState?.equals(
+                    itemView.context.getDrawable(R.drawable.ic_bookmark)?.constantState
+                ) == true
+
+                bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)
+                bookmarkIcon.setColorFilter(itemView.context.getColor(R.color.blueMain))
+
+                // Show toast
+                Toast.makeText(itemView.context, "Article removed from bookmarks", Toast.LENGTH_SHORT).show()
+
+                // Perform bookmark operation
+                onBookmarkClick(article)
+            }
+            bookmarkIcon.setOnClickListener {
+                // Update visual immediately
+                bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)
+                bookmarkIcon.setColorFilter(itemView.context.getColor(R.color.blueMain))
+
+                // Show toast
+                Toast.makeText(itemView.context, "Article removed from bookmarks", Toast.LENGTH_SHORT).show()
+
+                // Notify parent
                 onBookmarkClick(article)
             }
         }

@@ -83,6 +83,7 @@ class HomeFragment : Fragment() {
                             recyclerView.isVisible = false
                             footerLoading.root.isVisible = false
                         }
+
                         is LoadState.Error -> {
                             progressBar.isVisible = false
                             textEmpty.text = getString(
@@ -93,6 +94,7 @@ class HomeFragment : Fragment() {
                             recyclerView.isVisible = false
                             footerLoading.root.isVisible = false
                         }
+
                         else -> {
                             progressBar.isVisible = false
                             textEmpty.isVisible = false
@@ -105,15 +107,18 @@ class HomeFragment : Fragment() {
                         is LoadState.Loading -> {
                             footerLoading.root.isVisible = true
                         }
+
                         is LoadState.Error -> {
                             footerLoading.root.isVisible = true
-                            footerLoading.textError.text = (loadState.append as LoadState.Error).error.message
+                            footerLoading.textError.text =
+                                (loadState.append as LoadState.Error).error.message
                             footerLoading.textError.isVisible = true
                             footerLoading.buttonRetry.isVisible = true
                             footerLoading.buttonRetry.setOnClickListener {
                                 newsAdapter.retry()
                             }
                         }
+
                         else -> {
                             footerLoading.root.isVisible = false
                         }
@@ -122,7 +127,8 @@ class HomeFragment : Fragment() {
                     // Show empty state
                     if (loadState.refresh !is LoadState.Loading &&
                         loadState.append.endOfPaginationReached &&
-                        newsAdapter.itemCount == 0) {
+                        newsAdapter.itemCount == 0
+                    ) {
                         textEmpty.text = getString(R.string.no_articles_found)
                         textEmpty.isVisible = true
                         recyclerView.isVisible = false

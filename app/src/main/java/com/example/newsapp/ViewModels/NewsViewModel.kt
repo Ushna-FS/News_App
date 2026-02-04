@@ -35,6 +35,20 @@ class NewsViewModel @Inject constructor(
     private val _sortType = MutableStateFlow(SortType.NEWEST_FIRST)
     val sortType: StateFlow<SortType> = _sortType.asStateFlow()
 
+    private val _bookmarkStateChanged = MutableStateFlow<Pair<String, Boolean>?>(null)
+    val bookmarkStateChanged: StateFlow<Pair<String, Boolean>?> =
+        _bookmarkStateChanged.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            bookmarkRepository.bookmarkUpdates.collect { url ->
+                // When bookmark changes, update the state
+                val isBookmarked = bookmarkRepository.isBookmarked(url)
+                _bookmarkStateChanged.value = Pair(url, isBookmarked)
+            }
+        }
+    }
+
     // UPDATED: Combine all filter states and pass to repository
     val combinedNewsPagingData: Flow<PagingData<Article>> = combine(
         selectedCategories,
@@ -79,6 +93,7 @@ class NewsViewModel @Inject constructor(
 
     private val _errorMessage = MutableStateFlow("")
     val errorMessage: StateFlow<String> = _errorMessage.asStateFlow()
+
 
     fun clearSearch() {
         _searchQuery.value = ""
@@ -125,13 +140,20 @@ class NewsViewModel @Inject constructor(
             else -> "${categories.joinToString(", ")} (${sources.size} sources)"
         }
     }
+
     fun toggleBookmark(article: Article) {
         viewModelScope.launch {
-            val isBookmarked = bookmarkRepository.isBookmarked(article.url ?: "")
+            val url = article.url ?: return@launch
+            val isBookmarked = bookmarkRepository.isBookmarked(url)
+
             if (isBookmarked) {
                 bookmarkRepository.removeBookmark(article)
+                // Show message immediately
+                _bookmarkStateChanged.value = Pair(url, false)
             } else {
                 bookmarkRepository.addBookmark(article)
+                // Show message immediately
+                _bookmarkStateChanged.value = Pair(url, true)
             }
         }
     }

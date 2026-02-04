@@ -112,19 +112,27 @@ class NewsRecyclerAdapter(
 
     private fun formatDate(publishedAt: String?): String {
         return try {
-            // FIXED: Added null check before substringBefore
             if (publishedAt.isNullOrEmpty()) return ""
 
-            // Format: "2026-01-30T04:18:45Z" → "30 Jan, 4:18 AM"
             val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
             inputFormat.timeZone = TimeZone.getTimeZone("UTC")
-            val date = inputFormat.parse(publishedAt)
+            val date = inputFormat.parse(publishedAt) ?: return ""
 
-            val outputFormat = SimpleDateFormat("dd MMM, h:mm a", Locale.getDefault())
-            outputFormat.format(date ?: Date())
+            // Create output format with date and time
+            val outputFormat = SimpleDateFormat("dd MMM yyyy, h:mm a", Locale.getDefault())
+            outputFormat.format(date)
         } catch (e: Exception) {
-            // Fallback: just show date part with safe call
-            publishedAt?.substringBefore("T") ?: "" // FIXED: Added safe call
+            // Fallback: try to extract just the date part
+            try {
+                publishedAt?.substringBefore("T")?.let { datePart ->
+                    val dateOnlyFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                    val date = dateOnlyFormat.parse(datePart)
+                    val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                    outputFormat.format(date ?: Date())
+                } ?: ""
+            } catch (e: Exception) {
+                publishedAt?.substringBefore("T") ?: ""
+            }
         }
     }
 }
