@@ -32,4 +32,16 @@
     <string name="date">30 Jan , 4:18 AM</string>
     <string name="business">Business</string>
     <string name="technology">Technology</string>
+    <string name="article_detail">Article Detail</string>
+    <string name="no_title">No Title Available</string>
+    <string name="unknown_source">Unknown Source</string>
+    <string name="by_author">By %s</string>
+    <string name="unknown_author">Unknown Author</string>
+    <string name="no_content">No content available for this article.</string>
+    <string name="bookmark">Bookmark</string>
+    <string name="bookmarked">Bookmarked</string>
+    <string name="share">Share</string>
+    <string name="share_article">Share Article</string>
+    <string name="article_load_error">Unable to load article. Please try again.</string>
+    <string name="article_image">Article Image</string>
 </resources>

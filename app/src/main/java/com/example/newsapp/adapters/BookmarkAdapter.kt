@@ -9,20 +9,21 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.newsapp.R
-import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.models.getFormattedDate
+import com.example.newsapp.screens.fragments.ArticleDetailFragment
 
 class BookmarkAdapter(
-    private val onItemClick: (Article) -> Unit,
-    private val onBookmarkClick: (Article) -> Unit
-) : ListAdapter<Article, BookmarkAdapter.BookmarkViewHolder>(DIFF_CALLBACK) {
+    private val onItemClick: (com.example.newsapp.data.models.Article) -> Unit,
+    private val onBookmarkClick: (com.example.newsapp.data.models.Article) -> Unit
+) : ListAdapter<com.example.newsapp.data.models.Article, BookmarkAdapter.BookmarkViewHolder>(DIFF_CALLBACK) {
 
     companion object {
-        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<Article>() {
-            override fun areItemsTheSame(oldItem: Article, newItem: Article): Boolean {
+        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<com.example.newsapp.data.models.Article>() {
+            override fun areItemsTheSame(oldItem: com.example.newsapp.data.models.Article, newItem: com.example.newsapp.data.models.Article): Boolean {
                 return oldItem.url == newItem.url
             }
 
-            override fun areContentsTheSame(oldItem: Article, newItem: Article): Boolean {
+            override fun areContentsTheSame(oldItem: com.example.newsapp.data.models.Article, newItem: com.example.newsapp.data.models.Article): Boolean {
                 return oldItem == newItem
             }
         }
@@ -40,8 +41,8 @@ class BookmarkAdapter(
 
     class BookmarkViewHolder(
         itemView: View,
-        private val onItemClick: (Article) -> Unit,
-        private val onBookmarkClick: (Article) -> Unit
+        private val onItemClick: (com.example.newsapp.data.models.Article) -> Unit,
+        private val onBookmarkClick: (com.example.newsapp.data.models.Article) -> Unit
     ) : RecyclerView.ViewHolder(itemView) {
 
         private val imageNews = itemView.findViewById<android.widget.ImageView>(R.id.ivNewsImage)
@@ -51,11 +52,11 @@ class BookmarkAdapter(
         private val textTime = itemView.findViewById<android.widget.TextView>(R.id.tvNewsTime)
         private val bookmarkIcon = itemView.findViewById<android.widget.ImageView>(R.id.ivBookmark)
 
-        fun bind(article: Article) {
+        fun bind(article: com.example.newsapp.data.models.Article) {
             textTitle.text = article.title ?: ""
             textDescription.text = article.description ?: ""
             textSource.text = article.source?.name ?: "Unknown"
-            textTime.text = article.publishedAt?.take(10) ?: ""
+            textTime.text = article.getFormattedDate()
 
             // Load image
             article.urlToImage?.let { url ->
@@ -79,22 +80,6 @@ class BookmarkAdapter(
                 onItemClick(article)
             }
 
-            bookmarkIcon.setOnClickListener {
-                // Toggle visual state immediately
-                val currentDrawable = bookmarkIcon.drawable
-                val isCurrentlyFilled = currentDrawable.constantState?.equals(
-                    itemView.context.getDrawable(R.drawable.ic_bookmark)?.constantState
-                ) == true
-
-                bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)
-                bookmarkIcon.setColorFilter(itemView.context.getColor(R.color.blueMain))
-
-                // Show toast
-                Toast.makeText(itemView.context, "Article removed from bookmarks", Toast.LENGTH_SHORT).show()
-
-                // Perform bookmark operation
-                onBookmarkClick(article)
-            }
             bookmarkIcon.setOnClickListener {
                 // Update visual immediately
                 bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)

@@ -2,12 +2,12 @@ plugins {
     id("com.android.application")
     id("com.google.dagger.hilt.android")
     id ("com.google.devtools.ksp")
-
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
     namespace = "com.example.newsapp"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.newsapp"
@@ -70,6 +70,7 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation ("com.google.dagger:hilt-android:2.57.1")
+    implementation(libs.androidx.activity)
     ksp ("com.google.dagger:hilt-compiler:2.57.1")
 
     implementation("androidx.core:core-splashscreen:1.0.1")
@@ -84,6 +85,8 @@ dependencies {
     val room_version = "2.7.1"
     implementation("androidx.room:room-runtime:$room_version")
     ksp("androidx.room:room-compiler:$room_version")
+
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

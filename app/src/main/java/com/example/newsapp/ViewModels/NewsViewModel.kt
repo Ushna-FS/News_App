@@ -68,7 +68,6 @@ class NewsViewModel @Inject constructor(
         }
         .flowOn(Dispatchers.IO)
 
-    // Search functionality
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -94,6 +93,22 @@ class NewsViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow("")
     val errorMessage: StateFlow<String> = _errorMessage.asStateFlow()
 
+    // Add active filters state for DiscoverFragment
+    private val _activeFilters = MutableStateFlow<Triple<List<String>, List<String>, Boolean>>(
+        Triple(emptyList(), emptyList(), false)
+    )
+    val activeFilters: StateFlow<Triple<List<String>, List<String>, Boolean>> = _activeFilters.asStateFlow()
+
+    // Compute active filters whenever categories/sources change
+    private fun updateActiveFilters() {
+        val hasCustomCategories = _selectedCategories.value != listOf("Business", "Technology")
+        val hasCustomSources = _selectedSources.value.isNotEmpty()
+        _activeFilters.value = Triple(
+            if (hasCustomCategories) _selectedCategories.value else emptyList(),
+            if (hasCustomSources) _selectedSources.value else emptyList(),
+            hasCustomCategories || hasCustomSources
+        )
+    }
 
     fun clearSearch() {
         _searchQuery.value = ""
@@ -126,6 +141,7 @@ class NewsViewModel @Inject constructor(
     fun applyFilters(categories: List<String>, sources: List<String>) {
         _selectedCategories.value = categories
         _selectedSources.value = sources
+        updateActiveFilters()
     }
 
     fun getFilterSummary(): String {
@@ -138,6 +154,45 @@ class NewsViewModel @Inject constructor(
             categories.size == 1 && sources.isEmpty() -> "${categories.first()} News"
             sources.isNotEmpty() && categories.isEmpty() -> "${sources.size} Sources"
             else -> "${categories.joinToString(", ")} (${sources.size} sources)"
+        }
+    }
+
+    private fun applyFiltersInternal(
+        allArticles: List<Article>,
+        categories: List<String>,
+        sources: List<String>,
+        sortType: SortType
+    ): List<Article> {
+        var filtered = allArticles
+
+        // Filter by category
+        if (categories.isNotEmpty()) {
+            filtered = filtered.filter { article ->
+                // Fix: Use safe call operator and provide default value
+                val articleSourceName = article.source?.name ?: ""
+                when {
+                    articleSourceName.contains("TechCrunch", ignoreCase = true) ->
+                        categories.any { it.equals("Technology", ignoreCase = true) }
+                    else -> categories.any { it.equals("Business", ignoreCase = true) }
+                }
+            }
+        }
+
+        // Filter by source
+        if (sources.isNotEmpty()) {
+            filtered = filtered.filter { article ->
+                // Fix: Use safe call operator and provide default value
+                val articleSourceName = article.source?.name ?: ""
+                sources.any { source ->
+                    articleSourceName.contains(source, ignoreCase = true)
+                }
+            }
+        }
+
+        // Apply sorting
+        return when (sortType) {
+            SortType.NEWEST_FIRST -> filtered.sortedByDescending { it.publishedAt }
+            SortType.OLDEST_FIRST -> filtered.sortedBy { it.publishedAt }
         }
     }
 
@@ -165,4 +220,11 @@ class NewsViewModel @Inject constructor(
 
     val bookmarks: Flow<List<BookmarkedArticle>> = bookmarkRepository.getAllBookmarks()
         .flowOn(Dispatchers.IO)
+
+    // Add helper function for DiscoverFragment to check active filters
+    fun hasActiveFilters(): Boolean {
+        val hasCustomCategories = _selectedCategories.value != listOf("Business", "Technology")
+        val hasCustomSources = _selectedSources.value.isNotEmpty()
+        return hasCustomCategories || hasCustomSources
+    }
 }

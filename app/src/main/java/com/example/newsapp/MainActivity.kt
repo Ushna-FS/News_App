@@ -4,10 +4,8 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.example.newsapp.screens.fragments.BookmarksFragment
-import com.example.newsapp.screens.fragments.HomeFragment
+import com.example.newsapp.screens.fragments.*
 import com.example.newsapp.databinding.ActivityMainBinding
-import com.example.newsapp.screens.fragments.DiscoverFragment
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -36,17 +34,23 @@ class MainActivity : AppCompatActivity() {
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.home -> {
-                    showFragment(homeFragment)
+                    if (!isArticleDetailShowing()) {
+                        showFragment(homeFragment)
+                    }
                     true
                 }
 
                 R.id.discover -> {
-                    showFragment(discoverFragment)
+                    if (!isArticleDetailShowing()) {
+                        showFragment(discoverFragment)
+                    }
                     true
                 }
 
                 R.id.bookmarks -> {
-                    showFragment(bookmarksFragment)
+                    if (!isArticleDetailShowing()) {
+                        showFragment(bookmarksFragment)
+                    }
                     true
                 }
 
@@ -55,11 +59,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun isArticleDetailShowing(): Boolean {
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        return currentFragment is ArticleDetailFragment
+    }
+
     private fun showFragment(fragment: Fragment) {
         // Don't replace if it's already showing
-        if (currentFragment == fragment) return
+        if (currentFragment == fragment && !isArticleDetailShowing()) return
 
         supportFragmentManager.beginTransaction().apply {
+            // Clear back stack if we're switching bottom nav tabs
+            if (!isArticleDetailShowing()) {
+                supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            }
+
             // Add animation only if files exist
             try {
                 setCustomAnimations(
@@ -72,16 +86,11 @@ class MainActivity : AppCompatActivity() {
                 // If animation files don't exist, continue without animation
             }
 
-            // Hide current fragment
-            currentFragment?.let { hide(it) }
-
-            // Show new fragment
-            if (fragment.isAdded) {
-                show(fragment)
-            } else {
-                add(R.id.fragment_container, fragment, fragment::class.java.simpleName)
+            replace(R.id.fragment_container, fragment) // Always use REPLACE
+            if (!isArticleDetailShowing()) {
+                // Only add to back stack if not coming from ArticleDetail
+                addToBackStack(fragment::class.java.simpleName)
             }
-
             commit()
         }
 
@@ -89,8 +98,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        // If not on home, go to home
-        if (currentFragment != homeFragment) {
+        // If ArticleDetailFragment is showing, pop it
+        if (isArticleDetailShowing()) {
+            supportFragmentManager.popBackStack()
+        }
+        // If there are fragments in back stack from bottom navigation, pop them
+        else if (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStack()
+        }
+        // If not on home and back stack is empty, go to home
+        else if (currentFragment != homeFragment) {
             binding.bottomNavigation.selectedItemId = R.id.home
         } else {
             super.onBackPressed()

@@ -34,20 +34,3 @@ fun com.example.newsapp.data.models.Article.toBookmarkedArticle(): BookmarkedArt
         bookmarkedAt = System.currentTimeMillis()
     )
 }
-
-// Extension function to convert BookmarkedArticle to Article
-fun BookmarkedArticle.toArticle(): com.example.newsapp.data.models.Article {
-    return com.example.newsapp.data.models.Article(
-        source = com.example.newsapp.data.models.Source(
-            id = this.sourceId,
-            name = this.sourceName
-        ),
-        author = this.author,
-        title = this.title,
-        description = this.description,
-        url = this.url,
-        urlToImage = this.urlToImage,
-        publishedAt = this.publishedAt,
-        content = this.content
-    )
-}

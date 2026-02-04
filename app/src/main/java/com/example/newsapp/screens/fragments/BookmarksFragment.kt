@@ -14,7 +14,6 @@ import com.example.newsapp.ViewModels.NewsViewModel
 import com.example.newsapp.adapters.BookmarkAdapter
 import com.example.newsapp.data.local.BookmarkedArticle
 import com.example.newsapp.data.models.Article
-import com.example.newsapp.data.models.Source
 import com.example.newsapp.databinding.FragmentBookmarksBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -43,25 +42,11 @@ class BookmarksFragment : Fragment() {
         setupObservers()
     }
 
-    // Extension function to convert BookmarkedArticle to Article
-    private fun BookmarkedArticle.toArticle(): Article {
-        return Article(
-            source = Source(id = null, name = this.sourceName),
-            author = this.author,
-            title = this.title,
-            description = this.description,
-            url = this.url,
-            urlToImage = this.urlToImage,
-            publishedAt = this.publishedAt,
-            content = this.content
-        )
-    }
-
     private fun setupRecyclerView() {
         bookmarkAdapter = BookmarkAdapter(
             onItemClick = { article ->
-                // Handle article click - open article detail
-                // You can implement this later
+                // Open ArticleDetailFragment
+                openArticleDetail(article)
             },
             onBookmarkClick = { article ->
                 // Remove bookmark when clicked (since it's already bookmarked)
@@ -69,7 +54,6 @@ class BookmarksFragment : Fragment() {
             }
         )
 
-        // Set up the RecyclerView - CORRECTED: use binding.recyclerViewBookmarks
         binding.recyclerViewBookmarks.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = bookmarkAdapter
@@ -84,17 +68,52 @@ class BookmarksFragment : Fragment() {
                 val bookmarkedArticles = bookmarks.map { it.toArticle() }
                 bookmarkAdapter.submitList(bookmarkedArticles)
 
-                // Show/hide empty state and RecyclerView - CORRECTED: use proper binding references
+                // Show/hide empty state and RecyclerView
                 val hasBookmarks = bookmarks.isNotEmpty()
                 binding.textEmpty.isVisible = !hasBookmarks
-                binding.recyclerViewBookmarks.isVisible =
-                    hasBookmarks // This is the correct binding
+                binding.recyclerViewBookmarks.isVisible = hasBookmarks
             }
         }
+    }
+
+    private fun openArticleDetail(article: Article) {
+        val fragmentManager = requireActivity().supportFragmentManager
+
+        // Check if already showing to prevent duplicates
+        if (fragmentManager.findFragmentByTag("ArticleDetail") != null) return
+
+        fragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.slide_in_left,
+                R.anim.slide_out_right,
+                R.anim.slide_in_right,
+                R.anim.slide_out_left
+            )
+            .replace(
+                R.id.fragment_container,
+                ArticleDetailFragment.newInstance(article),
+                "ArticleDetail"
+            )
+            .addToBackStack("ArticleDetail")
+            .commit()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
+}
+
+// Extension function to convert BookmarkedArticle to Article
+private fun BookmarkedArticle.toArticle(): com.example.newsapp.data.models.Article {
+    return com.example.newsapp.data.models.Article(
+        source = com.example.newsapp.data.models.Source(id = null, name = this.sourceName),
+        author = this.author,
+        title = this.title,
+        description = this.description,
+        url = this.url,
+        urlToImage = this.urlToImage,
+        publishedAt = this.publishedAt,
+        content = this.content
+    )
 }

@@ -14,6 +14,7 @@ import com.example.newsapp.R
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.databinding.FragmentHomeBinding
 import com.example.newsapp.ViewModels.NewsViewModel
+import com.example.newsapp.data.models.Article
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -47,7 +48,7 @@ class HomeFragment : Fragment() {
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
             onItemClick = { article ->
-                // Handle article click
+                openArticleDetail(article)
             },
             onExtractSource = { article ->
                 newsViewModel.extractSourceFromArticle(article)
@@ -63,6 +64,28 @@ class HomeFragment : Fragment() {
             )
             setHasFixedSize(true)
         }
+    }
+
+    private fun openArticleDetail(article: Article) {
+        val fragmentManager = requireActivity().supportFragmentManager
+
+        // Check if already showing to prevent duplicates
+        if (fragmentManager.findFragmentByTag("ArticleDetail") != null) return
+
+        fragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.slide_in_left,
+                R.anim.slide_out_right,
+                R.anim.slide_in_right,
+                R.anim.slide_out_left
+            )
+            .replace(
+                R.id.fragment_container,
+                ArticleDetailFragment.newInstance(article),
+                "ArticleDetail"
+            )
+            .addToBackStack("ArticleDetail")
+            .commit()
     }
 
     private fun setupObservers() {

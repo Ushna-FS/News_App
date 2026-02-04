@@ -1,3 +1,4 @@
+
 package com.example.newsapp.data.Repository
 
 import androidx.paging.Pager
@@ -150,14 +151,18 @@ class FilteredCombinedNewsPagingSource(
                 }
             }
 
-            // Apply sorting
+            // FIXED: Sort properly by converting dates to comparable timestamps
             filteredArticles = when (sortType) {
                 SortType.NEWEST_FIRST -> filteredArticles.sortedByDescending {
-                    parseDate(it.publishedAt)
+                    it.publishedAt?.let { dateStr ->
+                        parseDateToLong(dateStr)
+                    } ?: 0L
                 }
 
                 SortType.OLDEST_FIRST -> filteredArticles.sortedBy {
-                    parseDate(it.publishedAt)
+                    it.publishedAt?.let { dateStr ->
+                        parseDateToLong(dateStr)
+                    } ?: 0L
                 }
             }
 
@@ -175,28 +180,28 @@ class FilteredCombinedNewsPagingSource(
         }
     }
 
-    private fun parseDate(dateString: String?): Date {
+    private fun parseDateToLong(dateString: String?): Long {
         return try {
-            if (dateString.isNullOrEmpty()) Date(0) else {
+            if (dateString.isNullOrEmpty()) 0L else {
                 val formats = listOf(
                     "yyyy-MM-dd'T'HH:mm:ss'Z'",
                     "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
                     "yyyy-MM-dd HH:mm:ss",
-                    "yyyy-MM-dd"  // Added date-only format
+                    "yyyy-MM-dd"
                 )
                 for (format in formats) {
                     try {
                         val sdf = SimpleDateFormat(format, Locale.getDefault())
-                        sdf.timeZone = TimeZone.getTimeZone("UTC") // Added timezone
-                        return sdf.parse(dateString) ?: Date(0)
+                        sdf.timeZone = TimeZone.getTimeZone("UTC")
+                        return sdf.parse(dateString)?.time ?: 0L
                     } catch (e: Exception) {
                         continue
                     }
                 }
-                Date(Long.MIN_VALUE)
+                0L
             }
         } catch (e: Exception) {
-            Date(Long.MIN_VALUE)
+            0L
         }
     }
 }

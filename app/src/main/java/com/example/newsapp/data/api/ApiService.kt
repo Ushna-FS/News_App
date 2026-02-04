@@ -13,7 +13,7 @@ interface ApiService {
         @Query("category") category: String = "business",
         @Query("page") page: Int = 1,
         @Query("pageSize") pageSize: Int = 5,
-        @Query("apiKey") apiKey: String = "80bbde4fd1384332a02d01f1e07d2f18"
+        @Query("apiKey") apiKey: String = "159b885b18104900b02c921bebf1fce8"
     ): Response<NewsResponse>
 
     @GET("top-headlines")
@@ -21,7 +21,7 @@ interface ApiService {
         @Query("sources") sources: String = "techcrunch",
         @Query("page") page: Int = 1,
         @Query("pageSize") pageSize: Int = 5,
-        @Query("apiKey") apiKey: String = "80bbde4fd1384332a02d01f1e07d2f18"
+        @Query("apiKey") apiKey: String = "159b885b18104900b02c921bebf1fce8"
     ): Response<NewsResponse>
 
     @GET("everything")
@@ -31,6 +31,6 @@ interface ApiService {
         @Query("language") language: String = "en",
         @Query("page") page: Int = 1,
         @Query("pageSize") pageSize: Int = 5,
-        @Query("apiKey") apiKey: String = "80bbde4fd1384332a02d01f1e07d2f18"
+        @Query("apiKey") apiKey: String = "159b885b18104900b02c921bebf1fce8"
     ): Response<NewsResponse>
 }
