@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
     <application
+        android:name=".NewsApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -15,7 +16,7 @@
 
         <!-- Splash Activity -->
         <activity
-            android:name=".Screens.SplashActivity"
+            android:name=".Screens.Activities.SplashActivity"
             android:theme="@style/Theme.NewsApp.Splash"
             android:exported="true"
             android:hardwareAccelerated="true">
