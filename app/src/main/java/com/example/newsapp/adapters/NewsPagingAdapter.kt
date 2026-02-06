@@ -18,6 +18,8 @@ import com.example.newsapp.ViewModels.NewsViewModel
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.screens.fragments.ArticleDetailFragment
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.net.SocketTimeoutException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -176,39 +178,6 @@ class NewsPagingAdapter(
             }
 
         }
-
-//        private fun openArticleDetail(article: com.example.newsapp.data.models.Article) {
-//            val fragment = ArticleDetailFragment.newInstance(article)
-//
-//            (itemView.context as? androidx.fragment.app.FragmentActivity)
-//                ?.supportFragmentManager
-//                ?.beginTransaction()
-//                ?.setCustomAnimations(
-//                    R.anim.slide_in_left,
-//                    R.anim.slide_out_right,
-//                    R.anim.slide_in_right,
-//                    R.anim.slide_out_left
-//                )
-//                ?.replace(R.id.fragment_container, fragment)
-//                ?.addToBackStack(null)
-//                ?.commit()
-//        }
-//
-//        private fun openArticleDetail(article: Article) {
-//            val fragment = ArticleDetailFragment.newInstance(article)
-//
-//            (itemView.context as? androidx.fragment.app.FragmentActivity)?.supportFragmentManager
-//                ?.beginTransaction()
-//                ?.setCustomAnimations(
-//                    R.anim.slide_in_left,
-//                    R.anim.slide_out_right,
-//                    R.anim.slide_in_right,
-//                    R.anim.slide_out_left
-//                )
-//                ?.replace(R.id.fragment_container, fragment)
-//                ?.addToBackStack(null)
-//                ?.commit()
-//        }
         private fun updateBookmarkIconVisual(isBookmarked: Boolean) {
             if (isBookmarked) {
                 bookmarkIcon.setImageResource(R.drawable.ic_bookmark)
@@ -281,6 +250,7 @@ class NewsPagingAdapter(
         }
     }
 
+
     class NewsLoadStateAdapter(private val retry: () -> Unit) :
         LoadStateAdapter<NewsLoadStateAdapter.LoadStateViewHolder>() {
 
@@ -322,19 +292,31 @@ class NewsPagingAdapter(
                         textError.isVisible = true
                         buttonRetry.isVisible = true
 
-                        textError.text = loadState.error.message ?: "Unknown error"
+                        val error = loadState.error
+
+                        textError.text = when (error) {
+                            is IOException,
+                            is SocketTimeoutException -> "No internet connection — tap retry"
+
+                            else -> "Something went wrong — tap retry"
+                        }
+
                         buttonRetry.setOnClickListener { retry() }
                     }
 
-                    else -> {
-                        progressBar.isVisible = false
-                        textError.isVisible = false
-                        buttonRetry.isVisible = false
+                    is LoadState.NotLoading -> {
+                        if (loadState.endOfPaginationReached) {
+                            progressBar.isVisible = false
+                            textError.isVisible = true
+                            textError.text = "You reached the end — no more articles"
+                            buttonRetry.isVisible = false
+                        } else {
+                            progressBar.isVisible = false
+                            textError.isVisible = false
+                            buttonRetry.isVisible = false
+                        }
                     }
                 }
             }
         }
-    }
-}
-
-
+    }}

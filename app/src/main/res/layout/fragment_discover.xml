@@ -231,6 +231,14 @@
             android:textColor="@color/gray_medium"
             android:textAlignment="center"
             android:gravity="center"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRetry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Retry"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_marginTop="12dp"/>
+
 
 
 

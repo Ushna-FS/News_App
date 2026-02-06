@@ -18,6 +18,9 @@ import com.example.newsapp.data.models.Article
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.net.SocketTimeoutException
+
 
 @AndroidEntryPoint
 class HomeFragment : Fragment() {
@@ -42,6 +45,7 @@ class HomeFragment : Fragment() {
 
         setupRecyclerView()
         setupObservers()
+        setupRetryButton()
         binding.textWelcome.text = getString(R.string.home_user)
     }
 
@@ -63,6 +67,61 @@ class HomeFragment : Fragment() {
                 footer = NewsPagingAdapter.NewsLoadStateAdapter { newsAdapter.retry() }
             )
             setHasFixedSize(true)
+        }
+
+        // Set up load state listener
+        newsAdapter.addLoadStateListener { loadState ->
+            val refresh = loadState.refresh
+            val isListEmpty = newsAdapter.itemCount == 0
+
+            // ---------------- INITIAL LOAD ERROR ----------------
+            if (refresh is LoadState.Error) {
+                binding.progressBar.isVisible = false
+                binding.recyclerView.isVisible = false
+                binding.llEmptyState.isVisible = true
+
+                // Show retry button for initial load errors
+                binding.btnRetry.isVisible = true
+
+                val error = refresh.error
+                binding.textEmpty.text = when (error) {
+                    is IOException,
+                    is SocketTimeoutException -> "Check internet connection"
+
+                    else -> "Failed to load articles"
+                }
+                return@addLoadStateListener
+            }
+
+            // ---------------- INITIAL LOADING ----------------
+            if (refresh is LoadState.Loading) {
+                binding.progressBar.isVisible = true
+                binding.recyclerView.isVisible = false
+                binding.llEmptyState.isVisible = false
+                return@addLoadStateListener
+            }
+
+            // ---------------- SUCCESS ----------------
+            binding.progressBar.isVisible = false
+
+            if (isListEmpty) {
+                binding.recyclerView.isVisible = false
+                binding.llEmptyState.isVisible = true
+                binding.btnRetry.isVisible = false   // No retry on empty success
+                binding.textEmpty.text = "No articles found"
+            } else {
+                binding.recyclerView.isVisible = true
+                binding.llEmptyState.isVisible = false
+            }
+        }
+    }
+
+    private fun setupRetryButton() {
+        binding.btnRetry.setOnClickListener {
+            // Retry loading
+            newsAdapter.retry()
+            binding.progressBar.isVisible = true
+            binding.llEmptyState.isVisible = false
         }
     }
 
@@ -93,70 +152,6 @@ class HomeFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             newsViewModel.businessNewsPagingData.collectLatest { pagingData ->
                 newsAdapter.submitData(pagingData)
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            newsAdapter.loadStateFlow.collectLatest { loadState ->
-                binding.apply {
-                    // Handle initial loading
-                    when (loadState.refresh) {
-                        is LoadState.Loading -> {
-                            progressBar.isVisible = true
-                            recyclerView.isVisible = false
-                            footerLoading.root.isVisible = false
-                        }
-
-                        is LoadState.Error -> {
-                            progressBar.isVisible = false
-                            textEmpty.text = getString(
-                                R.string.error,
-                                (loadState.refresh as LoadState.Error).error.message
-                            )
-                            textEmpty.isVisible = true
-                            recyclerView.isVisible = false
-                            footerLoading.root.isVisible = false
-                        }
-
-                        else -> {
-                            progressBar.isVisible = false
-                            textEmpty.isVisible = false
-                            recyclerView.isVisible = true
-                        }
-                    }
-
-                    // Handle pagination loading
-                    when (loadState.append) {
-                        is LoadState.Loading -> {
-                            footerLoading.root.isVisible = true
-                        }
-
-                        is LoadState.Error -> {
-                            footerLoading.root.isVisible = true
-                            footerLoading.textError.text =
-                                (loadState.append as LoadState.Error).error.message
-                            footerLoading.textError.isVisible = true
-                            footerLoading.buttonRetry.isVisible = true
-                            footerLoading.buttonRetry.setOnClickListener {
-                                newsAdapter.retry()
-                            }
-                        }
-
-                        else -> {
-                            footerLoading.root.isVisible = false
-                        }
-                    }
-
-                    // Show empty state
-                    if (loadState.refresh !is LoadState.Loading &&
-                        loadState.append.endOfPaginationReached &&
-                        newsAdapter.itemCount == 0
-                    ) {
-                        textEmpty.text = getString(R.string.no_articles_found)
-                        textEmpty.isVisible = true
-                        recyclerView.isVisible = false
-                    }
-                }
             }
         }
     }
