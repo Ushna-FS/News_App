@@ -10,7 +10,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.R
-import com.example.newsapp.ViewModels.NewsViewModel
+import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.adapters.BookmarkAdapter
 import com.example.newsapp.data.local.BookmarkedArticle
 import com.example.newsapp.data.models.Article

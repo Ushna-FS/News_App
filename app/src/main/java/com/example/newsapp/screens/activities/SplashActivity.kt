@@ -1,10 +1,12 @@
 package com.example.newsapp.screens.activities
 
+import android.app.ActivityOptions
 import android.content.Intent
 import android.os.Bundle
 import android.view.animation.AnimationUtils
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.example.newsapp.MainActivity
 import com.example.newsapp.R
@@ -12,25 +14,23 @@ import com.example.newsapp.databinding.ActivitySplashBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import dagger.hilt.android.AndroidEntryPoint
-
-
 @AndroidEntryPoint
 class SplashActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivitySplashBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
 
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Disable back press properly
-        onBackPressedDispatcher.addCallback(this) {
-            // Do nothing (back disabled during splash)
-        }
+        // Disable back press during splash
+        onBackPressedDispatcher.addCallback(this) {}
 
-        // Start animation immediately
         startAnimations()
 
         lifecycleScope.launch {
@@ -40,17 +40,18 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun startAnimations() {
-
         val logoAnim = AnimationUtils.loadAnimation(this, R.anim.splash_anim)
-        binding.ivNewsIcon.startAnimation(logoAnim)
-
         val textAnim = AnimationUtils.loadAnimation(this, R.anim.slide_in_left)
+
+        binding.ivNewsIcon.startAnimation(logoAnim)
         binding.tvAppName.startAnimation(textAnim)
     }
 
     private fun navigateToMain() {
         startActivity(Intent(this, MainActivity::class.java))
-        overridePendingTransition(
+
+        val options = ActivityOptions.makeCustomAnimation(
+            this,
             android.R.anim.fade_in,
             android.R.anim.fade_out
         )

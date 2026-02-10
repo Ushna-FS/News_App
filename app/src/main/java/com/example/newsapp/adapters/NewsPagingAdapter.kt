@@ -14,9 +14,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.newsapp.R
-import com.example.newsapp.ViewModels.NewsViewModel
+import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.data.models.Article
-import com.example.newsapp.screens.fragments.ArticleDetailFragment
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.SocketTimeoutException
@@ -95,13 +94,8 @@ class NewsPagingAdapter(
                 imageNews.setImageResource(R.drawable.ic_newspaper)
             }
 
-            // Set bookmark state
-            updateBookmarkIcon(article.url)
-
-//            itemView.setOnClickListener {
-//                openArticleDetail(article)
             itemView.setOnClickListener {
-                onItemClick(article)  // This will call the fragment's openArticleDetail function
+                onItemClick(article)
             }
 
 
@@ -130,54 +124,8 @@ class NewsPagingAdapter(
                 // Perform bookmark operation
                 viewModel?.toggleBookmark(article)
             }
-
-            bookmarkIcon.setOnClickListener {
-                // Get current state from our map
-                val currentState = bookmarkStates[articleUrl] ?: false
-
-                // Update visual immediately
-                updateBookmarkIconVisual(!currentState)
-
-                // Update our local state
-                bookmarkStates[articleUrl] = !currentState
-
-                // Show toast message
-                val message = if (!currentState) {
-                    "Article added to bookmarks"
-                } else {
-                    "Article removed from bookmarks"
-                }
-                Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
-
-                // Call ViewModel
-                viewModel?.toggleBookmark(article)
-            }
-
-            // Listen for bookmark state changes from ViewModel
-            viewModel?.bookmarkStateChanged?.let { flow ->
-                lifecycleOwner?.lifecycleScope?.launch {
-                    flow.collect { changed ->
-                        changed?.let { (changedUrl, isBookmarked) ->
-                            if (changedUrl == articleUrl) {
-                                updateBookmarkIconVisual(isBookmarked)
-                                bookmarkStates[articleUrl] = isBookmarked
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Initial bookmark state check
-            if (viewModel != null && lifecycleOwner != null) {
-                lifecycleOwner.lifecycleScope.launch {
-                    viewModel.isArticleBookmarked(articleUrl).collect { isBookmarked ->
-                        updateBookmarkIconVisual(isBookmarked)
-                        bookmarkStates[articleUrl] = isBookmarked
-                    }
-                }
-            }
-
         }
+
         private fun updateBookmarkIconVisual(isBookmarked: Boolean) {
             if (isBookmarked) {
                 bookmarkIcon.setImageResource(R.drawable.ic_bookmark)
@@ -228,29 +176,8 @@ class NewsPagingAdapter(
                 }
             }
         }
-
-        private fun updateBookmarkIcon(url: String?) {
-            if (viewModel != null && lifecycleOwner != null && !url.isNullOrEmpty()) {
-                lifecycleOwner.lifecycleScope.launch {
-                    viewModel.isArticleBookmarked(url).collect { isBookmarked ->
-                        if (isBookmarked) {
-                            bookmarkIcon.setImageResource(R.drawable.ic_bookmark)
-                            bookmarkIcon.setColorFilter(
-                                itemView.context.getColor(R.color.blueMain)
-                            )
-                        } else {
-                            bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)
-                            bookmarkIcon.setColorFilter(
-                                itemView.context.getColor(R.color.blueMain)
-                            )
-                        }
-                    }
-                }
-            }
-        }
     }
-
-
+    
     class NewsLoadStateAdapter(private val retry: () -> Unit) :
         LoadStateAdapter<NewsLoadStateAdapter.LoadStateViewHolder>() {
 
@@ -319,4 +246,5 @@ class NewsPagingAdapter(
                 }
             }
         }
-    }}
+    }
+}

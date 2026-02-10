@@ -1,8 +1,8 @@
-package com.example.newsapp.ViewModels
+package com.example.newsapp.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.newsapp.data.Repository.BookmarkRepository
+import com.example.newsapp.data.repository.BookmarkRepository
 import com.example.newsapp.data.models.Article
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -35,11 +35,6 @@ class ArticleDetailViewModel @Inject constructor(
             }
         }
     }
-
-//    fun setArticle(article: Article) {
-//        _article.value = article
-//        updateBookmarkStatus()
-//    }
 
     fun setArticle(article: Article) {
         _isLoading.value = true

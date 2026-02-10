@@ -1,32 +1,32 @@
-package com.example.newsapp.ViewModels
+package com.example.newsapp.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.*
-import com.example.newsapp.data.Repository.BookmarkRepository
-import com.example.newsapp.data.Repository.NewsRepository
-import com.example.newsapp.data.Repository.SortType
+import com.example.newsapp.data.repository.BookmarkRepository
+import com.example.newsapp.data.repository.NewsRepository
+import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.data.local.BookmarkedArticle
 import com.example.newsapp.data.models.Article
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class NewsViewModel @Inject constructor(
-    private val repository: NewsRepository,
-    private val bookmarkRepository: BookmarkRepository
+    private val repository: NewsRepository, private val bookmarkRepository: BookmarkRepository
 ) : ViewModel() {
     // For HomeFragment - Only Business news
     val businessNewsPagingData: Flow<PagingData<Article>> =
-        repository.getBusinessNewsStream()
-            .cachedIn(viewModelScope)
-            .flowOn(Dispatchers.IO)
+        repository.getBusinessNewsStream().cachedIn(viewModelScope).flowOn(Dispatchers.IO)
 
     // StateFlows for filters and sort
-    private val _selectedCategories = MutableStateFlow(listOf("Business", "Technology"))
+    private val _selectedCategories = MutableStateFlow<List<String>>(emptyList())
+
     val selectedCategories: StateFlow<List<String>> = _selectedCategories.asStateFlow()
 
     private val _selectedSources = MutableStateFlow<List<String>>(emptyList())
@@ -50,39 +50,30 @@ class NewsViewModel @Inject constructor(
     }
 
     // UPDATED: Combine all filter states and pass to repository
+    @OptIn(ExperimentalCoroutinesApi::class)
     val combinedNewsPagingData: Flow<PagingData<Article>> = combine(
-        selectedCategories,
-        selectedSources,
-        sortType
+        selectedCategories, selectedSources, sortType
     ) { categories, sources, sortType ->
         Triple(categories, sources, sortType)
-    }
-        .distinctUntilChanged() // Only emit when something changes
+    }.distinctUntilChanged() // Only emit when something changes
         .flatMapLatest { (categories, sources, sortType) ->
             repository.getCombinedNewsStream(
-                categories = categories,
-                sources = sources,
-                sortType = sortType
-            )
-                .cachedIn(viewModelScope)
-        }
-        .flowOn(Dispatchers.IO)
+                categories = categories, sources = sources, sortType = sortType
+            ).cachedIn(viewModelScope)
+        }.flowOn(Dispatchers.IO)
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    val searchNewsPagingData: Flow<PagingData<Article>> = _searchQuery
-        .debounce(300)
-        .distinctUntilChanged()
-        .flatMapLatest { query ->
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    val searchNewsPagingData: Flow<PagingData<Article>> =
+        _searchQuery.debounce(300).distinctUntilChanged().flatMapLatest { query ->
             if (query.isBlank()) {
                 emptyFlow()
             } else {
-                repository.searchNewsStream(query)
-                    .cachedIn(viewModelScope)
+                repository.searchNewsStream(query).cachedIn(viewModelScope)
             }
-        }
-        .flowOn(Dispatchers.IO)
+        }.flowOn(Dispatchers.IO)
 
     private val _hasUserSelectedSort = MutableStateFlow(false)
     val hasUserSelectedSort: StateFlow<Boolean> = _hasUserSelectedSort.asStateFlow()
@@ -97,11 +88,11 @@ class NewsViewModel @Inject constructor(
     private val _activeFilters = MutableStateFlow<Triple<List<String>, List<String>, Boolean>>(
         Triple(emptyList(), emptyList(), false)
     )
-    val activeFilters: StateFlow<Triple<List<String>, List<String>, Boolean>> = _activeFilters.asStateFlow()
+    val activeFilters: StateFlow<Triple<List<String>, List<String>, Boolean>> =
+        _activeFilters.asStateFlow()
 
-    // Compute active filters whenever categories/sources change
     private fun updateActiveFilters() {
-        val hasCustomCategories = _selectedCategories.value != listOf("Business", "Technology")
+        val hasCustomCategories = _selectedCategories.value.isNotEmpty()
         val hasCustomSources = _selectedSources.value.isNotEmpty()
         _activeFilters.value = Triple(
             if (hasCustomCategories) _selectedCategories.value else emptyList(),
@@ -109,6 +100,7 @@ class NewsViewModel @Inject constructor(
             hasCustomCategories || hasCustomSources
         )
     }
+
 
     fun clearSearch() {
         _searchQuery.value = ""
@@ -150,8 +142,8 @@ class NewsViewModel @Inject constructor(
 
         return when {
             categories.isEmpty() && sources.isEmpty() -> "All News"
-            categories.size == 2 && sources.isEmpty() -> "All News"
             categories.size == 1 && sources.isEmpty() -> "${categories.first()} News"
+            categories.size > 1 && sources.isEmpty() -> "Selected Categories"
             sources.isNotEmpty() && categories.isEmpty() -> "${sources.size} Sources"
             else -> "${categories.joinToString(", ")} (${sources.size} sources)"
         }
@@ -171,8 +163,10 @@ class NewsViewModel @Inject constructor(
                 // Fix: Use safe call operator and provide default value
                 val articleSourceName = article.source?.name ?: ""
                 when {
-                    articleSourceName.contains("TechCrunch", ignoreCase = true) ->
-                        categories.any { it.equals("Technology", ignoreCase = true) }
+                    articleSourceName.contains(
+                        "TechCrunch", ignoreCase = true
+                    ) -> categories.any { it.equals("Technology", ignoreCase = true) }
+
                     else -> categories.any { it.equals("Business", ignoreCase = true) }
                 }
             }
@@ -198,7 +192,7 @@ class NewsViewModel @Inject constructor(
 
     fun toggleBookmark(article: Article) {
         viewModelScope.launch {
-            val url = article.url ?: return@launch
+            val url = article.url
             val isBookmarked = bookmarkRepository.isBookmarked(url)
 
             if (isBookmarked) {
@@ -218,12 +212,11 @@ class NewsViewModel @Inject constructor(
         emit(isBookmarked)
     }.flowOn(Dispatchers.IO)
 
-    val bookmarks: Flow<List<BookmarkedArticle>> = bookmarkRepository.getAllBookmarks()
-        .flowOn(Dispatchers.IO)
+    val bookmarks: Flow<List<BookmarkedArticle>> =
+        bookmarkRepository.getAllBookmarks().flowOn(Dispatchers.IO)
 
-    // Add helper function for DiscoverFragment to check active filters
     fun hasActiveFilters(): Boolean {
-        val hasCustomCategories = _selectedCategories.value != listOf("Business", "Technology")
+        val hasCustomCategories = _selectedCategories.value.isNotEmpty()
         val hasCustomSources = _selectedSources.value.isNotEmpty()
         return hasCustomCategories || hasCustomSources
     }

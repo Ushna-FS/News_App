@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
-import com.example.newsapp.ViewModels.NewsViewModel
+import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.adapters.SourcesAdapter
 import com.example.newsapp.databinding.FragmentFilterBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -30,9 +30,7 @@ class FilterFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         binding = FragmentFilterBinding.inflate(inflater, container, false)
         return binding.root
@@ -52,17 +50,14 @@ class FilterFragment : Fragment() {
         sourcesAdapter = SourcesAdapter { selected ->
             // Immediately update ViewModel when selection changes
             newsViewModel.applyFilters(
-                getSelectedCategories(),
-                selected
+                getSelectedCategories(), selected
             )
         }
 
         binding.rvSources.apply {
             layoutManager = GridLayoutManager(
-                requireContext(),
-                3, // Show 3 chips per row for better visibility
-                GridLayoutManager.HORIZONTAL,
-                false
+                requireContext(), 3, // Show 3 chips per row for better visibility
+                GridLayoutManager.HORIZONTAL, false
             )
             adapter = sourcesAdapter
         }
@@ -73,8 +68,7 @@ class FilterFragment : Fragment() {
             // Collect both available sources and selected sources
             newsViewModel.availableSources.collect { sources ->
                 sourcesAdapter.submitList(
-                    sources.sorted(),
-                    newsViewModel.selectedSources.value // Already a List
+                    sources.sorted(), newsViewModel.selectedSources.value // Already a List
                 )
             }
         }
@@ -85,20 +79,19 @@ class FilterFragment : Fragment() {
         val categories = listOf(getString(R.string.business), getString(R.string.technology))
 
         binding.chipGroupCategory.removeAllViews()
-
         categories.forEach { category ->
             val chip = com.google.android.material.chip.Chip(requireContext()).apply {
                 text = category
                 isCheckable = true
                 val selectedCategories = newsViewModel.selectedCategories.value
-                isChecked = selectedCategories.contains(category)
+                isChecked =
+                    selectedCategories.contains(category) // Only highlight if user applied filter
 
                 // Update visual state
                 updateCategoryChipVisual(this, isChecked)
 
                 setOnCheckedChangeListener { _, isChecked ->
                     updateCategoryChipVisual(this, isChecked)
-                    applyFilters()
                 }
             }
             binding.chipGroupCategory.addView(chip)
@@ -107,8 +100,7 @@ class FilterFragment : Fragment() {
 
     @SuppressLint("UseCompatLoadingForColorStateLists")
     private fun updateCategoryChipVisual(
-        chip: com.google.android.material.chip.Chip,
-        isSelected: Boolean
+        chip: com.google.android.material.chip.Chip, isSelected: Boolean
     ) {
         if (isSelected) {
             chip.chipBackgroundColor = resources.getColorStateList(R.color.blueMain)
@@ -166,20 +158,6 @@ class FilterFragment : Fragment() {
                 binding.chipGroupCategory.getChildAt(i) as com.google.android.material.chip.Chip
             chip.isChecked = false
             updateCategoryChipVisual(chip, false)
-        }
-
-        // Default selection: Business and Technology
-        if (binding.chipGroupCategory.childCount >= 2) {
-            val businessChip =
-                binding.chipGroupCategory.getChildAt(0) as com.google.android.material.chip.Chip
-            val techChip =
-                binding.chipGroupCategory.getChildAt(1) as com.google.android.material.chip.Chip
-
-            businessChip.isChecked = true
-            techChip.isChecked = true
-
-            updateCategoryChipVisual(businessChip, true)
-            updateCategoryChipVisual(techChip, true)
         }
 
         // Clear sources selection

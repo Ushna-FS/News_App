@@ -13,14 +13,13 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.newsapp.R
-import com.example.newsapp.ViewModels.ArticleDetailViewModel
+import com.example.newsapp.viewmodels.ArticleDetailViewModel
 import com.example.newsapp.data.models.getFormattedDate
 import com.example.newsapp.data.models.getFullContent
 import com.example.newsapp.databinding.FragmentArticleDetailBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @AndroidEntryPoint

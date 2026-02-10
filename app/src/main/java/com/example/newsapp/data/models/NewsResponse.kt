@@ -27,16 +27,15 @@ data class Source(
     val name: String?
 )
 
-fun Article.getFullContent(): String {
+fun Article.getFullContent(): String? {
     return when {
         !content.isNullOrBlank() ->
             content.substringBefore("[")
 
         !description.isNullOrBlank() ->
             description
-
         else ->
-            "Full article content is not available.\nTap \"Open in Browser\" to read more."
+            null
     }
 }
 

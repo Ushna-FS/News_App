@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.R
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.databinding.FragmentHomeBinding
-import com.example.newsapp.ViewModels.NewsViewModel
+import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.data.models.Article
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -32,9 +32,7 @@ class HomeFragment : Fragment() {
     private lateinit var newsAdapter: NewsPagingAdapter
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
@@ -52,20 +50,16 @@ class HomeFragment : Fragment() {
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
             onItemClick = { article ->
-                openArticleDetail(article)
-            },
-            onExtractSource = { article ->
-                newsViewModel.extractSourceFromArticle(article)
-            },
-            viewModel = newsViewModel,
-            lifecycleOwner = viewLifecycleOwner
+            openArticleDetail(article)
+        }, onExtractSource = { article ->
+            newsViewModel.extractSourceFromArticle(article)
+        }, viewModel = newsViewModel, lifecycleOwner = viewLifecycleOwner
         )
 
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = newsAdapter.withLoadStateFooter(
-                footer = NewsPagingAdapter.NewsLoadStateAdapter { newsAdapter.retry() }
-            )
+                footer = NewsPagingAdapter.NewsLoadStateAdapter { newsAdapter.retry() })
             setHasFixedSize(true)
         }
 
@@ -85,8 +79,7 @@ class HomeFragment : Fragment() {
 
                 val error = refresh.error
                 binding.textEmpty.text = when (error) {
-                    is IOException,
-                    is SocketTimeoutException -> "Check internet connection"
+                    is IOException, is SocketTimeoutException -> "Check internet connection"
 
                     else -> "Failed to load articles"
                 }
@@ -122,6 +115,7 @@ class HomeFragment : Fragment() {
             newsAdapter.retry()
             binding.progressBar.isVisible = true
             binding.llEmptyState.isVisible = false
+            binding.recyclerView.isVisible = false
         }
     }
 
@@ -131,20 +125,14 @@ class HomeFragment : Fragment() {
         // Check if already showing to prevent duplicates
         if (fragmentManager.findFragmentByTag("ArticleDetail") != null) return
 
-        fragmentManager.beginTransaction()
-            .setCustomAnimations(
-                R.anim.slide_in_left,
-                R.anim.slide_out_right,
-                R.anim.slide_in_right,
-                R.anim.slide_out_left
-            )
-            .replace(
-                R.id.fragment_container,
-                ArticleDetailFragment.newInstance(article),
-                "ArticleDetail"
-            )
-            .addToBackStack("ArticleDetail")
-            .commit()
+        fragmentManager.beginTransaction().setCustomAnimations(
+            R.anim.slide_in_left,
+            R.anim.slide_out_right,
+            R.anim.slide_in_right,
+            R.anim.slide_out_left
+        ).replace(
+            R.id.fragment_container, ArticleDetailFragment.newInstance(article), "ArticleDetail"
+        ).addToBackStack("ArticleDetail").commit()
     }
 
     private fun setupObservers() {

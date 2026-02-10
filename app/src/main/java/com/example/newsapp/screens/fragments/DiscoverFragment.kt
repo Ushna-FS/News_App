@@ -19,9 +19,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.R
-import com.example.newsapp.ViewModels.NewsViewModel
+import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.adapters.NewsPagingAdapter
-import com.example.newsapp.data.Repository.SortType
+import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.databinding.FragmentDiscoverBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -43,9 +43,7 @@ class DiscoverFragment : Fragment() {
     private var isSearching = false
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentDiscoverBinding.inflate(inflater, container, false)
         return binding.root
@@ -59,6 +57,7 @@ class DiscoverFragment : Fragment() {
         setupObservers()
         setupBackPressHandler()
         setupFilterButton()
+        observeFilters()
         setupSortButton()
         setupFilterFragment()
 
@@ -71,12 +70,9 @@ class DiscoverFragment : Fragment() {
         newsAdapter = NewsPagingAdapter(
             onItemClick = { article ->
                 openArticleDetail(article)
-            },
-            onExtractSource = { article ->
+            }, onExtractSource = { article ->
                 newsViewModel.extractSourceFromArticle(article)
-            },
-            viewModel = newsViewModel,
-            lifecycleOwner = viewLifecycleOwner
+            }, viewModel = newsViewModel, lifecycleOwner = viewLifecycleOwner
         )
 
         newsAdapter.addLoadStateListener { loadState ->
@@ -116,9 +112,8 @@ class DiscoverFragment : Fragment() {
                 }
 
                 // Empty state
-                val isEmpty = loadState.refresh !is LoadState.Loading &&
-                        loadState.append.endOfPaginationReached &&
-                        newsAdapter.itemCount == 0
+                val isEmpty =
+                    loadState.refresh !is LoadState.Loading && loadState.append.endOfPaginationReached && newsAdapter.itemCount == 0
 
                 if (isEmpty) {
                     llEmptyState.isVisible = true
@@ -142,8 +137,7 @@ class DiscoverFragment : Fragment() {
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = newsAdapter.withLoadStateFooter(
-                footer = NewsPagingAdapter.NewsLoadStateAdapter { newsAdapter.retry() }
-            )
+                footer = NewsPagingAdapter.NewsLoadStateAdapter { newsAdapter.retry() })
             setHasFixedSize(true)
         }
     }
@@ -154,20 +148,14 @@ class DiscoverFragment : Fragment() {
         // Check if already showing to prevent duplicates
         if (fragmentManager.findFragmentByTag("ArticleDetail") != null) return
 
-        fragmentManager.beginTransaction()
-            .setCustomAnimations(
-                R.anim.slide_in_left,
-                R.anim.slide_out_right,
-                R.anim.slide_in_right,
-                R.anim.slide_out_left
-            )
-            .replace(
-                R.id.fragment_container,
-                ArticleDetailFragment.newInstance(article),
-                "ArticleDetail"
-            )
-            .addToBackStack("ArticleDetail")
-            .commit()
+        fragmentManager.beginTransaction().setCustomAnimations(
+            R.anim.slide_in_left,
+            R.anim.slide_out_right,
+            R.anim.slide_in_right,
+            R.anim.slide_out_left
+        ).replace(
+            R.id.fragment_container, ArticleDetailFragment.newInstance(article), "ArticleDetail"
+        ).addToBackStack("ArticleDetail").commit()
     }
 
     private fun setupSearchFunctionality() {
@@ -223,7 +211,6 @@ class DiscoverFragment : Fragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            // Collect search query
             newsViewModel.searchQuery.collectLatest { query ->
                 isSearching = query.isNotEmpty()
 
@@ -233,9 +220,8 @@ class DiscoverFragment : Fragment() {
                         newsAdapter.submitData(pagingData)
                     }
                 } else {
-                    // Normal mode - show combined news
-                    newsViewModel.combinedNewsPagingData.collectLatest { pagingData ->
-                        newsAdapter.submitData(pagingData)
+                    newsViewModel.combinedNewsPagingData.collectLatest {
+                        newsAdapter.submitData(it)
                     }
                 }
 
@@ -254,6 +240,16 @@ class DiscoverFragment : Fragment() {
             }
         }
     }
+
+    private fun observeFilters() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsViewModel.activeFilters.collectLatest {
+                // Filters applied → refresh the adapter
+                newsAdapter.refresh()
+            }
+        }
+    }
+
 
     private fun setupBackPressHandler() {
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
@@ -311,8 +307,7 @@ class DiscoverFragment : Fragment() {
     private fun showSortMenu() {
         val items = arrayOf("Newest First", "Oldest First", "Reset to Default")
 
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Sort Articles")
+        MaterialAlertDialogBuilder(requireContext()).setTitle("Sort Articles")
             .setItems(items) { _, which ->
                 when (which) {
                     0 -> {
@@ -337,8 +332,7 @@ class DiscoverFragment : Fragment() {
                 updateFilterSummary()
                 // Scroll to top to see the new order
                 binding.recyclerView.scrollToPosition(0)
-            }
-            .show()
+            }.show()
     }
 
     private fun updateSortButtonHighlight() {
@@ -354,7 +348,7 @@ class DiscoverFragment : Fragment() {
                 text = when (newsViewModel.sortType.value) {
                     SortType.NEWEST_FIRST -> "Newest"
                     SortType.OLDEST_FIRST -> "Oldest"
-                    else -> "Sort By"
+                    else -> context?.getString(R.string.sort_by)
                 }
             }
         } else {
@@ -364,11 +358,10 @@ class DiscoverFragment : Fragment() {
                 strokeColor = resources.getColorStateList(R.color.blueMain, requireContext().theme)
                 setBackgroundColor(
                     resources.getColor(
-                        android.R.color.transparent,
-                        requireContext().theme
+                        android.R.color.transparent, requireContext().theme
                     )
                 )
-                text = "Sort By"
+                text = context?.getString(R.string.sort_by)
             }
         }
     }
@@ -385,7 +378,7 @@ class DiscoverFragment : Fragment() {
                 setBackgroundColor(resources.getColor(R.color.blueMain, requireContext().theme))
 
                 // Update text based on what's active
-                val textBuilder = StringBuilder("Filter")
+                val textBuilder = StringBuilder(context.getString(R.string.filter))
                 if (hasActiveFilters) {
                     textBuilder.append(" (Active)")
                 }
@@ -401,22 +394,22 @@ class DiscoverFragment : Fragment() {
                 strokeColor = resources.getColorStateList(R.color.blueMain, requireContext().theme)
                 setBackgroundColor(
                     resources.getColor(
-                        android.R.color.transparent,
-                        requireContext().theme
+                        android.R.color.transparent, requireContext().theme
                     )
                 )
-                text = "Filter"
+                text = context?.getString(R.string.filter)
             }
         }
     }
 
     private fun closeFilterPanel() {
         filterFragment?.let {
-            childFragmentManager.beginTransaction().remove(it).commit()
+            childFragmentManager.beginTransaction().remove(it).commitAllowingStateLoss()
+
         }
         filterFragment = null
         isFilterOpen = false
-        binding.btnFilter.text = "Filter"
+        binding.btnFilter.text = context?.getString(R.string.filter)
         binding.btnSort.visibility = View.VISIBLE
         // Update button highlight when closing filter panel
         updateFilterButtonHighlight()
@@ -437,12 +430,11 @@ class DiscoverFragment : Fragment() {
             })
         }
 
-        childFragmentManager.beginTransaction()
-            .replace(R.id.filterContainer, filterFragment!!)
+        childFragmentManager.beginTransaction().replace(R.id.filterContainer, filterFragment!!)
             .commit()
 
         isFilterOpen = true
-        binding.btnFilter.text = "Close Filter"
+        binding.btnFilter.text = context?.getString(R.string.close_filter)
         binding.btnSort.visibility = View.GONE
     }
 
