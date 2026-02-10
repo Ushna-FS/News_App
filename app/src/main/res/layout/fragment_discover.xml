@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="?attr/colorSurface"
     android:fitsSystemWindows="true"
     tools:context=".screens.fragments.DiscoverFragment">
 
@@ -17,7 +17,7 @@
         android:background="@color/blueMain"
         android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
         app:title="Top Business News"
-        app:titleTextColor="@color/white"
+        android:textColor="?attr/colorOnSurface"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>

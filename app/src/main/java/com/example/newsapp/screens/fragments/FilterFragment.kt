@@ -15,6 +15,7 @@ import com.example.newsapp.databinding.FragmentFilterBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import com.example.newsapp.R
+import com.google.android.material.color.MaterialColors
 
 @AndroidEntryPoint
 class FilterFragment : Fragment() {
@@ -107,7 +108,10 @@ class FilterFragment : Fragment() {
             chip.setTextColor(resources.getColor(R.color.white))
         } else {
             chip.chipBackgroundColor = resources.getColorStateList(R.color.white)
-            chip.setTextColor(resources.getColor(R.color.blueMain))
+            chip.setTextColor(
+                MaterialColors.getColor(chip, com.google.android.material.R.attr.colorOnSurface)
+            )
+
         }
         chip.chipStrokeColor = resources.getColorStateList(R.color.blueMain)
     }

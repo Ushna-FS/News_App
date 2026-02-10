@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.newsapp.R
 import com.google.android.material.chip.Chip
+import com.google.android.material.color.MaterialColors
 
 class SourcesAdapter(
     private val onSelectionChanged: (List<String>) -> Unit
@@ -26,8 +27,8 @@ class SourcesAdapter(
     inner class SourceViewHolder(val chip: Chip) : RecyclerView.ViewHolder(chip)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SourceViewHolder {
-        val chip = LayoutInflater.from(parent.context)
-            .inflate(R.layout.source_chip, parent, false) as Chip
+        val chip =
+            LayoutInflater.from(parent.context).inflate(R.layout.source_chip, parent, false) as Chip
         return SourceViewHolder(chip)
     }
 
@@ -42,6 +43,10 @@ class SourcesAdapter(
 
         // Set initial visual state
         updateChipVisual(chip, selectedSources.contains(source))
+        holder.chip.setTextColor(
+            MaterialColors.getColor(holder.chip, com.google.android.material.R.attr.colorOnSurface)
+        )
+
 
         chip.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
@@ -57,11 +62,11 @@ class SourcesAdapter(
     private fun updateChipVisual(chip: Chip, isSelected: Boolean) {
         if (isSelected) {
             chip.setChipBackgroundColorResource(R.color.gray_light)
-            chip.setTextColor(Color.WHITE)
+            chip.setTextColor(chip.context.getColor(R.color.chip_text_color))
             chip.chipStrokeColor = chip.context.resources.getColorStateList(R.color.white)
         } else {
             chip.setChipBackgroundColorResource(R.color.white)
-            chip.setTextColor(Color.BLACK)
+            chip.setTextColor(chip.context.getColor(R.color.chip_text_color))
             chip.chipStrokeColor = chip.context.resources.getColorStateList(R.color.lightBlue)
         }
     }

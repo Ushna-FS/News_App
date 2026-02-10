@@ -8,11 +8,11 @@
     android:layout_margin="4dp"
     android:text="@string/source_name"
     android:checkable="true"
-    android:textColor="@color/black"
+    android:textColor="@color/chip_text_color"
     app:chipCornerRadius="20dp"
     app:chipStrokeWidth="1dp"
     app:chipStrokeColor="@color/lightBlue"
     app:checkedIconVisible="false"
-    app:chipBackgroundColor="@color/white"
+    app:chipBackgroundColor="?attr/colorSurface"
     app:chipStartPadding="12dp"
     app:chipEndPadding="12dp" />
