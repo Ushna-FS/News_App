@@ -85,8 +85,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.fragment)
     annotationProcessor(libs.androidx.hilt.compiler)
 
-    implementation(libs.androidx.paging.runtime.ktx)
-
+//    implementation(libs.androidx.paging.runtime.ktx)
+    implementation(libs.androidx.paging.runtime.ktx.v320)
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
 

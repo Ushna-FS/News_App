@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -14,6 +15,7 @@ import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.adapters.BookmarkAdapter
 import com.example.newsapp.data.local.BookmarkedArticle
 import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.models.Source
 import com.example.newsapp.databinding.FragmentBookmarksBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -28,9 +30,7 @@ class BookmarksFragment : Fragment() {
     private lateinit var bookmarkAdapter: BookmarkAdapter
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentBookmarksBinding.inflate(inflater, container, false)
         return binding.root
@@ -43,16 +43,13 @@ class BookmarksFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        bookmarkAdapter = BookmarkAdapter(
-            onItemClick = { article ->
-                // Open ArticleDetailFragment
-                openArticleDetail(article)
-            },
-            onBookmarkClick = { article ->
-                // Remove bookmark when clicked (since it's already bookmarked)
-                newsViewModel.toggleBookmark(article)
-            }
-        )
+        bookmarkAdapter = BookmarkAdapter(onItemClick = { article ->
+            // Open ArticleDetailFragment
+            openArticleDetail(article)
+        }, onBookmarkClick = { article ->
+            // Remove bookmark when clicked (since it's already bookmarked)
+            newsViewModel.toggleBookmark(article)
+        })
 
         binding.recyclerViewBookmarks.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -74,6 +71,11 @@ class BookmarksFragment : Fragment() {
                 binding.recyclerViewBookmarks.isVisible = hasBookmarks
             }
         }
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsViewModel.uiMessage.collect {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun openArticleDetail(article: Article) {
@@ -82,20 +84,14 @@ class BookmarksFragment : Fragment() {
         // Check if already showing to prevent duplicates
         if (fragmentManager.findFragmentByTag("ArticleDetail") != null) return
 
-        fragmentManager.beginTransaction()
-            .setCustomAnimations(
-                R.anim.slide_in_left,
-                R.anim.slide_out_right,
-                R.anim.slide_in_right,
-                R.anim.slide_out_left
-            )
-            .replace(
-                R.id.fragment_container,
-                ArticleDetailFragment.newInstance(article),
-                "ArticleDetail"
-            )
-            .addToBackStack("ArticleDetail")
-            .commit()
+        fragmentManager.beginTransaction().setCustomAnimations(
+            R.anim.slide_in_left,
+            R.anim.slide_out_right,
+            R.anim.slide_in_right,
+            R.anim.slide_out_left
+        ).replace(
+            R.id.fragment_container, ArticleDetailFragment.newInstance(article), "ArticleDetail"
+        ).addToBackStack("ArticleDetail").commit()
     }
 
     override fun onDestroyView() {
@@ -105,15 +101,16 @@ class BookmarksFragment : Fragment() {
 }
 
 // Extension function to convert BookmarkedArticle to Article
-private fun BookmarkedArticle.toArticle(): com.example.newsapp.data.models.Article {
-    return com.example.newsapp.data.models.Article(
-        source = com.example.newsapp.data.models.Source(id = null, name = this.sourceName),
+private fun BookmarkedArticle.toArticle():Article {
+    return Article(
+        source = Source(id = null, name = this.sourceName),
         author = this.author,
         title = this.title,
         description = this.description,
         url = this.url,
         urlToImage = this.urlToImage,
         publishedAt = this.publishedAt,
-        content = this.content
+        content = this.content,
+        isBookmarked = true
     )
 }

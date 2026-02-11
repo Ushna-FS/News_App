@@ -4,10 +4,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.R
@@ -44,17 +47,28 @@ class HomeFragment : Fragment() {
         setupRecyclerView()
         setupObservers()
         setupRetryButton()
+        observeBookmarkUpdates()
         binding.textWelcome.text = getString(R.string.home_user)
     }
 
+    private fun observeBookmarkUpdates() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                newsViewModel.bookmarkStateChanged.collect { (url, isBookmarked) ->
+                    newsAdapter.updateBookmarkIconForUrl(url, isBookmarked)
+                }
+            }
+        }
+    }
+
     private fun setupRecyclerView() {
-        newsAdapter = NewsPagingAdapter(
-            onItemClick = { article ->
+        newsAdapter = NewsPagingAdapter(onItemClick = { article ->
             openArticleDetail(article)
+        }, onBookmarkClick = { article ->
+            newsViewModel.toggleBookmark(article)
         }, onExtractSource = { article ->
             newsViewModel.extractSourceFromArticle(article)
-        }, viewModel = newsViewModel, lifecycleOwner = viewLifecycleOwner
-        )
+        })
 
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -142,6 +156,21 @@ class HomeFragment : Fragment() {
                 newsAdapter.submitData(pagingData)
             }
         }
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsViewModel.getAllBookmarkedUrls().collect { urls ->
+                newsAdapter.updateBookmarkedUrls(urls)
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsViewModel.uiMessage.collect {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+
+
+
     }
 
     override fun onDestroyView() {

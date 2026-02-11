@@ -3,6 +3,7 @@ package com.example.newsapp.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.newsapp.data.models.Article
 
 @Entity(tableName = "bookmarked_articles")
 data class BookmarkedArticle(
@@ -20,7 +21,7 @@ data class BookmarkedArticle(
 )
 
 // Extension function to convert Article to BookmarkedArticle
-fun com.example.newsapp.data.models.Article.toBookmarkedArticle(): BookmarkedArticle {
+fun Article.toBookmarkedArticle(): BookmarkedArticle {
     return BookmarkedArticle(
         url = this.url ?: "",
         title = this.title,

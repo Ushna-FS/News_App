@@ -90,8 +90,7 @@ class FilteredCombinedNewsPagingSource(
                 categories.isEmpty() || categories.any { it.equals("Business", ignoreCase = true) }
             val shouldFetchTech = categories.isEmpty() || categories.any {
                 it.equals(
-                    "Technology",
-                    ignoreCase = true
+                    "Technology", ignoreCase = true
                 )
             }
 

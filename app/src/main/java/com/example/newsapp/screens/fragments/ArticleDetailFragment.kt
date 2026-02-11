@@ -1,7 +1,6 @@
 package com.example.newsapp.screens.fragments
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,18 +8,22 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.newsapp.R
-import com.example.newsapp.viewmodels.ArticleDetailViewModel
+import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.models.getFormattedDate
 import com.example.newsapp.data.models.getFullContent
+import com.example.newsapp.viewmodels.ArticleDetailViewModel
 import com.example.newsapp.databinding.FragmentArticleDetailBinding
+import com.example.newsapp.viewmodels.NewsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import androidx.core.net.toUri
 
 @AndroidEntryPoint
 class ArticleDetailFragment : Fragment() {
@@ -30,11 +33,10 @@ class ArticleDetailFragment : Fragment() {
 
     private val viewModel: ArticleDetailViewModel by viewModels()
     private val json = Json { ignoreUnknownKeys = true }
+    private val newsViewModel: NewsViewModel by activityViewModels()
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentArticleDetailBinding.inflate(inflater, container, false)
         return binding.root
@@ -43,7 +45,7 @@ class ArticleDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupUI()
-        observeViewModel()
+        observeViewModelStates()
         if (viewModel.article.value == null) {
             loadArticle()
         }
@@ -56,12 +58,14 @@ class ArticleDetailFragment : Fragment() {
             }
 
             ivBookmark.setOnClickListener {
-                viewModel.toggleBookmark()
+                viewModel.article.value?.let {
+                    newsViewModel.toggleBookmark(it)
+                }
             }
 
             btnOpenInBrowser.setOnClickListener {
                 viewModel.article.value?.url?.let { url ->
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
                     startActivity(intent)
                 }
             }
@@ -79,16 +83,31 @@ class ArticleDetailFragment : Fragment() {
         }
     }
 
-    private fun observeViewModel() {
+    private fun observeViewModelStates() {
+        // Check bookmark state when article loads
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.article.collectLatest { article ->
-                article?.let { displayArticle(it) }
+                article?.let {
+                    displayArticle(it)
+
+                    // Check initial bookmark state
+                    newsViewModel.isArticleBookmarked(it.url).collectLatest { isBookmarked ->
+                        updateBookmarkIcon(isBookmarked)
+                        it.isBookmarked = isBookmarked
+                    }
+                }
             }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.isBookmarked.collectLatest { isBookmarked ->
-                updateBookmarkIcon(isBookmarked)
+            // Listen for ALL bookmark changes
+            newsViewModel.bookmarkStateChanged.collect { (url, isBookmarked) ->
+                viewModel.article.value?.let { article ->
+                    if (article.url == url) {
+                        updateBookmarkIcon(isBookmarked)
+                        article.isBookmarked = isBookmarked
+                    }
+                }
             }
         }
 
@@ -103,7 +122,8 @@ class ArticleDetailFragment : Fragment() {
     private fun loadArticle() {
         arguments?.getString(ARG_ARTICLE_JSON)?.let { jsonString ->
             try {
-                val article = json.decodeFromString<com.example.newsapp.data.models.Article>(jsonString)
+                val article =
+                    json.decodeFromString<Article>(jsonString)
                 viewModel.setArticle(article)
             } catch (e: Exception) {
                 showError("Failed to load article")
@@ -111,20 +131,17 @@ class ArticleDetailFragment : Fragment() {
         } ?: showError("No article data")
     }
 
-    private fun displayArticle(article: com.example.newsapp.data.models.Article) {
+    private fun displayArticle(article: Article) {
         binding.apply {
             tvTitle.text = article.title ?: ""
-            tvContent.text = article.getFullContent() // Now this will work
+            tvContent.text = article.getFullContent()
             tvAuthor.text = article.author ?: "Unknown Author"
             tvSource.text = article.source?.name ?: "Unknown Source"
-            tvPublishedAt.text = article.getFormattedDate() // Now this will work
+            tvPublishedAt.text = article.getFormattedDate()
 
             article.urlToImage?.let { imageUrl ->
-                Glide.with(requireContext())
-                    .load(imageUrl)
-                    .placeholder(R.drawable.ic_newspaper)
-                    .error(R.drawable.ic_newspaper)
-                    .into(ivArticleImage)
+                Glide.with(requireContext()).load(imageUrl).placeholder(R.drawable.ic_newspaper)
+                    .error(R.drawable.ic_newspaper).into(ivArticleImage)
             } ?: run {
                 ivArticleImage.setImageResource(R.drawable.ic_newspaper)
             }
@@ -156,7 +173,7 @@ class ArticleDetailFragment : Fragment() {
     companion object {
         private const val ARG_ARTICLE_JSON = "article_json"
 
-        fun newInstance(article: com.example.newsapp.data.models.Article): ArticleDetailFragment {
+        fun newInstance(article: Article): ArticleDetailFragment {
             val json = Json { ignoreUnknownKeys = true }
             return ArticleDetailFragment().apply {
                 arguments = Bundle().apply {

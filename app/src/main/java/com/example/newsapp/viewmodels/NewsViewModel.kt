@@ -35,21 +35,26 @@ class NewsViewModel @Inject constructor(
     private val _sortType = MutableStateFlow(SortType.NEWEST_FIRST)
     val sortType: StateFlow<SortType> = _sortType.asStateFlow()
 
-    private val _bookmarkStateChanged = MutableStateFlow<Pair<String, Boolean>?>(null)
-    val bookmarkStateChanged: StateFlow<Pair<String, Boolean>?> =
-        _bookmarkStateChanged.asStateFlow()
+    private val _uiMessage = MutableSharedFlow<String>()
+    val uiMessage = _uiMessage.asSharedFlow()
+
+
+    private val _bookmarkStateChanged = MutableSharedFlow<Pair<String, Boolean>>(replay = 1)
+    val bookmarkStateChanged = _bookmarkStateChanged.asSharedFlow()
 
     init {
         viewModelScope.launch {
             bookmarkRepository.bookmarkUpdates.collect { url ->
-                // When bookmark changes, update the state
                 val isBookmarked = bookmarkRepository.isBookmarked(url)
-                _bookmarkStateChanged.value = Pair(url, isBookmarked)
+                _bookmarkStateChanged.emit(Pair(url, isBookmarked))
+                if (!isBookmarked) {
+                    // show toast when removed from BookmarksFragment
+                    _uiMessage.emit("Article removed from bookmarks")
+                }
             }
         }
     }
 
-    // UPDATED: Combine all filter states and pass to repository
     @OptIn(ExperimentalCoroutinesApi::class)
     val combinedNewsPagingData: Flow<PagingData<Article>> = combine(
         selectedCategories, selectedSources, sortType
@@ -148,64 +153,27 @@ class NewsViewModel @Inject constructor(
             else -> "${categories.joinToString(", ")} (${sources.size} sources)"
         }
     }
-
-    private fun applyFiltersInternal(
-        allArticles: List<Article>,
-        categories: List<String>,
-        sources: List<String>,
-        sortType: SortType
-    ): List<Article> {
-        var filtered = allArticles
-
-        // Filter by category
-        if (categories.isNotEmpty()) {
-            filtered = filtered.filter { article ->
-                // Fix: Use safe call operator and provide default value
-                val articleSourceName = article.source?.name ?: ""
-                when {
-                    articleSourceName.contains(
-                        "TechCrunch", ignoreCase = true
-                    ) -> categories.any { it.equals("Technology", ignoreCase = true) }
-
-                    else -> categories.any { it.equals("Business", ignoreCase = true) }
-                }
-            }
-        }
-
-        // Filter by source
-        if (sources.isNotEmpty()) {
-            filtered = filtered.filter { article ->
-                // Fix: Use safe call operator and provide default value
-                val articleSourceName = article.source?.name ?: ""
-                sources.any { source ->
-                    articleSourceName.contains(source, ignoreCase = true)
-                }
-            }
-        }
-
-        // Apply sorting
-        return when (sortType) {
-            SortType.NEWEST_FIRST -> filtered.sortedByDescending { it.publishedAt }
-            SortType.OLDEST_FIRST -> filtered.sortedBy { it.publishedAt }
-        }
-    }
-
     fun toggleBookmark(article: Article) {
         viewModelScope.launch {
             val url = article.url
             val isBookmarked = bookmarkRepository.isBookmarked(url)
 
             if (isBookmarked) {
-                bookmarkRepository.removeBookmark(article)
-                // Show message immediately
-                _bookmarkStateChanged.value = Pair(url, false)
+                bookmarkRepository.removeBookmark(article) // This will emit
+                _uiMessage.emit("Article removed from bookmarks")
             } else {
-                bookmarkRepository.addBookmark(article)
-                // Show message immediately
-                _bookmarkStateChanged.value = Pair(url, true)
+                bookmarkRepository.addBookmark(article) // This will emit
+                _uiMessage.emit("Article added to bookmarks")
             }
+
         }
     }
+
+    fun getAllBookmarkedUrls(): Flow<Set<String>> = flow {
+        bookmarkRepository.getAllBookmarks().collect { bookmarks ->
+            emit(bookmarks.map { it.url }.toSet())
+        }
+    }.flowOn(Dispatchers.IO)
 
     fun isArticleBookmarked(url: String): Flow<Boolean> = flow {
         val isBookmarked = bookmarkRepository.isBookmarked(url)
@@ -220,4 +188,6 @@ class NewsViewModel @Inject constructor(
         val hasCustomSources = _selectedSources.value.isNotEmpty()
         return hasCustomCategories || hasCustomSources
     }
+
+
 }

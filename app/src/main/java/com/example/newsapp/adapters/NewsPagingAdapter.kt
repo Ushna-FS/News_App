@@ -3,10 +3,7 @@ package com.example.newsapp.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.core.view.isVisible
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
 import androidx.paging.LoadStateAdapter
 import androidx.paging.PagingDataAdapter
@@ -14,9 +11,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.newsapp.R
-import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.data.models.Article
-import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.text.SimpleDateFormat
@@ -24,15 +19,13 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+
 class NewsPagingAdapter(
     private val onItemClick: (Article) -> Unit,
+    private val onBookmarkClick: (Article) -> Unit,
     private val onExtractSource: ((Article) -> Unit)? = null,
-    private val viewModel: NewsViewModel? = null,
-    private val lifecycleOwner: LifecycleOwner? = null
-) : PagingDataAdapter<Article, NewsPagingAdapter.ArticleViewHolder>(ARTICLE_COMPARATOR) {
 
-    private val bookmarkStates = mutableMapOf<String, Boolean>()
-
+    ) : PagingDataAdapter<Article, NewsPagingAdapter.ArticleViewHolder>(ARTICLE_COMPARATOR) {
     companion object {
         private val ARTICLE_COMPARATOR = object : DiffUtil.ItemCallback<Article>() {
             override fun areItemsTheSame(oldItem: Article, newItem: Article): Boolean {
@@ -48,20 +41,45 @@ class NewsPagingAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArticleViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val view = inflater.inflate(R.layout.item_news_article, parent, false)
-        return ArticleViewHolder(view, onItemClick, onExtractSource, viewModel, lifecycleOwner)
+
+        return ArticleViewHolder(view, this, onItemClick, onBookmarkClick, onExtractSource)
+
     }
 
     override fun onBindViewHolder(holder: ArticleViewHolder, position: Int) {
-        getItem(position)?.let { holder.bind(it) }
+        getItem(position)?.let {
+            holder.bind(it)
+
+        }
     }
 
-    inner class ArticleViewHolder(
+    fun updateBookmarkIconForUrl(url: String, isBookmarked: Boolean) {
+        for (i in 0 until itemCount) {
+            getItem(i)?.let { article ->
+                if (article.url == url) {
+                    article.isBookmarked = isBookmarked
+                    notifyItemChanged(i)
+                    return
+                }
+            }
+        }
+    }
+    var bookmarkedUrls: Set<String> = emptySet()
+
+    fun updateBookmarkedUrls(urls: Set<String>) {
+        bookmarkedUrls = urls
+        notifyDataSetChanged()
+    }
+
+
+    class ArticleViewHolder(
         itemView: View,
+        private val adapter: NewsPagingAdapter,
         private val onItemClick: (Article) -> Unit,
-        private val onExtractSource: ((Article) -> Unit)?,
-        private val viewModel: NewsViewModel?,
-        private val lifecycleOwner: LifecycleOwner?
-    ) : RecyclerView.ViewHolder(itemView) {
+        private val onBookmarkClick: (Article) -> Unit,
+        private val onExtractSource: ((Article) -> Unit)? = null,
+
+        ) : RecyclerView.ViewHolder(itemView) {
 
         private val imageNews = itemView.findViewById<android.widget.ImageView>(R.id.ivNewsImage)
         private val textTitle = itemView.findViewById<android.widget.TextView>(R.id.tvNewsTitle)
@@ -76,12 +94,14 @@ class NewsPagingAdapter(
             textDescription.text = article.description ?: ""
             textSource.text = article.source?.name ?: "Unknown"
             textTime.text = formatDate(article.publishedAt)
-            val articleUrl = article.url ?: ""
 
             // Extract source for filter
             onExtractSource?.invoke(article)
-            val isBookmarked = bookmarkStates[articleUrl] ?: false
-            updateBookmarkIconVisual(isBookmarked)
+            //bookmark state
+            val isBookmarkedNow = adapter.bookmarkedUrls.contains(article.url)
+            article.isBookmarked = isBookmarkedNow
+            updateBookmarkIconVisual(isBookmarkedNow)
+
 
             // Load image with Glide
             article.urlToImage?.let { url ->
@@ -97,33 +117,10 @@ class NewsPagingAdapter(
             itemView.setOnClickListener {
                 onItemClick(article)
             }
-
-
             bookmarkIcon.setOnClickListener {
-                // Toggle visual state immediately
-                val currentDrawable = bookmarkIcon.drawable
-                val isCurrentlyFilled = currentDrawable.constantState?.equals(
-                    itemView.context.getDrawable(R.drawable.ic_bookmark)?.constantState
-                ) == true
-
-                if (isCurrentlyFilled) {
-                    bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)
-                } else {
-                    bookmarkIcon.setImageResource(R.drawable.ic_bookmark)
-                }
-                bookmarkIcon.setColorFilter(itemView.context.getColor(R.color.blueMain))
-
-                // Show toast
-                val message = if (isCurrentlyFilled) {
-                    "Article removed from bookmarks"
-                } else {
-                    "Article added to bookmarks"
-                }
-                Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
-
-                // Perform bookmark operation
-                viewModel?.toggleBookmark(article)
+                onBookmarkClick(article)
             }
+
         }
 
         private fun updateBookmarkIconVisual(isBookmarked: Boolean) {
@@ -135,6 +132,7 @@ class NewsPagingAdapter(
                 bookmarkIcon.setColorFilter(itemView.context.getColor(R.color.blueMain))
             }
         }
+
 
         private fun formatDate(publishedAt: String?): String {
             return try {
@@ -159,25 +157,8 @@ class NewsPagingAdapter(
                 }
             }
         }
-
-        private fun showBookmarkToast(article: Article) {
-            // Check current bookmark state
-            val url = article.url
-            if (url != null) {
-                lifecycleOwner?.lifecycleScope?.launch {
-                    viewModel?.isArticleBookmarked(url)?.collect { isBookmarked ->
-                        val message = if (isBookmarked) {
-                            "Article removed from bookmarks"
-                        } else {
-                            "Article added to bookmarks"
-                        }
-                        Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        }
     }
-    
+
     class NewsLoadStateAdapter(private val retry: () -> Unit) :
         LoadStateAdapter<NewsLoadStateAdapter.LoadStateViewHolder>() {
 
@@ -193,6 +174,7 @@ class NewsPagingAdapter(
         override fun onBindViewHolder(holder: LoadStateViewHolder, loadState: LoadState) {
             holder.bind(loadState)
         }
+
 
         class LoadStateViewHolder(
             itemView: View,

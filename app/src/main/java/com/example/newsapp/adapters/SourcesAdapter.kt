@@ -1,6 +1,6 @@
 package com.example.newsapp.adapters
 
-import android.graphics.Color
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -13,7 +13,7 @@ class SourcesAdapter(
 ) : RecyclerView.Adapter<SourcesAdapter.SourceViewHolder>() {
 
     private val sourcesList = mutableListOf<String>()
-    private val selectedSources = mutableSetOf<String>() // Track selection in adapter
+    private val selectedSources = mutableSetOf<String>()
 
     // Expose selected sources for external access
     fun getSelectedSources(): List<String> = selectedSources.toList()
@@ -59,6 +59,7 @@ class SourcesAdapter(
         }
     }
 
+    @SuppressLint("UseCompatLoadingForColorStateLists")
     private fun updateChipVisual(chip: Chip, isSelected: Boolean) {
         if (isSelected) {
             chip.setChipBackgroundColorResource(R.color.gray_light)

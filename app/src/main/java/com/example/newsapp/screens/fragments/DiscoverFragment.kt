@@ -15,7 +15,9 @@ import androidx.activity.addCallback
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.R
@@ -60,19 +62,33 @@ class DiscoverFragment : Fragment() {
         observeFilters()
         setupSortButton()
         setupFilterFragment()
+        observeBookmarkUpdates()
 
         // Initialize button highlights
         updateSortButtonHighlight()
         updateFilterButtonHighlight()
     }
 
+    private fun observeBookmarkUpdates() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                newsViewModel.getAllBookmarkedUrls().collect { urls ->
+                    newsAdapter.updateBookmarkedUrls(urls)
+                }
+            }
+        }
+    }
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
             onItemClick = { article ->
                 openArticleDetail(article)
-            }, onExtractSource = { article ->
+            },
+            onBookmarkClick = { article ->
+                newsViewModel.toggleBookmark(article)
+            },
+            onExtractSource = { article ->
                 newsViewModel.extractSourceFromArticle(article)
-            }, viewModel = newsViewModel, lifecycleOwner = viewLifecycleOwner
+            }
         )
 
         newsAdapter.addLoadStateListener { loadState ->
@@ -194,6 +210,10 @@ class DiscoverFragment : Fragment() {
                 updateFilterSummary()
             }
         }
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsViewModel.uiMessage.collect {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+            }}
 
         // Observe sort changes to update button highlight
         viewLifecycleOwner.lifecycleScope.launch {
@@ -239,6 +259,14 @@ class DiscoverFragment : Fragment() {
                 }
             }
         }
+        // Observe bookmark changes to update icons in adapter
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsViewModel.getAllBookmarkedUrls().collect { urls ->
+                newsAdapter.updateBookmarkedUrls(urls)
+            }
+        }
+
+
     }
 
     private fun observeFilters() {
