@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -99,21 +100,21 @@ class FilterFragment : Fragment() {
         }
     }
 
-    @SuppressLint("UseCompatLoadingForColorStateLists")
     private fun updateCategoryChipVisual(
         chip: com.google.android.material.chip.Chip, isSelected: Boolean
     ) {
         if (isSelected) {
-            chip.chipBackgroundColor = resources.getColorStateList(R.color.blueMain)
-            chip.setTextColor(resources.getColor(R.color.white))
+            chip.chipBackgroundColor =
+                ContextCompat.getColorStateList(chip.context, R.color.blueMain)
+            chip.setTextColor(ContextCompat.getColor(chip.context, R.color.white))
         } else {
-            chip.chipBackgroundColor = resources.getColorStateList(R.color.white)
+            chip.chipBackgroundColor = ContextCompat.getColorStateList(chip.context, R.color.white)
             chip.setTextColor(
                 MaterialColors.getColor(chip, com.google.android.material.R.attr.colorOnSurface)
             )
 
         }
-        chip.chipStrokeColor = resources.getColorStateList(R.color.blueMain)
+        chip.chipStrokeColor = ContextCompat.getColorStateList(chip.context, R.color.blueMain)
     }
 
     private fun getSelectedCategories(): List<String> {

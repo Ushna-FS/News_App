@@ -53,22 +53,38 @@ class NewsPagingAdapter(
         }
     }
 
-    fun updateBookmarkIconForUrl(url: String, isBookmarked: Boolean) {
+
+    override fun onBindViewHolder(
+        holder: ArticleViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        if (payloads.contains("BOOKMARK_STATE")) {
+            getItem(position)?.let { article ->
+                val isBookmarked = bookmarkedUrls.contains(article.url)
+                holder.updateBookmarkIconVisual(isBookmarked)
+            }
+        } else {
+            super.onBindViewHolder(holder, position, payloads)
+        }
+    }
+
+    fun updateBookmarkIconForUrl(url: String) {
         for (i in 0 until itemCount) {
             getItem(i)?.let { article ->
                 if (article.url == url) {
-                    article.isBookmarked = isBookmarked
-                    notifyItemChanged(i)
+                    notifyItemChanged(i, "BOOKMARK_STATE")
                     return
                 }
             }
         }
     }
+
     var bookmarkedUrls: Set<String> = emptySet()
 
     fun updateBookmarkedUrls(urls: Set<String>) {
         bookmarkedUrls = urls
-        notifyDataSetChanged()
+        notifyItemRangeChanged(0, itemCount, "BOOKMARK_STATE")
     }
 
 
@@ -90,16 +106,15 @@ class NewsPagingAdapter(
         private val bookmarkIcon = itemView.findViewById<android.widget.ImageView>(R.id.ivBookmark)
 
         fun bind(article: Article) {
-            textTitle.text = article.title ?: ""
+            textTitle.text = article.title
             textDescription.text = article.description ?: ""
-            textSource.text = article.source?.name ?: "Unknown"
+            textSource.text = article.source.name ?: "Unknown"
             textTime.text = formatDate(article.publishedAt)
 
             // Extract source for filter
             onExtractSource?.invoke(article)
             //bookmark state
             val isBookmarkedNow = adapter.bookmarkedUrls.contains(article.url)
-            article.isBookmarked = isBookmarkedNow
             updateBookmarkIconVisual(isBookmarkedNow)
 
 
@@ -123,7 +138,7 @@ class NewsPagingAdapter(
 
         }
 
-        private fun updateBookmarkIconVisual(isBookmarked: Boolean) {
+        fun updateBookmarkIconVisual(isBookmarked: Boolean) {
             if (isBookmarked) {
                 bookmarkIcon.setImageResource(R.drawable.ic_bookmark)
                 bookmarkIcon.setColorFilter(itemView.context.getColor(R.color.blueMain))
@@ -146,14 +161,14 @@ class NewsPagingAdapter(
                 outputFormat.format(date)
             } catch (e: Exception) {
                 try {
-                    publishedAt?.substringBefore("T")?.let { datePart ->
+                    e.printStackTrace(); publishedAt?.substringBefore("T")?.let { datePart ->
                         val dateOnlyFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                         val date = dateOnlyFormat.parse(datePart)
                         val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
                         outputFormat.format(date ?: Date())
                     } ?: ""
                 } catch (e: Exception) {
-                    publishedAt?.substringBefore("T") ?: ""
+                    e.printStackTrace(); publishedAt?.substringBefore("T") ?: ""
                 }
             }
         }

@@ -12,11 +12,6 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-
-    // Fragments
-    private val homeFragment by lazy { HomeFragment() }
-    private val discoverFragment by lazy { DiscoverFragment() }
-    private val bookmarksFragment by lazy { BookmarksFragment() }
     private var currentFragment: Fragment? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,7 +22,17 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupBottomNavigation()
-        showFragment(homeFragment)
+        showFragment(HomeFragment())
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : androidx.activity.OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    handleBackPress()
+                }
+            }
+        )
+
+
     }
 
     private fun setupBottomNavigation() {
@@ -35,21 +40,21 @@ class MainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.home -> {
                     if (!isArticleDetailShowing()) {
-                        showFragment(homeFragment)
+                        showFragment(HomeFragment())
                     }
                     true
                 }
 
                 R.id.discover -> {
                     if (!isArticleDetailShowing()) {
-                        showFragment(discoverFragment)
+                        showFragment(DiscoverFragment())
                     }
                     true
                 }
 
                 R.id.bookmarks -> {
                     if (!isArticleDetailShowing()) {
-                        showFragment(bookmarksFragment)
+                        showFragment(BookmarksFragment())
                     }
                     true
                 }
@@ -65,52 +70,35 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showFragment(fragment: Fragment) {
-        // Don't replace if it's already showing
-        if (currentFragment == fragment && !isArticleDetailShowing()) return
+        supportFragmentManager.popBackStack(
+            null,
+            androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE
+        )
 
-        supportFragmentManager.beginTransaction().apply {
-            // Clear back stack if we're switching bottom nav tabs
-            if (!isArticleDetailShowing()) {
-                supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
-            }
-
-            // Add animation only if files exist
-            try {
-                setCustomAnimations(
-                    R.anim.slide_in_right,
-                    R.anim.slide_out_left,
-                    R.anim.slide_in_left,
-                    R.anim.slide_out_right
-                )
-            } catch (e: Exception) {
-                // If animation files don't exist, continue without animation
-            }
-
-            replace(R.id.fragment_container, fragment) // Always use REPLACE
-            if (!isArticleDetailShowing()) {
-                // Only add to back stack if not coming from ArticleDetail
-                addToBackStack(fragment::class.java.simpleName)
-            }
-            commit()
-        }
+        supportFragmentManager.beginTransaction()
+            .setCustomAnimations(
+                R.anim.slide_in_right,
+                R.anim.slide_out_left,
+                R.anim.slide_in_left,
+                R.anim.slide_out_right
+            )
+            .replace(R.id.fragment_container, fragment)
+            .commit()
 
         currentFragment = fragment
     }
 
-    override fun onBackPressed() {
-        // If ArticleDetailFragment is showing, pop it
-        if (isArticleDetailShowing()) {
-            supportFragmentManager.popBackStack()
-        }
-        // If there are fragments in back stack from bottom navigation, pop them
-        else if (supportFragmentManager.backStackEntryCount > 0) {
-            supportFragmentManager.popBackStack()
-        }
-        // If not on home and back stack is empty, go to home
-        else if (currentFragment != homeFragment) {
-            binding.bottomNavigation.selectedItemId = R.id.home
-        } else {
-            super.onBackPressed()
+    private fun handleBackPress() {
+        when {
+            isArticleDetailShowing() -> {
+                supportFragmentManager.popBackStack()
+            }
+
+            currentFragment !is HomeFragment -> {
+                binding.bottomNavigation.selectedItemId = R.id.home
+            }
+
+            else -> finish()
         }
     }
 }

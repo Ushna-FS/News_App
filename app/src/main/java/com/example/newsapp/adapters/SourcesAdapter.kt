@@ -1,18 +1,33 @@
 package com.example.newsapp.adapters
 
-import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.newsapp.R
 import com.google.android.material.chip.Chip
 import com.google.android.material.color.MaterialColors
+import androidx.core.content.ContextCompat
 
 class SourcesAdapter(
     private val onSelectionChanged: (List<String>) -> Unit
-) : RecyclerView.Adapter<SourcesAdapter.SourceViewHolder>() {
+) : ListAdapter<String,SourcesAdapter.SourceViewHolder>(DIFF_CALLBACK) {
 
-    private val sourcesList = mutableListOf<String>()
+    companion object {
+        private val DIFF_CALLBACK = object : DiffUtil.ItemCallback<String>() {
+            override fun areItemsTheSame(oldItem: String, newItem: String): Boolean {
+                return oldItem == newItem
+            }
+
+            override fun areContentsTheSame(oldItem: String, newItem: String): Boolean {
+                return oldItem == newItem
+            }
+        }
+    }
+
+
+    //    private val sourcesList = mutableListOf<String>()
     private val selectedSources = mutableSetOf<String>()
 
     // Expose selected sources for external access
@@ -21,10 +36,10 @@ class SourcesAdapter(
     // Clear all selections
     fun clearSelections() {
         selectedSources.clear()
-        notifyDataSetChanged()
+        submitList(currentList.toList())
     }
 
-    inner class SourceViewHolder(val chip: Chip) : RecyclerView.ViewHolder(chip)
+    class SourceViewHolder(val chip: Chip) : RecyclerView.ViewHolder(chip)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SourceViewHolder {
         val chip =
@@ -32,10 +47,10 @@ class SourcesAdapter(
         return SourceViewHolder(chip)
     }
 
-    override fun getItemCount() = sourcesList.size
+//    override fun getItemCount() = sourcesList.size
 
     override fun onBindViewHolder(holder: SourceViewHolder, position: Int) {
-        val source = sourcesList[position]
+        val source =getItem(position)
         val chip = holder.chip
 
         chip.text = source
@@ -59,26 +74,23 @@ class SourcesAdapter(
         }
     }
 
-    @SuppressLint("UseCompatLoadingForColorStateLists")
     private fun updateChipVisual(chip: Chip, isSelected: Boolean) {
         if (isSelected) {
             chip.setChipBackgroundColorResource(R.color.gray_light)
             chip.setTextColor(chip.context.getColor(R.color.chip_text_color))
-            chip.chipStrokeColor = chip.context.resources.getColorStateList(R.color.white)
+            chip.chipStrokeColor = ContextCompat.getColorStateList(chip.context,R.color.white)
         } else {
             chip.setChipBackgroundColorResource(R.color.white)
             chip.setTextColor(chip.context.getColor(R.color.chip_text_color))
-            chip.chipStrokeColor = chip.context.resources.getColorStateList(R.color.lightBlue)
+            chip.chipStrokeColor = ContextCompat.getColorStateList(chip.context,R.color.lightBlue)
         }
     }
 
     fun submitList(list: List<String>, selected: List<String>) {
-        sourcesList.clear()
-        sourcesList.addAll(list)
 
         selectedSources.clear()
         selectedSources.addAll(selected)
+        submitList(list)
 
-        notifyDataSetChanged()
     }
 }

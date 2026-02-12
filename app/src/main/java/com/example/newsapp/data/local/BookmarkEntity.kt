@@ -23,14 +23,14 @@ data class BookmarkedArticle(
 // Extension function to convert Article to BookmarkedArticle
 fun Article.toBookmarkedArticle(): BookmarkedArticle {
     return BookmarkedArticle(
-        url = this.url ?: "",
+        url = this.url,
         title = this.title,
         description = this.description,
         urlToImage = this.urlToImage,
         publishedAt = this.publishedAt,
         content = this.content,
-        sourceName = this.source?.name,
-        sourceId = this.source?.id,
+        sourceName = this.source.name,
+        sourceId = this.source.id,
         author = this.author,
         bookmarkedAt = System.currentTimeMillis()
     )

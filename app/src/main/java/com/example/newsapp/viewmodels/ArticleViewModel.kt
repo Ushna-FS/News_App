@@ -21,7 +21,6 @@ class ArticleDetailViewModel @Inject constructor(
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _isBookmarked = MutableStateFlow(false)
-    val isBookmarked: StateFlow<Boolean> = _isBookmarked.asStateFlow()
 
     init {
         // Listen for bookmark updates
@@ -41,23 +40,6 @@ class ArticleDetailViewModel @Inject constructor(
         _article.value = article
         updateBookmarkStatus()
         _isLoading.value = false
-    }
-
-
-    fun toggleBookmark() {
-        viewModelScope.launch {
-            _article.value?.let { article ->
-                val currentlyBookmarked = isBookmarked.value
-
-                if (currentlyBookmarked) {
-                    bookmarkRepository.removeBookmark(article.url) // Use the string version
-                    _isBookmarked.value = false
-                } else {
-                    bookmarkRepository.addBookmark(article)
-                    _isBookmarked.value = true
-                }
-            }
-        }
     }
 
     private fun updateBookmarkStatus() {

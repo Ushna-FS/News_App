@@ -105,7 +105,7 @@ private fun BookmarkedArticle.toArticle():Article {
     return Article(
         source = Source(id = null, name = this.sourceName),
         author = this.author,
-        title = this.title,
+        title = this.title.toString(),
         description = this.description,
         url = this.url,
         urlToImage = this.urlToImage,

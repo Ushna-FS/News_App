@@ -1,6 +1,6 @@
 package com.example.newsapp.data.models
 
-import kotlinx.serialization.Serializable
+import java.io.Serializable
 
 
 data class NewsResponse(
@@ -9,11 +9,10 @@ data class NewsResponse(
     val articles: List<Article>
 )
 
-@Serializable
 data class Article(
-    val source: Source?,
+    val source: Source,
     val author: String?,
-    val title: String?,
+    val title: String,
     val description: String?,
     val url: String,
     val urlToImage: String?,
@@ -21,13 +20,12 @@ data class Article(
     val content: String?,
     var isBookmarked: Boolean = false
 
-)
+): Serializable
 
-@Serializable
 data class Source(
     val id: String?,
     val name: String?
-)
+):Serializable
 
 fun Article.getFullContent(): String? {
     return when {

@@ -54,8 +54,8 @@ class HomeFragment : Fragment() {
     private fun observeBookmarkUpdates() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                newsViewModel.bookmarkStateChanged.collect { (url, isBookmarked) ->
-                    newsAdapter.updateBookmarkIconForUrl(url, isBookmarked)
+                newsViewModel.bookmarkStateChanged.collect { (url) ->
+                    newsAdapter.updateBookmarkIconForUrl(url)
                 }
             }
         }
@@ -115,7 +115,7 @@ class HomeFragment : Fragment() {
                 binding.recyclerView.isVisible = false
                 binding.llEmptyState.isVisible = true
                 binding.btnRetry.isVisible = false   // No retry on empty success
-                binding.textEmpty.text = "No articles found"
+                binding.textEmpty.text = context?.getString(R.string.no_articles_found)
             } else {
                 binding.recyclerView.isVisible = true
                 binding.llEmptyState.isVisible = false
@@ -167,8 +167,6 @@ class HomeFragment : Fragment() {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
             }
         }
-
-
 
 
     }

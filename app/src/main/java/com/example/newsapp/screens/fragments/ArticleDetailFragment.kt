@@ -22,7 +22,6 @@ import com.example.newsapp.viewmodels.NewsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import androidx.core.net.toUri
 
 @AndroidEntryPoint
@@ -32,7 +31,6 @@ class ArticleDetailFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: ArticleDetailViewModel by viewModels()
-    private val json = Json { ignoreUnknownKeys = true }
     private val newsViewModel: NewsViewModel by activityViewModels()
 
     override fun onCreateView(
@@ -120,23 +118,20 @@ class ArticleDetailFragment : Fragment() {
     }
 
     private fun loadArticle() {
-        arguments?.getString(ARG_ARTICLE_JSON)?.let { jsonString ->
-            try {
-                val article =
-                    json.decodeFromString<Article>(jsonString)
-                viewModel.setArticle(article)
-            } catch (e: Exception) {
-                showError("Failed to load article")
-            }
-        } ?: showError("No article data")
+        val article = arguments?.getSerializable(ARG_ARTICLE) as? Article
+        if (article != null) {
+            viewModel.setArticle(article)
+        } else {
+            showError()
+        }
     }
 
     private fun displayArticle(article: Article) {
         binding.apply {
-            tvTitle.text = article.title ?: ""
+            tvTitle.text = article.title
             tvContent.text = article.getFullContent()
             tvAuthor.text = article.author ?: "Unknown Author"
-            tvSource.text = article.source?.name ?: "Unknown Source"
+            tvSource.text = article.source.name ?: "Unknown Source"
             tvPublishedAt.text = article.getFormattedDate()
 
             article.urlToImage?.let { imageUrl ->
@@ -158,7 +153,8 @@ class ArticleDetailFragment : Fragment() {
         }
     }
 
-    private fun showError(message: String) {
+    private fun showError() {
+        val message = "No article data"
         binding.progressBar.isVisible = false
         binding.tvError.isVisible = true
         binding.tvError.text = message
@@ -170,14 +166,14 @@ class ArticleDetailFragment : Fragment() {
         _binding = null
     }
 
+    //
     companion object {
-        private const val ARG_ARTICLE_JSON = "article_json"
+        private const val ARG_ARTICLE = "arg_article"
 
         fun newInstance(article: Article): ArticleDetailFragment {
-            val json = Json { ignoreUnknownKeys = true }
             return ArticleDetailFragment().apply {
                 arguments = Bundle().apply {
-                    putString(ARG_ARTICLE_JSON, json.encodeToString(article))
+                    putSerializable(ARG_ARTICLE, article)
                 }
             }
         }
