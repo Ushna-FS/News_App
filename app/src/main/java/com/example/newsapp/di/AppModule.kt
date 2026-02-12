@@ -9,6 +9,7 @@ import com.example.newsapp.data.repository.NewsRepository
 import com.example.newsapp.data.api.ApiService
 import com.example.newsapp.data.local.BookmarkDao
 import com.example.newsapp.data.local.NewsDatabase
+import com.example.newsapp.utils.DateFormatter
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -50,8 +51,8 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideNewsRepository(apiService: ApiService): NewsRepository {
-        return NewsRepository(apiService)
+    fun provideNewsRepository(apiService: ApiService, dateFormatter: DateFormatter ): NewsRepository {
+        return NewsRepository(apiService, dateFormatter)
     }
 
     @Singleton

@@ -10,10 +10,12 @@ import com.example.newsapp.data.paging.NewsType
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import com.example.newsapp.data.paging.FilteredCombinedNewsPagingSource
+import com.example.newsapp.utils.DateFormatter
 
 
 class NewsRepository @Inject constructor(
-    val apiService: ApiService
+    val apiService: ApiService,
+    private val dateFormatter: DateFormatter
 ) {
 
     fun getCombinedNewsStream(
@@ -29,7 +31,8 @@ class NewsRepository @Inject constructor(
                     apiService = apiService,
                     categories = categories,
                     sources = sources,
-                    sortType = sortType
+                    sortType = sortType,
+                    dateFormatter=dateFormatter
                 )
             }).flow
     }

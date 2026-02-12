@@ -5,11 +5,9 @@ import androidx.paging.PagingState
 import com.example.newsapp.data.api.ApiService
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.repository.SortType
+import com.example.newsapp.utils.DateFormatter
 import retrofit2.HttpException
 import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.TimeZone
 
 sealed class NewsType {
     object Business : NewsType()
@@ -71,6 +69,7 @@ class FilteredCombinedNewsPagingSource(
     private val categories: List<String> = emptyList(),
     private val sources: List<String> = emptyList(),
     private val sortType: SortType = SortType.NEWEST_FIRST,
+    private val dateFormatter: DateFormatter,
 ) : PagingSource<Int, Article>() {
 
     override fun getRefreshKey(state: PagingState<Int, Article>): Int? {
@@ -123,7 +122,7 @@ class FilteredCombinedNewsPagingSource(
             // Apply source filter if sources are selected
             if (sources.isNotEmpty()) {
                 filteredArticles = filteredArticles.filter { article ->
-                    val sourceName = article.source?.name ?: ""
+                    val sourceName = article.source.name ?: ""
                     sources.any { source ->
                         sourceName.contains(source, ignoreCase = true)
                     }
@@ -131,17 +130,15 @@ class FilteredCombinedNewsPagingSource(
             }
 
             filteredArticles = when (sortType) {
-                SortType.NEWEST_FIRST -> filteredArticles.sortedByDescending {
-                    it.publishedAt?.let { dateStr ->
-                        parseDateToLong(dateStr)
-                    } ?: 0L
-                }
+                SortType.NEWEST_FIRST ->
+                    filteredArticles.sortedByDescending {
+                        dateFormatter.parseToTimestamp(it.publishedAt)
+                    }
 
-                SortType.OLDEST_FIRST -> filteredArticles.sortedBy {
-                    it.publishedAt?.let { dateStr ->
-                        parseDateToLong(dateStr)
-                    } ?: 0L
-                }
+                SortType.OLDEST_FIRST ->
+                    filteredArticles.sortedBy {
+                        dateFormatter.parseToTimestamp(it.publishedAt)
+                    }
             }
 
             val hasMore =
@@ -154,31 +151,6 @@ class FilteredCombinedNewsPagingSource(
             )
         } catch (e: Exception) {
             LoadResult.Error(e)
-        }
-    }
-
-    private fun parseDateToLong(dateString: String?): Long {
-        return try {
-            if (dateString.isNullOrEmpty()) 0L else {
-                val formats = listOf(
-                    "yyyy-MM-dd'T'HH:mm:ss'Z'",
-                    "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-                    "yyyy-MM-dd HH:mm:ss",
-                    "yyyy-MM-dd"
-                )
-                for (format in formats) {
-                    try {
-                        val sdf = SimpleDateFormat(format, Locale.getDefault())
-                        sdf.timeZone = TimeZone.getTimeZone("UTC")
-                        return sdf.parse(dateString)?.time ?: 0L
-                    } catch (e: Exception) {
-                        continue
-                    }
-                }
-                0L
-            }
-        } catch (e: Exception) {
-            0L
         }
     }
 }

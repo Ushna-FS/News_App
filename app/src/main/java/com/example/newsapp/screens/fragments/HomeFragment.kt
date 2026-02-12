@@ -18,7 +18,9 @@ import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.databinding.FragmentHomeBinding
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.data.models.Article
+import com.example.newsapp.utils.DateFormatter
 import dagger.hilt.android.AndroidEntryPoint
+import jakarta.inject.Inject
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -33,6 +35,9 @@ class HomeFragment : Fragment() {
 
     private val newsViewModel: NewsViewModel by activityViewModels()
     private lateinit var newsAdapter: NewsPagingAdapter
+
+    @Inject
+    lateinit var dateFormatter: DateFormatter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -68,7 +73,9 @@ class HomeFragment : Fragment() {
             newsViewModel.toggleBookmark(article)
         }, onExtractSource = { article ->
             newsViewModel.extractSourceFromArticle(article)
-        })
+        },
+            dateFormatter=dateFormatter
+        )
 
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())

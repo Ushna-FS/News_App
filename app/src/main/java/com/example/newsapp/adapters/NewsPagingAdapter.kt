@@ -1,7 +1,6 @@
 package com.example.newsapp.adapters
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.paging.LoadState
@@ -12,20 +11,20 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.newsapp.R
 import com.example.newsapp.data.models.Article
+import com.example.newsapp.databinding.ItemLoadingBinding
+import com.example.newsapp.databinding.ItemNewsArticleBinding
+import com.example.newsapp.utils.DateFormatter
 import java.io.IOException
 import java.net.SocketTimeoutException
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 
 
 class NewsPagingAdapter(
     private val onItemClick: (Article) -> Unit,
     private val onBookmarkClick: (Article) -> Unit,
     private val onExtractSource: ((Article) -> Unit)? = null,
+    private val dateFormatter: DateFormatter
 
-    ) : PagingDataAdapter<Article, NewsPagingAdapter.ArticleViewHolder>(ARTICLE_COMPARATOR) {
+) : PagingDataAdapter<Article, NewsPagingAdapter.ArticleViewHolder>(ARTICLE_COMPARATOR) {
     companion object {
         private val ARTICLE_COMPARATOR = object : DiffUtil.ItemCallback<Article>() {
             override fun areItemsTheSame(oldItem: Article, newItem: Article): Boolean {
@@ -39,10 +38,21 @@ class NewsPagingAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArticleViewHolder {
-        val inflater = LayoutInflater.from(parent.context)
-        val view = inflater.inflate(R.layout.item_news_article, parent, false)
 
-        return ArticleViewHolder(view, this, onItemClick, onBookmarkClick, onExtractSource)
+        val binding = ItemNewsArticleBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
+
+        return ArticleViewHolder(
+            binding,
+            this,
+            onItemClick,
+            onBookmarkClick,
+            onExtractSource,
+            dateFormatter
+        )
 
     }
 
@@ -89,27 +99,20 @@ class NewsPagingAdapter(
 
 
     class ArticleViewHolder(
-        itemView: View,
+        private val binding: ItemNewsArticleBinding,
         private val adapter: NewsPagingAdapter,
         private val onItemClick: (Article) -> Unit,
         private val onBookmarkClick: (Article) -> Unit,
         private val onExtractSource: ((Article) -> Unit)? = null,
+        private val dateFormatter: DateFormatter
 
-        ) : RecyclerView.ViewHolder(itemView) {
-
-        private val imageNews = itemView.findViewById<android.widget.ImageView>(R.id.ivNewsImage)
-        private val textTitle = itemView.findViewById<android.widget.TextView>(R.id.tvNewsTitle)
-        private val textDescription =
-            itemView.findViewById<android.widget.TextView>(R.id.tvNewsDescription)
-        private val textSource = itemView.findViewById<android.widget.TextView>(R.id.tvNewsSource)
-        private val textTime = itemView.findViewById<android.widget.TextView>(R.id.tvNewsTime)
-        private val bookmarkIcon = itemView.findViewById<android.widget.ImageView>(R.id.ivBookmark)
+    ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(article: Article) {
-            textTitle.text = article.title
-            textDescription.text = article.description ?: ""
-            textSource.text = article.source.name ?: "Unknown"
-            textTime.text = formatDate(article.publishedAt)
+            binding.tvNewsTitle.text = article.title
+            binding.tvNewsDescription.text = article.description ?: ""
+            binding.tvNewsSource.text = article.source.name ?: "Unknown"
+            binding.tvNewsTime.text = dateFormatter.formatDisplayDate(article.publishedAt)
 
             // Extract source for filter
             onExtractSource?.invoke(article)
@@ -120,56 +123,31 @@ class NewsPagingAdapter(
 
             // Load image with Glide
             article.urlToImage?.let { url ->
-                Glide.with(itemView.context)
+                Glide.with(binding.root.context)
                     .load(url)
                     .placeholder(R.drawable.ic_newspaper)
                     .error(R.drawable.ic_newspaper)
-                    .into(imageNews)
+                    .into(binding.ivNewsImage)
             } ?: run {
-                imageNews.setImageResource(R.drawable.ic_newspaper)
+                binding.ivNewsImage.setImageResource(R.drawable.ic_newspaper)
             }
 
-            itemView.setOnClickListener {
+            binding.root.setOnClickListener {
                 onItemClick(article)
             }
-            bookmarkIcon.setOnClickListener {
+
+            binding.ivBookmark.setOnClickListener {
                 onBookmarkClick(article)
             }
-
         }
 
         fun updateBookmarkIconVisual(isBookmarked: Boolean) {
             if (isBookmarked) {
-                bookmarkIcon.setImageResource(R.drawable.ic_bookmark)
-                bookmarkIcon.setColorFilter(itemView.context.getColor(R.color.blueMain))
+                binding.ivBookmark.setImageResource(R.drawable.ic_bookmark)
+                binding.ivBookmark.setColorFilter(itemView.context.getColor(R.color.blueMain))
             } else {
-                bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)
-                bookmarkIcon.setColorFilter(itemView.context.getColor(R.color.blueMain))
-            }
-        }
-
-
-        private fun formatDate(publishedAt: String?): String {
-            return try {
-                if (publishedAt.isNullOrEmpty()) return ""
-
-                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
-                inputFormat.timeZone = TimeZone.getTimeZone("UTC")
-                val date = inputFormat.parse(publishedAt) ?: return ""
-
-                val outputFormat = SimpleDateFormat("dd MMM yyyy, h:mm a", Locale.getDefault())
-                outputFormat.format(date)
-            } catch (e: Exception) {
-                try {
-                    e.printStackTrace(); publishedAt?.substringBefore("T")?.let { datePart ->
-                        val dateOnlyFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                        val date = dateOnlyFormat.parse(datePart)
-                        val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-                        outputFormat.format(date ?: Date())
-                    } ?: ""
-                } catch (e: Exception) {
-                    e.printStackTrace(); publishedAt?.substringBefore("T") ?: ""
-                }
+                binding.ivBookmark.setImageResource(R.drawable.ic_bookmark_border)
+                binding.ivBookmark.setColorFilter(itemView.context.getColor(R.color.blueMain))
             }
         }
     }
@@ -181,9 +159,13 @@ class NewsPagingAdapter(
             parent: ViewGroup,
             loadState: LoadState
         ): LoadStateViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_loading, parent, false)
-            return LoadStateViewHolder(view, retry)
+            val binding = ItemLoadingBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+
+            return LoadStateViewHolder(binding, retry)
         }
 
         override fun onBindViewHolder(holder: LoadStateViewHolder, loadState: LoadState) {
@@ -192,56 +174,40 @@ class NewsPagingAdapter(
 
 
         class LoadStateViewHolder(
-            itemView: View,
+            private val binding: ItemLoadingBinding,
             private val retry: () -> Unit
-        ) : RecyclerView.ViewHolder(itemView) {
-
-            private val progressBar =
-                itemView.findViewById<android.widget.ProgressBar>(R.id.progressBar)
-            private val textError =
-                itemView.findViewById<android.widget.TextView>(R.id.textError)
-            private val buttonRetry =
-                itemView.findViewById<com.google.android.material.button.MaterialButton>(R.id.buttonRetry)
-
+        ) : RecyclerView.ViewHolder(binding.root) {
             fun bind(loadState: LoadState) {
-                when (loadState) {
-                    is LoadState.Loading -> {
-                        progressBar.isVisible = true
-                        textError.isVisible = false
-                        buttonRetry.isVisible = false
+
+                binding.progressBar.isVisible = loadState is LoadState.Loading
+                binding.textError.isVisible = loadState is LoadState.Error
+                binding.buttonRetry.isVisible = loadState is LoadState.Error
+
+                if (loadState is LoadState.Error) {
+                    val error = loadState.error
+
+                    binding.textError.text = when (error) {
+                        is IOException,
+                        is SocketTimeoutException ->
+                            "No internet connection — tap retry"
+
+                        else ->
+                            "Something went wrong — tap retry"
                     }
 
-                    is LoadState.Error -> {
-                        progressBar.isVisible = false
-                        textError.isVisible = true
-                        buttonRetry.isVisible = true
+                    binding.buttonRetry.setOnClickListener { retry() }
+                }
 
-                        val error = loadState.error
-
-                        textError.text = when (error) {
-                            is IOException,
-                            is SocketTimeoutException -> "No internet connection — tap retry"
-
-                            else -> "Something went wrong — tap retry"
-                        }
-
-                        buttonRetry.setOnClickListener { retry() }
-                    }
-
-                    is LoadState.NotLoading -> {
-                        if (loadState.endOfPaginationReached) {
-                            progressBar.isVisible = false
-                            textError.isVisible = true
-                            textError.text = "You reached the end — no more articles"
-                            buttonRetry.isVisible = false
-                        } else {
-                            progressBar.isVisible = false
-                            textError.isVisible = false
-                            buttonRetry.isVisible = false
-                        }
-                    }
+                if (loadState is LoadState.NotLoading &&
+                    loadState.endOfPaginationReached
+                ) {
+                    binding.progressBar.isVisible = false
+                    binding.textError.isVisible = true
+                    binding.textError.text = "You reached the end — no more articles"
+                    binding.buttonRetry.isVisible = false
                 }
             }
+
         }
     }
 }
