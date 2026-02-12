@@ -8,6 +8,7 @@ import com.example.newsapp.data.repository.NewsRepository
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.data.local.BookmarkedArticle
 import com.example.newsapp.data.models.Article
+import com.example.newsapp.utils.DateFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,7 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NewsViewModel @Inject constructor(
-    private val repository: NewsRepository, private val bookmarkRepository: BookmarkRepository
+    private val repository: NewsRepository,private val bookmarkRepository: BookmarkRepository,
 ) : ViewModel() {
     // For HomeFragment - Only Business news
     val businessNewsPagingData: Flow<PagingData<Article>> =
@@ -55,6 +56,22 @@ class NewsViewModel @Inject constructor(
         }
     }
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    val newsPagingData: Flow<PagingData<Article>> = searchQuery
+        .debounce(300)
+        .distinctUntilChanged()
+        .flatMapLatest { query ->
+            if (query.isBlank()) {
+                combinedNewsPagingData
+            } else {
+                searchNewsPagingData
+            }
+        }
+        .flowOn(Dispatchers.IO)
+
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val combinedNewsPagingData: Flow<PagingData<Article>> = combine(
         selectedCategories, selectedSources, sortType
@@ -66,9 +83,6 @@ class NewsViewModel @Inject constructor(
                 categories = categories, sources = sources, sortType = sortType
             ).cachedIn(viewModelScope)
         }.flowOn(Dispatchers.IO)
-
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val searchNewsPagingData: Flow<PagingData<Article>> =

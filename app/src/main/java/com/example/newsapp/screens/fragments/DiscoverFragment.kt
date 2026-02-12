@@ -26,8 +26,10 @@ import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.databinding.FragmentDiscoverBinding
+import com.example.newsapp.utils.DateFormatter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
+import jakarta.inject.Inject
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -42,7 +44,8 @@ class DiscoverFragment : Fragment() {
     private var filterFragment: FilterFragment? = null
     private var isFilterOpen = false
 
-    private var isSearching = false
+    @Inject
+    lateinit var dateFormatter: DateFormatter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -56,6 +59,7 @@ class DiscoverFragment : Fragment() {
 
         setupRecyclerView()
         setupSearchFunctionality()
+        observePagingData()
         setupObservers()
         setupBackPressHandler()
         setupFilterButton()
@@ -89,7 +93,9 @@ class DiscoverFragment : Fragment() {
             },
             onExtractSource = { article ->
                 newsViewModel.extractSourceFromArticle(article)
-            }
+            },
+            dateFormatter = dateFormatter
+
         )
 
         newsAdapter.addLoadStateListener { loadState ->
@@ -206,7 +212,7 @@ class DiscoverFragment : Fragment() {
     private fun setupObservers() {
         // Observe filter changes to update button highlight
         viewLifecycleOwner.lifecycleScope.launch {
-            newsViewModel.activeFilters.collectLatest { filters ->
+            newsViewModel.activeFilters.collectLatest {
                 updateFilterButtonHighlight()
                 updateFilterSummary()
             }
@@ -231,28 +237,6 @@ class DiscoverFragment : Fragment() {
                 updateSortButtonHighlight()
             }
         }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            newsViewModel.searchQuery.collectLatest { query ->
-                isSearching = query.isNotEmpty()
-
-                if (query.isNotEmpty()) {
-                    // Search mode
-                    newsViewModel.searchNewsPagingData.collectLatest { pagingData ->
-                        newsAdapter.submitData(pagingData)
-                    }
-                } else {
-                    newsViewModel.combinedNewsPagingData.collectLatest {
-                        newsAdapter.submitData(it)
-                    }
-                }
-
-                // Update filter button highlight when search changes
-                updateFilterButtonHighlight()
-                updateFilterSummary()
-            }
-        }
-
         // Error observer
         viewLifecycleOwner.lifecycleScope.launch {
             newsViewModel.errorMessage.collect { error ->
@@ -269,6 +253,16 @@ class DiscoverFragment : Fragment() {
         }
 
 
+    }
+
+    private fun observePagingData() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                newsViewModel.newsPagingData.collectLatest { pagingData ->
+                    newsAdapter.submitData(pagingData)
+                }
+            }
+        }
     }
 
     private fun observeFilters() {
@@ -475,7 +469,7 @@ class DiscoverFragment : Fragment() {
     private fun hideKeyboard() {
         val imm =
             requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(binding.root.windowToken, 0)
+        imm.hideSoftInputFromWindow(binding.etSearch.windowToken, 0)
     }
 
     override fun onDestroyView() {
