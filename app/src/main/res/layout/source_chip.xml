@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.chip.Chip
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.chip.Chip xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/chipSource"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
-    android:text="@string/source_name"
     android:checkable="true"
+    android:text="@string/source_name"
     android:textColor="@color/chip_text_color"
-    app:chipCornerRadius="20dp"
-    app:chipStrokeWidth="1dp"
-    app:chipStrokeColor="@color/lightBlue"
     app:checkedIconVisible="false"
     app:chipBackgroundColor="?attr/colorSurface"
+    app:chipCornerRadius="20dp"
+    app:chipEndPadding="12dp"
     app:chipStartPadding="12dp"
-    app:chipEndPadding="12dp" />
+    app:chipStrokeColor="@color/lightBlue"
+    app:chipStrokeWidth="1dp" />

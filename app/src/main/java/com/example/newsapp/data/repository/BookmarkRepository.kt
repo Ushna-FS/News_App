@@ -18,7 +18,7 @@ class BookmarkRepository @Inject constructor(
 
     suspend fun removeBookmark(article: Article) {
         bookmarkDao.deleteBookmarkByUrl(article.url)
-        _bookmarkUpdates.emit(article.url) 
+        _bookmarkUpdates.emit(article.url)
     }
 
     suspend fun removeBookmark(url: String) {
@@ -30,23 +30,6 @@ class BookmarkRepository @Inject constructor(
         bookmarkDao.insertBookmark(article.toBookmarkedArticle())
         _bookmarkUpdates.emit(article.url)
     }
-
-//    suspend fun removeBookmark(article: Article) {
-//        val bookmarkedArticle = bookmarkDao.getBookmarkByUrl(article.url)
-//        bookmarkedArticle?.let {
-//            bookmarkDao.deleteBookmark(it)
-//            _bookmarkUpdates.emit(article.url)
-//        }
-//    }
-//
-//    // Add this overloaded function that takes just the URL string
-//    suspend fun removeBookmark(url: String) {
-//        val bookmarkedArticle = bookmarkDao.getBookmarkByUrl(url)
-//        bookmarkedArticle?.let {
-//            bookmarkDao.deleteBookmark(it)
-//            _bookmarkUpdates.emit(url)
-//        }
-//    }
 
     suspend fun isBookmarked(url: String): Boolean {
         return bookmarkDao.isArticleBookmarked(url) > 0

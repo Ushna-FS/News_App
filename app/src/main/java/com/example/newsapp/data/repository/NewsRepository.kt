@@ -23,54 +23,38 @@ class NewsRepository @Inject constructor(
     ): Flow<PagingData<Article>> {
         return Pager(
             config = PagingConfig(
-                pageSize = 5,
-                enablePlaceholders = false,
-                prefetchDistance = 1,
-                initialLoadSize = 5
-            ),
-            pagingSourceFactory = {
+                pageSize = 5, enablePlaceholders = false, prefetchDistance = 1, initialLoadSize = 5
+            ), pagingSourceFactory = {
                 FilteredCombinedNewsPagingSource(
                     apiService = apiService,
                     categories = categories,
                     sources = sources,
                     sortType = sortType
                 )
-            }
-        ).flow
+            }).flow
     }
 
     // For HomeFragment - Only Business news
     fun getBusinessNewsStream(): Flow<PagingData<Article>> {
         return Pager(
             config = PagingConfig(
-                pageSize = 5,
-                enablePlaceholders = false,
-                prefetchDistance = 1,
-                initialLoadSize = 5
-            ),
-            pagingSourceFactory = {
+                pageSize = 5, enablePlaceholders = false, prefetchDistance = 1, initialLoadSize = 5
+            ), pagingSourceFactory = {
                 NewsPagingSource(apiService, NewsType.Business)
-            }
-        ).flow
+            }).flow
     }
 
     // Search stream
     fun searchNewsStream(query: String): Flow<PagingData<Article>> {
         return Pager(
             config = PagingConfig(
-                pageSize = 5,
-                enablePlaceholders = false,
-                prefetchDistance = 1,
-                initialLoadSize = 5
-            ),
-            pagingSourceFactory = {
+                pageSize = 5, enablePlaceholders = false, prefetchDistance = 1, initialLoadSize = 5
+            ), pagingSourceFactory = {
                 NewsPagingSource(apiService, NewsType.Search(query))
-            }
-        ).flow
+            }).flow
     }
 }
 
 enum class SortType {
-    NEWEST_FIRST,
-    OLDEST_FIRST
+    NEWEST_FIRST, OLDEST_FIRST
 }

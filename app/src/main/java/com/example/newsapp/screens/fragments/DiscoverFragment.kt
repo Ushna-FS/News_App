@@ -78,6 +78,7 @@ class DiscoverFragment : Fragment() {
             }
         }
     }
+
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
             onItemClick = { article ->
@@ -213,7 +214,8 @@ class DiscoverFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             newsViewModel.uiMessage.collect {
                 Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
-            }}
+            }
+        }
 
         // Observe sort changes to update button highlight
         viewLifecycleOwner.lifecycleScope.launch {
