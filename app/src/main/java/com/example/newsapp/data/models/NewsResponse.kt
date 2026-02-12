@@ -27,19 +27,6 @@ data class Source(
     val name: String?
 ):Serializable
 
-fun Article.getFullContent(): String? {
-    return when {
-        !content.isNullOrBlank() ->
-            content.substringBefore("[")
-
-        !description.isNullOrBlank() ->
-            description
-        else ->
-            null
-    }
-}
-
-
 fun Article.getFormattedDate(): String {
     return publishedAt?.substringBefore("T") ?: ""
 }

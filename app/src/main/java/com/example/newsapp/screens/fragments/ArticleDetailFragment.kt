@@ -1,6 +1,5 @@
 package com.example.newsapp.screens.fragments
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,18 +10,19 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import com.bumptech.glide.Glide
 import com.example.newsapp.R
 import com.example.newsapp.data.models.Article
-import com.example.newsapp.data.models.getFormattedDate
-import com.example.newsapp.data.models.getFullContent
 import com.example.newsapp.viewmodels.ArticleDetailViewModel
 import com.example.newsapp.databinding.FragmentArticleDetailBinding
 import com.example.newsapp.viewmodels.NewsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import androidx.core.net.toUri
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebChromeClient
+import kotlinx.coroutines.delay
+
 
 @AndroidEntryPoint
 class ArticleDetailFragment : Fragment() {
@@ -43,42 +43,54 @@ class ArticleDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupUI()
+        setupWebView()
         observeViewModelStates()
         if (viewModel.article.value == null) {
             loadArticle()
         }
+
     }
 
     private fun setupUI() {
-        binding.apply {
-            toolbar.setNavigationOnClickListener {
-                parentFragmentManager.popBackStack()
-            }
+        binding.toolbar.setNavigationOnClickListener {
+            parentFragmentManager.popBackStack()
+        }
 
-            ivBookmark.setOnClickListener {
+        binding.toolbar.setOnMenuItemClickListener { item ->
+            if (item.itemId == R.id.action_bookmark) {
                 viewModel.article.value?.let {
                     newsViewModel.toggleBookmark(it)
                 }
-            }
+                true
+            } else false
+        }
+    }
 
-            btnOpenInBrowser.setOnClickListener {
-                viewModel.article.value?.url?.let { url ->
-                    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                    startActivity(intent)
-                }
-            }
+    private fun setupWebView() {
 
-            btnShare.setOnClickListener {
-                viewModel.article.value?.let { article ->
-                    val shareIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, "${article.title}\n\n${article.url}")
-                        type = "text/plain"
-                    }
-                    startActivity(Intent.createChooser(shareIntent, "Share Article"))
+        binding.webView.isVisible = false
+        binding.progressBar.isVisible = true
+        binding.webView.webChromeClient = object : WebChromeClient() {
+            override fun onProgressChanged(view: WebView?, progress: Int) {
+                val b = _binding ?: return   // ← SAFE EXIT
+
+                if (progress > 60) {
+                    b.progressBar.isVisible = false
+                    b.webView.isVisible = true
                 }
             }
         }
+
+        val ws = binding.webView.settings
+
+        ws.javaScriptEnabled = true
+        ws.domStorageEnabled = true
+        ws.loadsImagesAutomatically = true
+        ws.blockNetworkImage = false
+        ws.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK
+        ws.setSupportZoom(false)
+        ws.mediaPlaybackRequiresUserGesture = true
+        ws.databaseEnabled = true
     }
 
     private fun observeViewModelStates() {
@@ -108,13 +120,6 @@ class ArticleDetailFragment : Fragment() {
                 }
             }
         }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.isLoading.collectLatest { isLoading ->
-                binding.progressBar.isVisible = isLoading
-                binding.scrollView.isVisible = !isLoading
-            }
-        }
     }
 
     private fun loadArticle() {
@@ -127,30 +132,26 @@ class ArticleDetailFragment : Fragment() {
     }
 
     private fun displayArticle(article: Article) {
-        binding.apply {
-            tvTitle.text = article.title
-            tvContent.text = article.getFullContent()
-            tvAuthor.text = article.author ?: "Unknown Author"
-            tvSource.text = article.source.name ?: "Unknown Source"
-            tvPublishedAt.text = article.getFormattedDate()
-
-            article.urlToImage?.let { imageUrl ->
-                Glide.with(requireContext()).load(imageUrl).placeholder(R.drawable.ic_newspaper)
-                    .error(R.drawable.ic_newspaper).into(ivArticleImage)
-            } ?: run {
-                ivArticleImage.setImageResource(R.drawable.ic_newspaper)
+        binding.toolbar.title = article.title
+        binding.webView.loadUrl(article.url)
+        viewLifecycleOwner.lifecycleScope.launch {
+            delay(8000)
+            _binding?.let {
+                it.progressBar.isVisible = false
+                it.webView.isVisible = true
             }
         }
     }
 
     private fun updateBookmarkIcon(isBookmarked: Boolean) {
-        binding.ivBookmark.apply {
-            setImageResource(
-                if (isBookmarked) R.drawable.ic_bookmark
-                else R.drawable.ic_bookmark_border
-            )
-            setColorFilter(requireContext().getColor(R.color.blueMain))
-        }
+        val icon = if (isBookmarked)
+            R.drawable.ic_bookmark
+        else
+            R.drawable.ic_bookmark_border
+
+        binding.toolbar.menu
+            .findItem(R.id.action_bookmark)
+            ?.setIcon(icon)
     }
 
     private fun showError() {
@@ -162,8 +163,11 @@ class ArticleDetailFragment : Fragment() {
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
+        binding.webView.webChromeClient = null
+        binding.webView.stopLoading()
+        binding.webView.destroy()
         _binding = null
+        super.onDestroyView()
     }
 
     //

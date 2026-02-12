@@ -7,6 +7,13 @@
         <item name="colorSecondary">@color/lightBlue</item>
 
         <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="toolbarStyle">@style/NewsToolbarStyle</item>
+        <style name="NewsToolbarStyle" parent="Widget.Material3.Toolbar">
+            <item name="titleTextColor">?attr/colorOnPrimary</item>
+            <item name="navigationIconTint">?attr/colorOnPrimary</item>
+            <item name="actionMenuTextColor">?attr/colorOnPrimary</item>
+        </style>
+
 
     </style>
 
