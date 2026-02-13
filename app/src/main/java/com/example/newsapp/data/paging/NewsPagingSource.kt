@@ -56,9 +56,7 @@ class NewsPagingSource(
             } else {
                 LoadResult.Error(HttpException(response))
             }
-        } catch (e: IOException) {
-            LoadResult.Error(e)
-        } catch (e: HttpException) {
+        } catch (e: Exception) {
             LoadResult.Error(e)
         }
     }

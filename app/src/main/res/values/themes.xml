@@ -23,21 +23,4 @@
 
     <style name="Theme.NewsApp" parent="Base.Theme.NewsApp" />
 
-
-    <!-- Splash theme -->
-    <style name="Theme.NewsApp.Splash" parent="Theme.Material3.DayNight.NoActionBar">
-
-        <item name="android:windowBackground">?attr/colorSurface</item>
-
-        <item name="android:windowFullscreen">false</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowActionBar">false</item>
-        <item name="android:windowContentOverlay">@null</item>
-
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:windowTranslucentNavigation">false</item>
-
-    </style>
-
 </resources>
