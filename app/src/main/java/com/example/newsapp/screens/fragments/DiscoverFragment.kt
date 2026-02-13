@@ -57,6 +57,7 @@ class DiscoverFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.toolbarInclude.toolbar.title = "Latest News"
         setupRecyclerView()
         setupSearchFunctionality()
         observePagingData()
@@ -288,14 +289,8 @@ class DiscoverFragment : Fragment() {
     @SuppressLint("SetTextI18n")
     private fun updateFilterSummary() {
         val filterSummary = newsViewModel.getFilterSummary()
-        val query = binding.etSearch.text.toString()
         val itemCount = newsAdapter.itemCount
 
-        if (query.isNotEmpty()) {
-            binding.toolbar.title = "Search: '$query' ($itemCount articles)"
-        } else {
-            binding.toolbar.title = "$filterSummary ($itemCount articles)"
-        }
 
         binding.tvFilterSummary.text = if (itemCount > 0) {
             "Showing: $filterSummary • $itemCount articles"
