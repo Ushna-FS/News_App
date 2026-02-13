@@ -8,7 +8,6 @@ import com.example.newsapp.data.repository.NewsRepository
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.data.local.BookmarkedArticle
 import com.example.newsapp.data.models.Article
-import com.example.newsapp.utils.DateFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,7 +18,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NewsViewModel @Inject constructor(
-    private val repository: NewsRepository,private val bookmarkRepository: BookmarkRepository,
+    private val repository: NewsRepository, private val bookmarkRepository: BookmarkRepository,
 ) : ViewModel() {
     // For HomeFragment - Only Business news
     val businessNewsPagingData: Flow<PagingData<Article>> =
@@ -58,6 +57,7 @@ class NewsViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val newsPagingData: Flow<PagingData<Article>> = searchQuery
         .debounce(300)
@@ -149,6 +149,16 @@ class NewsViewModel @Inject constructor(
         _sortType.value = SortType.NEWEST_FIRST
     }
 
+    fun toggleSource(source: String, isChecked: Boolean) {
+        val current = _selectedSources.value.toMutableList()
+
+        if (isChecked) current.add(source)
+        else current.remove(source)
+
+        _selectedSources.value = current.distinct()
+        updateActiveFilters()
+    }
+
     fun applyFilters(categories: List<String>, sources: List<String>) {
         _selectedCategories.value = categories
         _selectedSources.value = sources
@@ -167,6 +177,7 @@ class NewsViewModel @Inject constructor(
             else -> "${categories.joinToString(", ")} (${sources.size} sources)"
         }
     }
+
     fun toggleBookmark(article: Article) {
         viewModelScope.launch {
             val url = article.url

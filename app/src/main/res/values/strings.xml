@@ -13,10 +13,10 @@
     <string name="close">Close</string>
     <string name="categories">Categories</string>
     <string name="hello_user">Hello User!</string>
-    <string name="loading_articles">Loading articles...</string>
+    <string name="loading_articles">Loading articles…</string>
     <string name="your_saved_articles">Your Saved Articles</string>
     <string name="no_bookmarks_yet">No bookmarks yet</string>
-    <string name="search_news">Search news...</string>
+    <string name="search_news">Search news…</string>
     <string name="all_news">All News</string>
     <string name="empty_state">Empty state</string>
     <string name="bookmarks">Bookmarks</string>
@@ -44,4 +44,5 @@
     <string name="article_load_error">Unable to load article. Please try again.</string>
     <string name="article_image">Article Image</string>
     <string name="article_detail_fallback">Full article content is not available.\nTap \"Open in Browser\" to read more.</string>
+    <string name="retry">Retry</string>
 </resources>

@@ -8,8 +8,8 @@
     <!-- News Icon -->
     <ImageView
         android:id="@+id/ivNewsIcon"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
+        android:layout_width="135dp"
+        android:layout_height="125dp"
         android:animation="@anim/splash_anim"
         android:scaleType="fitCenter"
         android:src="@drawable/news_icon"
@@ -24,6 +24,7 @@
         android:id="@+id/tvAppName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
         android:text="NewsMate"
         android:textColor="@color/lightBlue"
         android:textSize="32sp"

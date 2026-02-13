@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources >
 
     <!-- Base theme -->
     <style name="Base.Theme.NewsApp" parent="Theme.Material3.DayNight.NoActionBar">
@@ -8,13 +8,17 @@
 
         <item name="android:windowBackground">?attr/colorSurface</item>
         <item name="toolbarStyle">@style/NewsToolbarStyle</item>
-        <style name="NewsToolbarStyle" parent="Widget.Material3.Toolbar">
-            <item name="titleTextColor">?attr/colorOnPrimary</item>
-            <item name="navigationIconTint">?attr/colorOnPrimary</item>
-            <item name="actionMenuTextColor">?attr/colorOnPrimary</item>
-        </style>
 
 
+    </style>
+
+    <style name="NewsToolbarStyle" parent="Widget.Material3.Toolbar">
+        <item name="titleTextColor">?attr/colorOnPrimary</item>
+        <item name="navigationIconTint">?attr/colorOnPrimary</item>
+        <item name="actionMenuTextColor">?attr/colorOnPrimary</item>
+
+        <!-- Ensure menu icons also use the same tint -->
+        <item name="itemIconTint">?attr/colorOnPrimary</item>
     </style>
 
     <style name="Theme.NewsApp" parent="Base.Theme.NewsApp" />

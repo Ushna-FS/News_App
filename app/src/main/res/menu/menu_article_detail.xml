@@ -6,5 +6,5 @@
         android:id="@+id/action_bookmark"
         android:icon="@drawable/ic_bookmark_border"
         android:title="@string/bookmark"
-        app:showAsAction="always" />
+        app:showAsAction="always"/>
 </menu>

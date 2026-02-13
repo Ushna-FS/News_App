@@ -46,7 +46,7 @@ class BookmarksFragment : Fragment() {
         bookmarkAdapter = BookmarkAdapter(onItemClick = { article ->
             // Open ArticleDetailFragment
             openArticleDetail(article)
-        }, onBookmarkClick = { article ->
+        }, toggleBookmark = { article ->
             // Remove bookmark when clicked (since it's already bookmarked)
             newsViewModel.toggleBookmark(article)
         })

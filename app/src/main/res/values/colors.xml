@@ -10,5 +10,9 @@
     <color name="red">#FF0000</color>
     <color name="chip_text_color">#FF000000</color>
 
+    <color name="chip_selected_bg">#803A3939</color>
+    <color name="chip_selected_text">#0E1C6D</color>
+
+    <color name="chip_unselected_bg">#FFFFFF</color>
 
 </resources>

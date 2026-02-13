@@ -13,7 +13,7 @@ import com.example.newsapp.databinding.ItemNewsArticleBinding
 
 class BookmarkAdapter(
     private val onItemClick: (Article) -> Unit,
-    private val onBookmarkClick: (Article) -> Unit
+    private val toggleBookmark: (Article) -> Unit
 ) : ListAdapter<Article, BookmarkAdapter.BookmarkViewHolder>(DIFF_CALLBACK) {
 
     companion object {
@@ -34,7 +34,7 @@ class BookmarkAdapter(
             parent,
             false
         )
-        return BookmarkViewHolder(binding, onItemClick, onBookmarkClick)
+        return BookmarkViewHolder(binding, onItemClick, toggleBookmark)
     }
 
     override fun onBindViewHolder(holder: BookmarkViewHolder, position: Int) {
