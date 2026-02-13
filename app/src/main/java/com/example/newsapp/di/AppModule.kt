@@ -4,12 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import com.example.newsapp.BuildConfig
 import com.example.newsapp.data.api.ApiKeyInterceptor
-import com.example.newsapp.data.repository.BookmarkRepository
-import com.example.newsapp.data.repository.NewsRepository
 import com.example.newsapp.data.api.ApiService
 import com.example.newsapp.data.local.BookmarkDao
 import com.example.newsapp.data.local.NewsDatabase
-import com.example.newsapp.utils.DateFormatter
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -49,11 +46,6 @@ object AppModule {
             .create(ApiService::class.java)
     }
 
-    @Singleton
-    @Provides
-    fun provideNewsRepository(apiService: ApiService, dateFormatter: DateFormatter ): NewsRepository {
-        return NewsRepository(apiService, dateFormatter)
-    }
 
     @Singleton
     @Provides
@@ -67,11 +59,5 @@ object AppModule {
     @Provides
     fun provideBookmarkDao(database: NewsDatabase): BookmarkDao {
         return database.bookmarkDao()
-    }
-
-    @Singleton
-    @Provides
-    fun provideBookmarkRepository(bookmarkDao: BookmarkDao): BookmarkRepository {
-        return BookmarkRepository(bookmarkDao)
     }
 }
