@@ -5,10 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.R
 import com.example.newsapp.viewmodels.NewsViewModel
@@ -78,20 +80,12 @@ class BookmarksFragment : Fragment() {
         }
     }
 
+
     private fun openArticleDetail(article: Article) {
-        val fragmentManager = requireActivity().supportFragmentManager
-
-        // Check if already showing to prevent duplicates
-        if (fragmentManager.findFragmentByTag("ArticleDetail") != null) return
-
-        fragmentManager.beginTransaction().setCustomAnimations(
-            R.anim.slide_in_left,
-            R.anim.slide_out_right,
-            R.anim.slide_in_right,
-            R.anim.slide_out_left
-        ).replace(
-            R.id.fragment_container, ArticleDetailFragment.newInstance(article), "ArticleDetail"
-        ).addToBackStack("ArticleDetail").commit()
+        findNavController().navigate(
+            R.id.articleDetailFragment,
+            bundleOf("arg_article" to article)
+        )
     }
 
     override fun onDestroyView() {
@@ -101,7 +95,7 @@ class BookmarksFragment : Fragment() {
 }
 
 // Extension function to convert BookmarkedArticle to Article
-private fun BookmarkedArticle.toArticle():Article {
+private fun BookmarkedArticle.toArticle(): Article {
     return Article(
         source = Source(id = null, name = this.sourceName),
         author = this.author,

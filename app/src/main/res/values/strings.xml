@@ -45,4 +45,6 @@
     <string name="article_image">Article Image</string>
     <string name="article_detail_fallback">Full article content is not available.\nTap \"Open in Browser\" to read more.</string>
     <string name="retry">Retry</string>
+    <string name="discover">Discover</string>
+    <string name="home">Home</string>
 </resources>

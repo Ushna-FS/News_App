@@ -12,12 +12,14 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.R
@@ -167,19 +169,10 @@ class DiscoverFragment : Fragment() {
     }
 
     private fun openArticleDetail(article: Article) {
-        val fragmentManager = requireActivity().supportFragmentManager
-
-        // Check if already showing to prevent duplicates
-        if (fragmentManager.findFragmentByTag("ArticleDetail") != null) return
-
-        fragmentManager.beginTransaction().setCustomAnimations(
-            R.anim.slide_in_left,
-            R.anim.slide_out_right,
-            R.anim.slide_in_right,
-            R.anim.slide_out_left
-        ).replace(
-            R.id.fragment_container, ArticleDetailFragment.newInstance(article), "ArticleDetail"
-        ).addToBackStack("ArticleDetail").commit()
+        findNavController().navigate(
+            R.id.articleDetailFragment,
+            bundleOf("arg_article" to article)
+        )
     }
 
     private fun setupSearchFunctionality() {
