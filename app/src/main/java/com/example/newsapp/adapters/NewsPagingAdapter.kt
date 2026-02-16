@@ -40,18 +40,11 @@ class NewsPagingAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArticleViewHolder {
 
         val binding = ItemNewsArticleBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
+            LayoutInflater.from(parent.context), parent, false
         )
 
         return ArticleViewHolder(
-            binding,
-            this,
-            onItemClick,
-            onBookmarkClick,
-            onExtractSource,
-            dateFormatter
+            binding, this, onItemClick, onBookmarkClick, onExtractSource, dateFormatter
         )
 
     }
@@ -65,9 +58,7 @@ class NewsPagingAdapter(
 
 
     override fun onBindViewHolder(
-        holder: ArticleViewHolder,
-        position: Int,
-        payloads: MutableList<Any>
+        holder: ArticleViewHolder, position: Int, payloads: MutableList<Any>
     ) {
         if (payloads.contains("BOOKMARK_STATE")) {
             getItem(position)?.let { article ->
@@ -123,11 +114,8 @@ class NewsPagingAdapter(
 
             // Load image with Glide
             article.urlToImage?.let { url ->
-                Glide.with(binding.root.context)
-                    .load(url)
-                    .placeholder(R.drawable.ic_newspaper)
-                    .error(R.drawable.ic_newspaper)
-                    .into(binding.ivNewsImage)
+                Glide.with(binding.root.context).load(url).placeholder(R.drawable.ic_newspaper)
+                    .error(R.drawable.ic_newspaper).into(binding.ivNewsImage)
             } ?: run {
                 binding.ivNewsImage.setImageResource(R.drawable.ic_newspaper)
             }
@@ -156,13 +144,10 @@ class NewsPagingAdapter(
         LoadStateAdapter<NewsLoadStateAdapter.LoadStateViewHolder>() {
 
         override fun onCreateViewHolder(
-            parent: ViewGroup,
-            loadState: LoadState
+            parent: ViewGroup, loadState: LoadState
         ): LoadStateViewHolder {
             val binding = ItemLoadingBinding.inflate(
-                LayoutInflater.from(parent.context),
-                parent,
-                false
+                LayoutInflater.from(parent.context), parent, false
             )
 
             return LoadStateViewHolder(binding, retry)
@@ -174,8 +159,7 @@ class NewsPagingAdapter(
 
 
         class LoadStateViewHolder(
-            private val binding: ItemLoadingBinding,
-            private val retry: () -> Unit
+            private val binding: ItemLoadingBinding, private val retry: () -> Unit
         ) : RecyclerView.ViewHolder(binding.root) {
             fun bind(loadState: LoadState) {
 
@@ -185,25 +169,21 @@ class NewsPagingAdapter(
 
                 if (loadState is LoadState.Error) {
                     val error = loadState.error
+                    val ctx = binding.root.context
 
                     binding.textError.text = when (error) {
-                        is IOException,
-                        is SocketTimeoutException ->
-                            "No internet connection — tap retry"
+                        is IOException, is SocketTimeoutException -> ctx.getString(R.string.error_no_internet)
 
-                        else ->
-                            "Something went wrong — tap retry"
+                        else -> ctx.getString(R.string.error_generic)
                     }
 
                     binding.buttonRetry.setOnClickListener { retry() }
                 }
 
-                if (loadState is LoadState.NotLoading &&
-                    loadState.endOfPaginationReached
-                ) {
+                if (loadState is LoadState.NotLoading && loadState.endOfPaginationReached) {
                     binding.progressBar.isVisible = false
                     binding.textError.isVisible = true
-                    binding.textError.text = "You reached the end — no more articles"
+                    binding.textError.text = binding.root.context.getString(R.string.pagination_end)
                     binding.buttonRetry.isVisible = false
                 }
             }

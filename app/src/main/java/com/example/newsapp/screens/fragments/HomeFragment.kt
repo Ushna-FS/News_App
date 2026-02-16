@@ -51,7 +51,7 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.toolbarInclude.toolbar.title = "NewsMate"
+        binding.toolbarInclude.toolbar.title = getString(R.string.newsmate)
         setupRecyclerView()
         setupObservers()
         setupRetryButton()
@@ -72,13 +72,12 @@ class HomeFragment : Fragment() {
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
             onItemClick = { article ->
-            openArticleDetail(article)
-        }, onBookmarkClick = { article ->
-            newsViewModel.toggleBookmark(article)
-        }, onExtractSource = { article ->
-            newsViewModel.extractSourceFromArticle(article)
-        },
-            dateFormatter = dateFormatter
+                openArticleDetail(article)
+            }, onBookmarkClick = { article ->
+                newsViewModel.toggleBookmark(article)
+            }, onExtractSource = { article ->
+                newsViewModel.extractSourceFromArticle(article)
+            }, dateFormatter = dateFormatter
         )
 
         binding.recyclerView.apply {
@@ -104,9 +103,9 @@ class HomeFragment : Fragment() {
 
                 val error = refresh.error
                 binding.textEmpty.text = when (error) {
-                    is IOException, is SocketTimeoutException -> "Check internet connection"
+                    is IOException, is SocketTimeoutException -> getString(R.string.error_check_internet)
 
-                    else -> "Failed to load articles"
+                    else -> getString(R.string.error_load_articles)
                 }
                 return@addLoadStateListener
             }
@@ -146,8 +145,7 @@ class HomeFragment : Fragment() {
 
     private fun openArticleDetail(article: Article) {
         findNavController().navigate(
-            R.id.articleDetailFragment,
-            bundleOf("arg_article" to article)
+            R.id.articleDetailFragment, bundleOf("arg_article" to article)
         )
     }
 
@@ -165,8 +163,10 @@ class HomeFragment : Fragment() {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            newsViewModel.uiMessage.collect {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+            newsViewModel.uiMessage.collect { resId ->
+                Toast.makeText(
+                    requireContext(), getString(resId), Toast.LENGTH_SHORT
+                ).show()
             }
         }
 

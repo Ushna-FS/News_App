@@ -47,4 +47,19 @@
     <string name="retry">Retry</string>
     <string name="discover">Discover</string>
     <string name="home">Home</string>
+    <string name="selected_categories">Selected Categories</string>
+    <string name="sources_count">%1$d Sources</string>
+    <string name="news_suffix">News</string>
+    <string name="sources_suffix">sources</string>
+    <string name="filter_summary_combo">%1$s (%2$d sources)</string>
+    <string name="error_no_internet">No internet connection — tap retry</string>
+    <string name="error_generic">Something went wrong — tap retry</string>
+    <string name="pagination_end">You reached the end — no more articles</string>
+    <string name="error_check_internet">Check internet connection</string>
+    <string name="error_load_articles">Failed to load articles</string>
+    <string name="no_article_data">No article data</string>
+    <string name="newsmate">NewsMate</string>
+    <string name="bookmark_added">Article added to bookmarks</string>
+    <string name="bookmark_removed">Article removed from bookmarks</string>
+
 </resources>

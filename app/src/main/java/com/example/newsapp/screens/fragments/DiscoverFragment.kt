@@ -89,15 +89,12 @@ class DiscoverFragment : Fragment() {
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
             onItemClick = { article ->
-                openArticleDetail(article)
-            },
-            onBookmarkClick = { article ->
-                newsViewModel.toggleBookmark(article)
-            },
-            onExtractSource = { article ->
-                newsViewModel.extractSourceFromArticle(article)
-            },
-            dateFormatter = dateFormatter
+            openArticleDetail(article)
+        }, onBookmarkClick = { article ->
+            newsViewModel.toggleBookmark(article)
+        }, onExtractSource = { article ->
+            newsViewModel.extractSourceFromArticle(article)
+        }, dateFormatter = dateFormatter
 
         )
 
@@ -170,8 +167,7 @@ class DiscoverFragment : Fragment() {
 
     private fun openArticleDetail(article: Article) {
         findNavController().navigate(
-            R.id.articleDetailFragment,
-            bundleOf("arg_article" to article)
+            R.id.articleDetailFragment, bundleOf("arg_article" to article)
         )
     }
 
@@ -212,9 +208,12 @@ class DiscoverFragment : Fragment() {
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
-            newsViewModel.uiMessage.collect {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+            newsViewModel.uiMessage.collect { resId ->
+                Toast.makeText(
+                    requireContext(), getString(resId), Toast.LENGTH_SHORT
+                ).show()
             }
+
         }
 
         // Observe sort changes to update button highlight
@@ -281,7 +280,25 @@ class DiscoverFragment : Fragment() {
 
     @SuppressLint("SetTextI18n")
     private fun updateFilterSummary() {
-        val filterSummary = newsViewModel.getFilterSummary()
+        val (categories, sources, _) = newsViewModel.getFilterSummaryData()
+
+        val filterSummary = when {
+            categories.isEmpty() && sources.isEmpty() -> getString(R.string.all_news)
+
+            categories.size == 1 && sources.isEmpty() -> "${categories.first()} ${getString(R.string.news_suffix)}"
+
+            categories.size > 1 && sources.isEmpty() -> getString(R.string.selected_categories)
+
+            sources.isNotEmpty() && categories.isEmpty() -> getString(
+                R.string.sources_count,
+                sources.size
+            )
+
+            else -> getString(
+                R.string.filter_summary_combo, categories.joinToString(", "), sources.size
+            )
+        }
+
         val itemCount = newsAdapter.itemCount
 
 

@@ -3,6 +3,7 @@ package com.example.newsapp.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.*
+import com.example.newsapp.R
 import com.example.newsapp.data.repository.BookmarkRepository
 import com.example.newsapp.data.repository.NewsRepository
 import com.example.newsapp.data.repository.SortType
@@ -35,10 +36,8 @@ class NewsViewModel @Inject constructor(
     private val _sortType = MutableStateFlow(SortType.NEWEST_FIRST)
     val sortType: StateFlow<SortType> = _sortType.asStateFlow()
 
-    private val _uiMessage = MutableSharedFlow<String>()
+    private val _uiMessage = MutableSharedFlow<Int>()
     val uiMessage = _uiMessage.asSharedFlow()
-
-
     private val _bookmarkStateChanged = MutableSharedFlow<Pair<String, Boolean>>(replay = 1)
     val bookmarkStateChanged = _bookmarkStateChanged.asSharedFlow()
 
@@ -49,7 +48,7 @@ class NewsViewModel @Inject constructor(
                 _bookmarkStateChanged.emit(Pair(url, isBookmarked))
                 if (!isBookmarked) {
                     // show toast when removed from BookmarksFragment
-                    _uiMessage.emit("Article removed from bookmarks")
+                    _uiMessage.emit(R.string.bookmark_removed)
                 }
             }
         }
@@ -165,17 +164,11 @@ class NewsViewModel @Inject constructor(
         updateActiveFilters()
     }
 
-    fun getFilterSummary(): String {
+    fun getFilterSummaryData(): Triple<List<String>, List<String>, Boolean> {
         val categories = _selectedCategories.value
         val sources = _selectedSources.value
-
-        return when {
-            categories.isEmpty() && sources.isEmpty() -> "All News"
-            categories.size == 1 && sources.isEmpty() -> "${categories.first()} News"
-            categories.size > 1 && sources.isEmpty() -> "Selected Categories"
-            sources.isNotEmpty() && categories.isEmpty() -> "${sources.size} Sources"
-            else -> "${categories.joinToString(", ")} (${sources.size} sources)"
-        }
+        val hasAny = categories.isNotEmpty() || sources.isNotEmpty()
+        return Triple(categories, sources, hasAny)
     }
 
     fun toggleBookmark(article: Article) {
@@ -185,10 +178,10 @@ class NewsViewModel @Inject constructor(
 
             if (isBookmarked) {
                 bookmarkRepository.removeBookmark(article) // This will emit
-                _uiMessage.emit("Article removed from bookmarks")
+                _uiMessage.emit(R.string.bookmark_removed)
             } else {
                 bookmarkRepository.addBookmark(article) // This will emit
-                _uiMessage.emit("Article added to bookmarks")
+                _uiMessage.emit(R.string.bookmark_added)
             }
 
         }
