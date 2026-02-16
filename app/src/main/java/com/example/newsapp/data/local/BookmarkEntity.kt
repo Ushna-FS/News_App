@@ -2,12 +2,16 @@ package com.example.newsapp.data.local
 
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.newsapp.data.models.Article
 
-@Entity(tableName = "bookmarked_articles")
+@Entity(tableName = "bookmarked_articles",
+indices = [Index(value = ["url"], unique = true)]
+)
 data class BookmarkedArticle(
-    @PrimaryKey(autoGenerate = false)
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0L,
     val url: String,
     val title: String,
     val description: String?,
@@ -23,6 +27,7 @@ data class BookmarkedArticle(
 // Extension function to convert Article to BookmarkedArticle
 fun Article.toBookmarkedArticle(): BookmarkedArticle {
     return BookmarkedArticle(
+        id = 0,
         url = this.url,
         title = this.title,
         description = this.description,
