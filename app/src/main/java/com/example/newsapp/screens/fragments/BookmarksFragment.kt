@@ -74,8 +74,12 @@ class BookmarksFragment : Fragment() {
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
-            newsViewModel.uiMessage.collect {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+            newsViewModel.uiMessage.collect { resId ->
+                Toast.makeText(
+                    requireContext(),
+                    getString(resId),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -104,7 +108,6 @@ private fun BookmarkedArticle.toArticle(): Article {
         url = this.url,
         urlToImage = this.urlToImage,
         publishedAt = this.publishedAt,
-        content = this.content,
-        isBookmarked = true
+        content = this.content
     )
 }

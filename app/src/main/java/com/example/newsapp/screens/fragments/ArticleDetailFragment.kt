@@ -103,7 +103,6 @@ class ArticleDetailFragment : Fragment() {
                     // Check initial bookmark state
                     newsViewModel.isArticleBookmarked(it.url).collectLatest { isBookmarked ->
                         updateBookmarkIcon(isBookmarked)
-                        it.isBookmarked = isBookmarked
                     }
                 }
             }
@@ -115,7 +114,7 @@ class ArticleDetailFragment : Fragment() {
                 viewModel.article.value?.let { article ->
                     if (article.url == url) {
                         updateBookmarkIcon(isBookmarked)
-                        article.isBookmarked = isBookmarked
+
                     }
                 }
             }
@@ -155,7 +154,7 @@ class ArticleDetailFragment : Fragment() {
     }
 
     private fun showError() {
-        val message = "No article data"
+        val message = getString(R.string.no_article_data)
         binding.progressBar.isVisible = false
         binding.tvError.isVisible = true
         binding.tvError.text = message
@@ -174,12 +173,5 @@ class ArticleDetailFragment : Fragment() {
     companion object {
         private const val ARG_ARTICLE = "arg_article"
 
-        fun newInstance(article: Article): ArticleDetailFragment {
-            return ArticleDetailFragment().apply {
-                arguments = Bundle().apply {
-                    putSerializable(ARG_ARTICLE, article)
-                }
-            }
-        }
     }
 }
