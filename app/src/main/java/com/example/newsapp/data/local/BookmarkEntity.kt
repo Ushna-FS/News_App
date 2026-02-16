@@ -9,12 +9,12 @@ import com.example.newsapp.data.models.Article
 data class BookmarkedArticle(
     @PrimaryKey(autoGenerate = false)
     val url: String,
-    val title: String?,
+    val title: String,
     val description: String?,
     val urlToImage: String?,
     val publishedAt: String?,
     val content: String?,
-    val sourceName: String?,
+    val sourceName: String,
     val sourceId: String?,
     val author: String?,
     val bookmarkedAt: Long = System.currentTimeMillis()

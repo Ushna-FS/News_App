@@ -360,7 +360,6 @@ class DiscoverFragment : Fragment() {
                 text = when (newsViewModel.sortType.value) {
                     SortType.NEWEST_FIRST -> "Newest"
                     SortType.OLDEST_FIRST -> "Oldest"
-                    else -> context?.getString(R.string.sort_by)
                 }
             }
         } else {

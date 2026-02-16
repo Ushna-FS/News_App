@@ -7,7 +7,6 @@ import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.utils.DateFormatter
 import retrofit2.HttpException
-import java.io.IOException
 
 sealed class NewsType {
     object Business : NewsType()
@@ -120,7 +119,7 @@ class FilteredCombinedNewsPagingSource(
             // Apply source filter if sources are selected
             if (sources.isNotEmpty()) {
                 filteredArticles = filteredArticles.filter { article ->
-                    val sourceName = article.source.name ?: ""
+                    val sourceName = article.source.name
                     sources.any { source ->
                         sourceName.contains(source, ignoreCase = true)
                     }

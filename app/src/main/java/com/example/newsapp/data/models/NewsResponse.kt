@@ -24,7 +24,7 @@ data class Article(
 
 data class Source(
     val id: String?,
-    val name: String?
+    val name: String
 ):Serializable
 
 fun Article.getFormattedDate(): String {

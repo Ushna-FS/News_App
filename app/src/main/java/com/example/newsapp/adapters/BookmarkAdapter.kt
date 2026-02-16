@@ -50,7 +50,7 @@ class BookmarkAdapter(
         fun bind(article: Article) {
             binding.tvNewsTitle.text = article.title
             binding.tvNewsDescription.text = article.description ?: ""
-            binding.tvNewsSource.text = article.source.name ?: "Unknown"
+            binding.tvNewsSource.text = article.source.name
             binding.tvNewsTime.text = article.getFormattedDate()
 
             // Load image (same logic)

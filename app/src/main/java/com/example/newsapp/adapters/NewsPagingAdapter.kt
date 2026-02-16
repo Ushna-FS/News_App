@@ -111,7 +111,7 @@ class NewsPagingAdapter(
         fun bind(article: Article) {
             binding.tvNewsTitle.text = article.title
             binding.tvNewsDescription.text = article.description ?: ""
-            binding.tvNewsSource.text = article.source.name ?: "Unknown"
+            binding.tvNewsSource.text = article.source.name
             binding.tvNewsTime.text = dateFormatter.formatDisplayDate(article.publishedAt)
 
             // Extract source for filter

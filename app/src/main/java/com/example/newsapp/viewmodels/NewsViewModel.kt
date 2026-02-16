@@ -131,7 +131,7 @@ class NewsViewModel @Inject constructor(
 
     fun extractSourceFromArticle(article: Article) {
         val currentSources = _availableSources.value.toMutableSet()
-        article.source.name?.let { sourceName ->
+        article.source.name.let { sourceName ->
             if (sourceName.isNotEmpty()) {
                 currentSources.add(sourceName)
             }
