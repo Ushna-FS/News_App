@@ -1,21 +1,88 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Base theme -->
     <style name="Base.Theme.NewsApp" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
+        <item name="colorPrimary">@color/blueMain</item>
+        <item name="colorSecondary">@color/lightBlue</item>
+        <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="toolbarStyle">@style/NewsToolbarStyle</item>
+
+        <!-- Typography -->
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.NewsApp.HeadlineLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.NewsApp.TitleMedium</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.NewsApp.BodyMedium</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.NewsApp.LabelSmall</item>
     </style>
 
+    <!-- Headline Large: 24px, Bold, 1.2 line-height -->
+    <style name="TextAppearance.NewsApp.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:lineSpacingMultiplier">1.2</item>
+    </style>
+
+    <!-- Title Medium: 18px, Semi-Bold, 1.3 line-height -->
+    <style name="TextAppearance.NewsApp.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textSize">19sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:lineSpacingMultiplier">1.3</item>
+    </style>
+
+    <!-- Body Medium: 14px, Regular, 1.5 line-height -->
+    <style name="TextAppearance.NewsApp.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:lineSpacingMultiplier">1.5</item>
+    </style>
+
+    <!-- Label Small: 11px, Medium, 1.4 line-height -->
+    <style name="TextAppearance.NewsApp.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:lineSpacingMultiplier">1.4</item>
+    </style>
+
+    <!-- Toolbar Style -->
+    <style name="NewsToolbarStyle" parent="Widget.Material3.Toolbar">
+        <item name="titleTextColor">?attr/colorOnSurface</item>
+        <item name="navigationIconTint">?attr/colorOnSurface</item>
+        <item name="actionMenuTextColor">?attr/colorOnSurface</item>
+        <item name="itemIconTint">?attr/colorOnSurface</item>
+        <item name="titleTextAppearance">@style/ToolbarTitle</item>
+    </style>
+    <!-- Toolbar Title -->
+    <style name="ToolbarTitle" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+    </style>
+
+    <!-- Shape for rounded corners (28dp) -->
+    <style name="ShapeAppearanceOverlay.App.Corner28" parent="">
+        <item name="cornerSize">28dp</item>
+    </style>
+
+    <!-- Shape for cards (12dp) -->
+    <style name="ShapeAppearanceOverlay.App.Corner12" parent="">
+        <item name="cornerSize">12dp</item>
+    </style>
+
+    <!-- Header Theme Overlay -->
+    <style name="ThemeOverlay.App.Header" parent="">
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorSecondary">@android:color/white</item>
+    </style>
+
+    <!-- Main Theme -->
     <style name="Theme.NewsApp" parent="Base.Theme.NewsApp" />
-
-
-    <style name="Theme.NewsApp.Splash" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:windowBackground">@color/white</item>
-        <item name="android:windowFullscreen">false</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowActionBar">false</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:windowTranslucentNavigation">false</item>
-    </style>
 
 </resources>

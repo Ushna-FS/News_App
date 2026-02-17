@@ -2,12 +2,15 @@ plugins {
     id("com.android.application")
     id("com.google.dagger.hilt.android")
     id ("com.google.devtools.ksp")
+    id("org.jetbrains.kotlin.plugin.serialization")
 
 }
 
+val apiKey: String = project.findProperty("NEWS_API_KEY")?.toString() ?: ""
+
 android {
     namespace = "com.example.newsapp"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.newsapp"
@@ -17,6 +20,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "NEWS_API_KEY",
+            "\"$apiKey\""
+        )
     }
 
     buildTypes {
@@ -36,48 +44,63 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig=true
     }
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.10.0")
-    implementation("androidx.activity:activity-ktx:1.8.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation(libs.androidx.core.ktx.v1120)
+    implementation(libs.androidx.appcompat.v161)
+    implementation(libs.material.v1100)
+    implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.constraintlayout.v214)
 
     // Retrofit for API calls
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 
     // Gson for JSON parsing
-    implementation("com.google.code.gson:gson:2.10.1")
+    implementation(libs.gson)
 
     // Coroutines for async operations
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation(libs.kotlinx.coroutines.android)
 
     // ViewModel and LiveData
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.livedata.ktx)
 
     // RecyclerView for listing news
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation(libs.androidx.recyclerview)
 
-    // Coil for image loading
-    implementation("io.coil-kt:coil:2.5.0")
+    implementation(libs.androidx.cardview)
+    implementation(libs.glide)
 
-    // CardView for news cards
-    implementation("androidx.cardview:cardview:1.0.0")
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    implementation ("com.google.dagger:hilt-android:2.57.1")
-    ksp ("com.google.dagger:hilt-compiler:2.57.1")
+    implementation (libs.hilt.android)
+    implementation(libs.androidx.activity)
+    ksp (libs.hilt.compiler)
 
+    implementation(libs.androidx.core.splashscreen)
 
     // For ViewModel injection
-    implementation("androidx.hilt:hilt-navigation-fragment:1.1.0")
-    annotationProcessor("androidx.hilt:hilt-compiler:1.1.0")
+    implementation(libs.androidx.hilt.navigation.fragment)
+    annotationProcessor(libs.androidx.hilt.compiler)
 
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+//    implementation(libs.androidx.paging.runtime.ktx)
+    implementation(libs.androidx.paging.runtime.ktx.v320)
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+
+    implementation(libs.kotlinx.serialization.json)
+
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
+
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
+
+
+
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit.v115)
+    androidTestImplementation(libs.androidx.espresso.core.v351)
 }

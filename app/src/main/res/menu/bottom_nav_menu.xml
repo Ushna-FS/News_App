@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/ic_home"
+        android:title="@string/home"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/discoverFragment"
+        android:icon="@drawable/ic_discover"
+        android:title="@string/discover"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/bookmarksFragment"
+        android:icon="@drawable/ic_bookmark"
+        android:title="@string/bookmarks"
+        app:showAsAction="ifRoom" />
+</menu>

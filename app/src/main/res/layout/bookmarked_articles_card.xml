@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    android:layout_marginBottom="12dp"
+    app:cardBackgroundColor="?attr/colorSurface"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="1dp"
+    app:rippleColor="?attr/colorPrimary">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <!-- RIGHT IMAGE -->
+        <ImageView
+            android:id="@+id/ivNewsImage"
+            android:layout_width="96dp"
+            android:layout_height="71dp"
+            android:background="?attr/colorSurfaceVariant"
+            android:clipToOutline="true"
+            android:outlineProvider="background"
+            android:scaleType="centerCrop"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- SOURCE -->
+        <TextView
+            android:id="@+id/tvNewsSource"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAppearance="@style/TextAppearance.NewsApp.LabelSmall"
+            android:textColor="?attr/colorPrimary"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@id/tvNewsTime"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Financial Times" />
+
+        <!-- TIME -->
+        <TextView
+            android:id="@+id/tvNewsTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="10dp"
+            android:maxLines="1"
+            android:textAppearance="@style/TextAppearance.NewsApp.LabelSmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            app:layout_constraintBaseline_toBaselineOf="@id/tvNewsSource"
+            app:layout_constraintEnd_toStartOf="@id/ivNewsImage"
+            app:layout_constraintStart_toEndOf="@id/tvNewsSource"
+            tools:text="2026-02-16" />
+
+        <!-- TITLE -->
+        <TextView
+            android:id="@+id/tvNewsTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="10dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textAppearance="@style/TextAppearance.NewsApp.TitleMedium"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            app:layout_constraintEnd_toStartOf="@id/ivNewsImage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvNewsSource"
+            tools:text="US carmakers spooked by Chinese rivals gaining…" />
+
+        <!-- READ MORE -->
+        <LinearLayout
+            android:id="@+id/layoutReadMore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tvNewsTitle">
+
+            <TextView
+                android:id="@+id/tvReadMore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:text="@string/read_more"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- BOOKMARK -->
+        <ImageView
+            android:id="@+id/ivBookmark"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_bookmark"
+            app:layout_constraintBottom_toBottomOf="@id/layoutReadMore"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:tint="?attr/colorPrimary" />
+
+        <!-- SHARE -->
+        <ImageView
+            android:id="@+id/ivShare"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/ic_share"
+            app:layout_constraintBottom_toBottomOf="@id/layoutReadMore"
+            app:layout_constraintEnd_toStartOf="@id/ivBookmark"
+            app:tint="?attr/colorOnSurfaceVariant" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

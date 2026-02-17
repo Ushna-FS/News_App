@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -20,53 +19,71 @@
             android:id="@+id/ivNewsImage"
             android:layout_width="match_parent"
             android:layout_height="200dp"
-            android:scaleType="centerCrop"
-            android:contentDescription="News image"
-            android:background="@color/lightBlue" />
+            android:background="@color/lightBlue"
+            android:contentDescription="@string/news_image"
+            android:scaleType="centerCrop" />
 
-        <!-- News Title -->
-        <TextView
-            android:id="@+id/tvNewsTitle"
+        <!-- News Title with Bookmark -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="News Title Here"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"
             android:layout_marginTop="12dp"
-            android:maxLines="2"
-            android:ellipsize="end" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvNewsTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="@string/news_title_here"
+                android:textColor="@color/black"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- Bookmark Icon -->
+            <ImageView
+                android:id="@+id/ivBookmark"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@drawable/ic_bookmark_border"
+                app:tint="@color/blueMain" />
+        </LinearLayout>
 
         <!-- News Description -->
         <TextView
             android:id="@+id/tvNewsDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="News description goes here with more details about the article content."
-            android:textSize="15sp"
-            android:textColor="@color/blueMain"
             android:layout_marginTop="8dp"
+            android:ellipsize="end"
             android:maxLines="3"
-            android:ellipsize="end" />
+            android:text="@string/news_desc"
+            android:textColor="@color/blueMain"
+            android:textSize="15sp" />
+
         <!-- Source and Time Row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:layout_marginTop="12dp"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <!-- Source - Left -->
             <TextView
                 android:id="@+id/tvNewsSource"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="CNN"
-                android:textSize="16sp"
-                android:textColor="@color/lightBlue"
-                android:textStyle="bold"
+                android:ellipsize="end"
                 android:maxLines="1"
-                android:ellipsize="end" />
+                android:text="CNN"
+                android:textColor="@color/lightBlue"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
             <!-- Flexible Space between -->
             <Space
@@ -79,13 +96,12 @@
                 android:id="@+id/tvNewsTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:maxLines="1"
                 android:text="30 Jan , 4:18 AM"
-                android:textSize="16sp"
                 android:textColor="@color/gray_medium"
-                android:maxLines="1" />
+                android:textSize="16sp" />
 
         </LinearLayout>
-
 
     </LinearLayout>
 
