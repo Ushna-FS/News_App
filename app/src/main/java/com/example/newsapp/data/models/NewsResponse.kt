@@ -1,6 +1,7 @@
 package com.example.newsapp.data.models
 
-import java.io.Serializable
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 
 
 data class NewsResponse(
@@ -9,6 +10,7 @@ data class NewsResponse(
     val articles: List<Article>
 )
 
+@Parcelize
 data class Article(
     val source: Source,
     val author: String?,
@@ -19,12 +21,13 @@ data class Article(
     val publishedAt: String?,
     val content: String?
 
-): Serializable
+): Parcelable
 
+@Parcelize
 data class Source(
     val id: String?,
     val name: String
-):Serializable
+): Parcelable
 
 fun Article.getFormattedDate(): String {
     return publishedAt?.substringBefore("T") ?: ""
