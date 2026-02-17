@@ -9,11 +9,10 @@ import com.bumptech.glide.Glide
 import com.example.newsapp.R
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.models.getFormattedDate
-import com.example.newsapp.databinding.ItemNewsArticleBinding
+import com.example.newsapp.databinding.BookmarkedArticlesCardBinding
 
 class BookmarkAdapter(
-    private val onItemClick: (Article) -> Unit,
-    private val toggleBookmark: (Article) -> Unit
+    private val onItemClick: (Article) -> Unit, private val toggleBookmark: (Article) -> Unit
 ) : ListAdapter<Article, BookmarkAdapter.BookmarkViewHolder>(DIFF_CALLBACK) {
 
     companion object {
@@ -29,10 +28,8 @@ class BookmarkAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BookmarkViewHolder {
-        val binding = ItemNewsArticleBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
+        val binding = BookmarkedArticlesCardBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
         )
         return BookmarkViewHolder(binding, onItemClick, toggleBookmark)
     }
@@ -42,24 +39,20 @@ class BookmarkAdapter(
     }
 
     class BookmarkViewHolder(
-        private val binding: ItemNewsArticleBinding,
+        private val binding: BookmarkedArticlesCardBinding,
         private val onItemClick: (Article) -> Unit,
         private val onBookmarkClick: (Article) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(article: Article) {
             binding.tvNewsTitle.text = article.title
-            binding.tvNewsDescription.text = article.description ?: ""
             binding.tvNewsSource.text = article.source.name
             binding.tvNewsTime.text = article.getFormattedDate()
 
             // Load image (same logic)
             article.urlToImage?.let { url ->
-                Glide.with(binding.root.context)
-                    .load(url)
-                    .placeholder(R.drawable.ic_newspaper)
-                    .error(R.drawable.ic_newspaper)
-                    .into(binding.ivNewsImage)
+                Glide.with(binding.root.context).load(url).placeholder(R.drawable.ic_newspaper)
+                    .error(R.drawable.ic_newspaper).into(binding.ivNewsImage)
             } ?: run {
                 binding.ivNewsImage.setImageResource(R.drawable.ic_newspaper)
             }

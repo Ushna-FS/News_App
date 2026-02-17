@@ -12,6 +12,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.addCallback
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -22,7 +23,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.newsapp.MainActivity
 import com.example.newsapp.R
+import com.example.newsapp.adapters.CardType
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.data.repository.SortType
@@ -59,7 +62,10 @@ class DiscoverFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.toolbarInclude.toolbar.title = "Latest News"
+        val toolbar = binding.toolbarInclude.toolbar
+        (requireActivity() as AppCompatActivity).setSupportActionBar(toolbar)
+
+        toolbar.title = "Discover"
         setupRecyclerView()
         setupSearchFunctionality()
         observePagingData()
@@ -74,6 +80,9 @@ class DiscoverFragment : Fragment() {
         // Initialize button highlights
         updateSortButtonHighlight()
         updateFilterButtonHighlight()
+        toolbar.setNavigationOnClickListener {
+            (requireActivity() as MainActivity).openDrawer()
+        }
     }
 
     private fun observeBookmarkUpdates() {
@@ -88,7 +97,7 @@ class DiscoverFragment : Fragment() {
 
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
-            onItemClick = { article ->
+            cardType = CardType.DISCOVER, onItemClick = { article ->
             openArticleDetail(article)
         }, onBookmarkClick = { article ->
             newsViewModel.toggleBookmark(article)
@@ -290,8 +299,7 @@ class DiscoverFragment : Fragment() {
             categories.size > 1 && sources.isEmpty() -> getString(R.string.selected_categories)
 
             sources.isNotEmpty() && categories.isEmpty() -> getString(
-                R.string.sources_count,
-                sources.size
+                R.string.sources_count, sources.size
             )
 
             else -> getString(

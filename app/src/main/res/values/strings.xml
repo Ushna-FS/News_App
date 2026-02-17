@@ -61,5 +61,16 @@
     <string name="newsmate">NewsMate</string>
     <string name="bookmark_added">Article added to bookmarks</string>
     <string name="bookmark_removed">Article removed from bookmarks</string>
+    <string name="catch_up_message">Catch up on what you missed today.</string>
+    <string name="search_hint">Search news…</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="published_time">2h ago</string>
+    <string name="read_more">Read More</string>
+    <string name="home_desc">Catch up on what you missed today.</string>
+    <string name="mail">user88@gmail.com</string>
+    <string name="username">Username</string>
+    <string name="notification">Notifications</string>
+    <string name="saved">Saved</string>
 
 </resources>

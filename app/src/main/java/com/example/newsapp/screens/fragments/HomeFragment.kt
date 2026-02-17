@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -15,7 +16,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.newsapp.MainActivity
 import com.example.newsapp.R
+import com.example.newsapp.adapters.CardType
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.databinding.FragmentHomeBinding
 import com.example.newsapp.viewmodels.NewsViewModel
@@ -50,13 +53,17 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        binding.toolbarInclude.toolbar.title = getString(R.string.newsmate)
+        val toolbar = binding.includeToolbar.toolbar
+        (requireActivity() as AppCompatActivity).setSupportActionBar(binding.includeToolbar.toolbar)
+        toolbar.title = "NewsMate"
         setupRecyclerView()
         setupObservers()
         setupRetryButton()
         observeBookmarkUpdates()
         binding.textWelcome.text = getString(R.string.home_user)
+        toolbar.setNavigationOnClickListener {
+            (requireActivity() as MainActivity).openDrawer()
+        }
     }
 
     private fun observeBookmarkUpdates() {
@@ -71,13 +78,13 @@ class HomeFragment : Fragment() {
 
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
-            onItemClick = { article ->
-                openArticleDetail(article)
-            }, onBookmarkClick = { article ->
-                newsViewModel.toggleBookmark(article)
-            }, onExtractSource = { article ->
-                newsViewModel.extractSourceFromArticle(article)
-            }, dateFormatter = dateFormatter
+            cardType = CardType.HOME, onItemClick = { article ->
+            openArticleDetail(article)
+        }, onBookmarkClick = { article ->
+            newsViewModel.toggleBookmark(article)
+        }, onExtractSource = { article ->
+            newsViewModel.extractSourceFromArticle(article)
+        }, dateFormatter = dateFormatter
         )
 
         binding.recyclerView.apply {
