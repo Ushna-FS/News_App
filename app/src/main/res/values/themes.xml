@@ -43,7 +43,7 @@
 
     <!-- Label Small: 11px, Medium, 1.4 line-height -->
     <style name="TextAppearance.NewsApp.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
-        <item name="android:textSize">14sp</item>
+        <item name="android:textSize">13sp</item>
         <item name="android:textStyle">normal</item>
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="fontFamily">sans-serif-medium</item>

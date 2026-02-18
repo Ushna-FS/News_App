@@ -29,9 +29,9 @@ class DateFormatter @Inject constructor() {
                 // Fallback: try to parse just the date part
                 val datePart = publishedAt?.substringBefore("T") ?: return ""
                 val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).parse(datePart)
-                dateOnlyFormat.format(date ?: Date())
+                e.printStackTrace(); dateOnlyFormat.format(date ?: Date())
             } catch (e: Exception) {
-                publishedAt?.substringBefore("T") ?: ""
+                e.printStackTrace(); publishedAt?.substringBefore("T") ?: ""
             }
         }
     }
@@ -42,30 +42,24 @@ class DateFormatter @Inject constructor() {
 
             inputFormat.parse(dateString)?.time ?: 0L
         } catch (e: Exception) {
-            0L
+            e.printStackTrace(); 0L
         }
     }
 
-    fun getTimeAgo(publishedAt: String?): String {
-        val date = try {
-            inputFormat.parse(publishedAt ?: return "")
-        } catch (e: Exception) {
-            return publishedAt?.substringBefore("T") ?: ""
-        } ?: return ""
-
+    fun getTimeAgo(timestamp: Long): String {
         val now = Date()
-        val diff = now.time - date.time
+        val diff = now.time - timestamp
         val seconds = TimeUnit.MILLISECONDS.toSeconds(diff)
         val minutes = TimeUnit.MILLISECONDS.toMinutes(diff)
         val hours = TimeUnit.MILLISECONDS.toHours(diff)
         val days = TimeUnit.MILLISECONDS.toDays(diff)
 
         return when {
-            seconds < 60 -> "$seconds seconds ago"
-            minutes < 60 -> "$minutes minutes ago"
-            hours < 24 -> "$hours hours ago"
+            seconds < 60 -> "Just now"
+            minutes < 60 -> "$minutes mins ago"
+            hours < 24 -> "$hours hrs ago"
             days < 7 -> "$days days ago"
-            else -> dateOnlyFormat.format(date)
+            else -> outputFormat.format(Date(timestamp))
         }
     }
 }

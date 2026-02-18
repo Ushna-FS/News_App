@@ -19,9 +19,7 @@ import com.example.newsapp.adapters.CardType
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.databinding.FragmentHomeBinding
 import com.example.newsapp.viewmodels.NewsViewModel
-import com.example.newsapp.utils.DateFormatter
 import dagger.hilt.android.AndroidEntryPoint
-import jakarta.inject.Inject
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -36,9 +34,6 @@ class HomeFragment : BaseNewsFragment()  {
 
     override val newsViewModel: NewsViewModel by activityViewModels()
     private lateinit var newsAdapter: NewsPagingAdapter
-
-    @Inject
-    lateinit var dateFormatter: DateFormatter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?

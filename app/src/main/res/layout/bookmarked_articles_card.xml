@@ -90,10 +90,18 @@
                 android:id="@+id/tvReadMore"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="2dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:drawableEnd="@drawable/ic_arrow_forward"
+                android:drawablePadding="4dp"
+                android:focusable="true"
+                android:paddingVertical="4dp"
                 android:text="@string/read_more"
+                android:textAppearance="@style/TextAppearance.NewsApp.LabelSmall"
                 android:textColor="?attr/colorPrimary"
-                android:textSize="13sp" />
+                android:textSize="12sp"
+                android:textStyle="bold|italic" />
         </LinearLayout>
 
         <!-- BOOKMARK -->
@@ -111,7 +119,7 @@
             android:id="@+id/ivShare"
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:layout_marginEnd="10dp"
+            android:layout_marginEnd="15dp"
             android:src="@drawable/ic_share"
             app:layout_constraintBottom_toBottomOf="@id/layoutReadMore"
             app:layout_constraintEnd_toStartOf="@id/ivBookmark"

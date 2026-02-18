@@ -27,10 +27,8 @@ import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.databinding.FragmentDiscoverBinding
-import com.example.newsapp.utils.DateFormatter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
-import jakarta.inject.Inject
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -44,9 +42,6 @@ class DiscoverFragment : BaseNewsFragment() {
     private lateinit var newsAdapter: NewsPagingAdapter
     private var filterFragment: FilterFragment? = null
     private var isFilterOpen = false
-
-    @Inject
-    lateinit var dateFormatter: DateFormatter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?

@@ -8,9 +8,13 @@ import com.example.newsapp.adapters.BookmarkAdapter
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.viewmodels.NewsViewModel
+import jakarta.inject.Inject
 import kotlinx.coroutines.launch
 
 abstract class BaseNewsFragment : Fragment() {
+    @Inject
+    lateinit var dateFormatter: com.example.newsapp.utils.DateFormatter
+
 
     protected open val newsViewModel: NewsViewModel by activityViewModels()
 
