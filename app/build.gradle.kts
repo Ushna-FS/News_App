@@ -2,8 +2,8 @@ plugins {
     id("com.android.application")
     id("com.google.dagger.hilt.android")
     id ("com.google.devtools.ksp")
-    id("org.jetbrains.kotlin.plugin.serialization")
-
+    id("kotlin-parcelize")
+    id("androidx.navigation.safeargs.kotlin")
 }
 
 val apiKey: String = project.findProperty("NEWS_API_KEY")?.toString() ?: ""

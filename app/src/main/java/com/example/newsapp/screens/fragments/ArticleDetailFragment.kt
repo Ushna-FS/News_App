@@ -21,7 +21,9 @@ import kotlinx.coroutines.launch
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebChromeClient
+import androidx.navigation.fragment.navArgs
 import kotlinx.coroutines.delay
+import kotlin.getValue
 
 
 @AndroidEntryPoint
@@ -32,6 +34,8 @@ class ArticleDetailFragment : Fragment() {
 
     private val viewModel: ArticleDetailViewModel by viewModels()
     private val newsViewModel: NewsViewModel by activityViewModels()
+    private val args: ArticleDetailFragmentArgs by navArgs()
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -122,12 +126,7 @@ class ArticleDetailFragment : Fragment() {
     }
 
     private fun loadArticle() {
-        val article = arguments?.getSerializable(ARG_ARTICLE) as? Article
-        if (article != null) {
-            viewModel.setArticle(article)
-        } else {
-            showError()
-        }
+        viewModel.setArticle(args.article)
     }
 
     private fun displayArticle(article: Article) {
@@ -143,14 +142,10 @@ class ArticleDetailFragment : Fragment() {
     }
 
     private fun updateBookmarkIcon(isBookmarked: Boolean) {
-        val icon = if (isBookmarked)
-            R.drawable.ic_bookmark
-        else
-            R.drawable.ic_bookmark_border
+        val icon = if (isBookmarked) R.drawable.ic_bookmark
+        else R.drawable.ic_bookmark_border
 
-        binding.toolbar.menu
-            .findItem(R.id.action_bookmark)
-            ?.setIcon(icon)
+        binding.toolbar.menu.findItem(R.id.action_bookmark)?.setIcon(icon)
     }
 
     private fun showError() {
@@ -167,11 +162,5 @@ class ArticleDetailFragment : Fragment() {
         binding.webView.destroy()
         _binding = null
         super.onDestroyView()
-    }
-
-    //
-    companion object {
-        private const val ARG_ARTICLE = "arg_article"
-
     }
 }

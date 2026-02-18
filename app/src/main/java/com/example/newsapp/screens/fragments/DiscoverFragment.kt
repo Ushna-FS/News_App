@@ -98,12 +98,12 @@ class DiscoverFragment : Fragment() {
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
             cardType = CardType.DISCOVER, onItemClick = { article ->
-            openArticleDetail(article)
-        }, onBookmarkClick = { article ->
-            newsViewModel.toggleBookmark(article)
-        }, onExtractSource = { article ->
-            newsViewModel.extractSourceFromArticle(article)
-        }, dateFormatter = dateFormatter
+                openArticleDetail(article)
+            }, onBookmarkClick = { article ->
+                newsViewModel.toggleBookmark(article)
+            }, onExtractSource = { article ->
+                newsViewModel.extractSourceFromArticle(article)
+            }, dateFormatter = dateFormatter
 
         )
 
@@ -176,7 +176,7 @@ class DiscoverFragment : Fragment() {
 
     private fun openArticleDetail(article: Article) {
         findNavController().navigate(
-            R.id.articleDetailFragment, bundleOf("arg_article" to article)
+            DiscoverFragmentDirections.actionDiscoverToArticleDetailFragment(article)
         )
     }
 

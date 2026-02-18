@@ -152,7 +152,7 @@ class HomeFragment : Fragment() {
 
     private fun openArticleDetail(article: Article) {
         findNavController().navigate(
-            R.id.articleDetailFragment, bundleOf("arg_article" to article)
+            HomeFragmentDirections.actionHomeToArticleDetailFragment(article)
         )
     }
 

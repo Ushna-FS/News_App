@@ -5,14 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.newsapp.R
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.adapters.BookmarkAdapter
 import com.example.newsapp.data.local.BookmarkedArticle
@@ -76,9 +74,7 @@ class BookmarksFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             newsViewModel.uiMessage.collect { resId ->
                 Toast.makeText(
-                    requireContext(),
-                    getString(resId),
-                    Toast.LENGTH_SHORT
+                    requireContext(), getString(resId), Toast.LENGTH_SHORT
                 ).show()
             }
         }
@@ -87,8 +83,7 @@ class BookmarksFragment : Fragment() {
 
     private fun openArticleDetail(article: Article) {
         findNavController().navigate(
-            R.id.articleDetailFragment,
-            bundleOf("arg_article" to article)
+            BookmarksFragmentDirections.actionBookmarkToArticleDetailFragment(article)
         )
     }
 
