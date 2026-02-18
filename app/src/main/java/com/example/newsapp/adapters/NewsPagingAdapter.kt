@@ -32,6 +32,8 @@ class NewsPagingAdapter(
     private val dateFormatter: DateFormatter
 
 ) : PagingDataAdapter<Article, RecyclerView.ViewHolder>(ARTICLE_COMPARATOR) {
+    var currentCategory: String = "General"
+
     companion object {
         private const val VIEW_HOME = 1
         private const val VIEW_DISCOVER = 2
@@ -145,9 +147,7 @@ class NewsPagingAdapter(
     inner class HomeViewHolder(
         val binding: HomeArticlesCardBinding
     ) : RecyclerView.ViewHolder(binding.root) {
-
         fun bind(article: Article) {
-
             binding.tvNewsTitle.text = article.title
             binding.tvNewsDescription.text = article.description ?: ""
             binding.tvNewsSource.text = article.source.name
@@ -155,6 +155,9 @@ class NewsPagingAdapter(
 
             val isBookmarked = bookmarkedUrls.contains(article.url)
             updateBookmarkIcon(binding.ivBookmark, isBookmarked)
+
+            binding.chipCategory.text = currentCategory.replaceFirstChar { it.uppercase() }
+
 
             binding.root.setOnClickListener { onItemClick(article) }
             binding.ivBookmark.setOnClickListener { onBookmarkClick(article) }

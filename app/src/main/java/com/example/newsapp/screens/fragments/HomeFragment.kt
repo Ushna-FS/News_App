@@ -27,7 +27,7 @@ import java.net.SocketTimeoutException
 
 
 @AndroidEntryPoint
-class HomeFragment : BaseNewsFragment()  {
+class HomeFragment : BaseNewsFragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
@@ -51,6 +51,8 @@ class HomeFragment : BaseNewsFragment()  {
         setupObservers()
         setupRetryButton()
         observeBookmarkUpdates()
+        setupCategoryChips()
+
         binding.textWelcome.text = getString(R.string.home_user)
         toolbar.setNavigationOnClickListener {
             (requireActivity() as MainActivity).openDrawer()
@@ -75,6 +77,7 @@ class HomeFragment : BaseNewsFragment()  {
             onExtractSource = { article -> newsViewModel.extractSourceFromArticle(article) },
             dateFormatter = dateFormatter
         )
+        newsAdapter.currentCategory = "general"
 
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -129,6 +132,29 @@ class HomeFragment : BaseNewsFragment()  {
         }
     }
 
+    private fun setupCategoryChips() {
+
+        binding.chipGroupCategories.setOnCheckedStateChangeListener { _, checkedIds ->
+
+            val id = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
+
+            val category = when (id) {
+                R.id.chipAll -> "all"
+                R.id.chipBusiness -> "business"
+                R.id.chipTech -> "technology"
+                R.id.chipSports -> "sports"
+                R.id.chipHealth -> "health"
+                else -> "all"
+            }
+
+            newsViewModel.setHomeCategory(category)
+            newsAdapter.currentCategory = category
+
+            binding.recyclerView.scrollToPosition(0)
+        }
+    }
+
+
     private fun setupRetryButton() {
         binding.btnRetry.setOnClickListener {
             // Retry loading
@@ -138,10 +164,11 @@ class HomeFragment : BaseNewsFragment()  {
             binding.recyclerView.isVisible = false
         }
     }
+
     private fun setupObservers() {
         // Use Business news for HomeFragment
         viewLifecycleOwner.lifecycleScope.launch {
-            newsViewModel.businessNewsPagingData.collectLatest { pagingData ->
+            newsViewModel.homeNewsPagingData.collectLatest { pagingData ->
                 newsAdapter.submitData(pagingData)
             }
         }

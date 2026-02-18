@@ -11,6 +11,8 @@ import retrofit2.HttpException
 sealed class NewsType {
     object Business : NewsType()
     object TechCrunch : NewsType()
+    object Everything : NewsType()
+    data class NewsCategory(val name: String) : NewsType()
     data class Search(val query: String) : NewsType()
 }
 
@@ -39,10 +41,21 @@ class NewsPagingSource(
                 is NewsType.TechCrunch -> apiService.getTechCrunchHeadlines(
                     page = page, pageSize = pageSize
                 )
+                is NewsType.Everything -> apiService.searchNews(
+                    query = "general",
+                    page = page,
+                    pageSize = pageSize
+                )
 
                 is NewsType.Search -> apiService.searchNews(
                     query = newsType.query, page = page, pageSize = pageSize
                 )
+                is NewsType.NewsCategory -> apiService.getTopHeadlines(
+                    category = newsType.name,
+                    page = page,
+                    pageSize = pageSize
+                )
+
             }
 
             if (response.isSuccessful) {
