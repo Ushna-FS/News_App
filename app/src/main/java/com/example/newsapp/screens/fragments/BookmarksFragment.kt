@@ -21,12 +21,12 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class BookmarksFragment : Fragment() {
+class BookmarksFragment : BaseNewsFragment() {
 
     private var _binding: FragmentBookmarksBinding? = null
     private val binding get() = _binding!!
 
-    private val newsViewModel: NewsViewModel by activityViewModels()
+    override val newsViewModel: NewsViewModel by activityViewModels()
     private lateinit var bookmarkAdapter: BookmarkAdapter
 
     override fun onCreateView(
@@ -40,16 +40,14 @@ class BookmarksFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         setupObservers()
+        observeBookmarkUpdates(bookmarkAdapter)
     }
 
     private fun setupRecyclerView() {
-        bookmarkAdapter = BookmarkAdapter(onItemClick = { article ->
-            // Open ArticleDetailFragment
-            openArticleDetail(article)
-        }, toggleBookmark = { article ->
-            // Remove bookmark when clicked (since it's already bookmarked)
-            newsViewModel.toggleBookmark(article)
-        })
+        bookmarkAdapter = BookmarkAdapter(
+            onItemClick = { article -> openArticleDetail(article) },
+            toggleBookmark = { article -> toggleBookmark(article) }
+        )
 
         binding.recyclerViewBookmarks.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -78,13 +76,6 @@ class BookmarksFragment : Fragment() {
                 ).show()
             }
         }
-    }
-
-
-    private fun openArticleDetail(article: Article) {
-        findNavController().navigate(
-            BookmarksFragmentDirections.actionBookmarkToArticleDetailFragment(article)
-        )
     }
 
     override fun onDestroyView() {

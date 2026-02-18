@@ -13,14 +13,11 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.MainActivity
@@ -29,7 +26,6 @@ import com.example.newsapp.adapters.CardType
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.data.repository.SortType
-import com.example.newsapp.data.models.Article
 import com.example.newsapp.databinding.FragmentDiscoverBinding
 import com.example.newsapp.utils.DateFormatter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -39,12 +35,12 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class DiscoverFragment : Fragment() {
+class DiscoverFragment : BaseNewsFragment() {
 
     private var _binding: FragmentDiscoverBinding? = null
     private val binding get() = _binding!!
 
-    private val newsViewModel: NewsViewModel by activityViewModels()
+    override val newsViewModel: NewsViewModel by activityViewModels()
     private lateinit var newsAdapter: NewsPagingAdapter
     private var filterFragment: FilterFragment? = null
     private var isFilterOpen = false
@@ -97,14 +93,11 @@ class DiscoverFragment : Fragment() {
 
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
-            cardType = CardType.DISCOVER, onItemClick = { article ->
-                openArticleDetail(article)
-            }, onBookmarkClick = { article ->
-                newsViewModel.toggleBookmark(article)
-            }, onExtractSource = { article ->
-                newsViewModel.extractSourceFromArticle(article)
-            }, dateFormatter = dateFormatter
-
+            cardType = CardType.DISCOVER,
+            onItemClick = { article -> openArticleDetail(article) }, // now from BaseNewsFragment
+            onBookmarkClick = { article -> toggleBookmark(article) }, // from BaseNewsFragment
+            onExtractSource = { article -> newsViewModel.extractSourceFromArticle(article) },
+            dateFormatter = dateFormatter
         )
 
         newsAdapter.addLoadStateListener { loadState ->
@@ -174,11 +167,6 @@ class DiscoverFragment : Fragment() {
         }
     }
 
-    private fun openArticleDetail(article: Article) {
-        findNavController().navigate(
-            DiscoverFragmentDirections.actionDiscoverToArticleDetailFragment(article)
-        )
-    }
 
     private fun setupSearchFunctionality() {
         binding.etSearch.addTextChangedListener(object : TextWatcher {
