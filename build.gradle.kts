@@ -4,9 +4,12 @@ plugins {
     id("com.google.dagger.hilt.android") version "2.59.1" apply false
     id("com.google.devtools.ksp") version "2.3.4" apply false
     id("org.jetbrains.kotlin.plugin.parcelize") version "2.3.20-Beta2" apply false
+    id("com.google.gms.google-services") version "4.4.4" apply false
+    id("com.google.firebase.crashlytics") version "3.0.6" apply false
 }
 buildscript {
     dependencies {
         classpath(libs.androidx.navigation.safe.args.gradle.plugin)
+        classpath(libs.firebase.crashlytics.gradle)
     }
 }

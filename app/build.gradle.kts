@@ -1,9 +1,11 @@
 plugins {
     id("com.android.application")
     id("com.google.dagger.hilt.android")
-    id ("com.google.devtools.ksp")
+    id("com.google.devtools.ksp")
     id("kotlin-parcelize")
     id("androidx.navigation.safeargs.kotlin")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
 
 val apiKey: String = project.findProperty("NEWS_API_KEY")?.toString() ?: ""
@@ -44,7 +46,7 @@ android {
 
     buildFeatures {
         viewBinding = true
-        buildConfig=true
+        buildConfig = true
     }
 }
 
@@ -75,9 +77,9 @@ dependencies {
     implementation(libs.androidx.cardview)
     implementation(libs.glide)
 
-    implementation (libs.hilt.android)
+    implementation(libs.hilt.android)
     implementation(libs.androidx.activity)
-    ksp (libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
 
     implementation(libs.androidx.core.splashscreen)
 
@@ -98,6 +100,10 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
 
+
+    implementation(libs.firebase.analytics)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics)
 
 
     testImplementation(libs.junit)
