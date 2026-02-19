@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">NewsApp</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="no_articles_found">No articles found</string>
     <string name="clear_search">Clear search</string>
@@ -14,10 +13,10 @@
     <string name="close">Close</string>
     <string name="categories">Categories</string>
     <string name="hello_user">Hello User!</string>
-    <string name="loading_articles">Loading articles...</string>
+    <string name="loading_articles">Loading articles…</string>
     <string name="your_saved_articles">Your Saved Articles</string>
     <string name="no_bookmarks_yet">No bookmarks yet</string>
-    <string name="search_news">Search news...</string>
+    <string name="search_news">Search news…</string>
     <string name="all_news">All News</string>
     <string name="empty_state">Empty state</string>
     <string name="bookmarks">Bookmarks</string>
@@ -32,4 +31,35 @@
     <string name="date">30 Jan , 4:18 AM</string>
     <string name="business">Business</string>
     <string name="technology">Technology</string>
+    <string name="article_detail">Article Detail</string>
+    <string name="no_title">No Title Available</string>
+    <string name="unknown_source">Unknown Source</string>
+    <string name="by_author">By %s</string>
+    <string name="unknown_author">Unknown Author</string>
+    <string name="no_content">No content available for this article.</string>
+    <string name="bookmark">Bookmark</string>
+    <string name="bookmarked">Bookmarked</string>
+    <string name="share">Share</string>
+    <string name="share_article">Share Article</string>
+    <string name="article_load_error">Unable to load article. Please try again.</string>
+    <string name="article_image">Article Image</string>
+    <string name="article_detail_fallback">Full article content is not available.\nTap \"Open in Browser\" to read more.</string>
+    <string name="retry">Retry</string>
+    <string name="discover">Discover</string>
+    <string name="home">Home</string>
+    <string name="selected_categories">Selected Categories</string>
+    <string name="sources_count">%1$d Sources</string>
+    <string name="news_suffix">News</string>
+    <string name="sources_suffix">sources</string>
+    <string name="filter_summary_combo">%1$s (%2$d sources)</string>
+    <string name="error_no_internet">No internet connection — tap retry</string>
+    <string name="error_generic">Something went wrong — tap retry</string>
+    <string name="pagination_end">You reached the end — no more articles</string>
+    <string name="error_check_internet">Check internet connection</string>
+    <string name="error_load_articles">Failed to load articles</string>
+    <string name="no_article_data">No article data</string>
+    <string name="newsmate">NewsMate</string>
+    <string name="bookmark_added">Article added to bookmarks</string>
+    <string name="bookmark_removed">Article removed from bookmarks</string>
+
 </resources>

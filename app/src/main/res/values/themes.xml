@@ -1,21 +1,26 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+<resources >
+
+    <!-- Base theme -->
     <style name="Base.Theme.NewsApp" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
+
+        <item name="colorPrimary">@color/blueMain</item>
+        <item name="colorSecondary">@color/lightBlue</item>
+
+        <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="toolbarStyle">@style/NewsToolbarStyle</item>
+
+
+    </style>
+
+    <style name="NewsToolbarStyle" parent="Widget.Material3.Toolbar">
+        <item name="titleTextColor">?attr/colorOnPrimary</item>
+        <item name="navigationIconTint">?attr/colorOnPrimary</item>
+        <item name="actionMenuTextColor">?attr/colorOnPrimary</item>
+
+        <!-- Ensure menu icons also use the same tint -->
+        <item name="itemIconTint">?attr/colorOnPrimary</item>
     </style>
 
     <style name="Theme.NewsApp" parent="Base.Theme.NewsApp" />
-
-
-    <style name="Theme.NewsApp.Splash" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:windowBackground">@color/white</item>
-        <item name="android:windowFullscreen">false</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:windowActionBar">false</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:windowTranslucentNavigation">false</item>
-    </style>
 
 </resources>

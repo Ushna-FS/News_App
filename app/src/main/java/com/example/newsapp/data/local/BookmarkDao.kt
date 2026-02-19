@@ -9,9 +9,6 @@ interface BookmarkDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBookmark(article: BookmarkedArticle)
 
-    @Delete
-    suspend fun deleteBookmark(article: BookmarkedArticle)
-
     @Query("SELECT * FROM bookmarked_articles ORDER BY bookmarkedAt DESC")
     fun getAllBookmarks(): Flow<List<BookmarkedArticle>>
 

@@ -1,5 +1,4 @@
-package com.example.newsapp.data.Repository
-
+package com.example.newsapp.data.repository
 
 import com.example.newsapp.data.local.BookmarkDao
 import com.example.newsapp.data.local.BookmarkedArticle
@@ -13,21 +12,23 @@ import javax.inject.Inject
 
 class BookmarkRepository @Inject constructor(
     private val bookmarkDao: BookmarkDao
-){
+) {
     private val _bookmarkUpdates = MutableSharedFlow<String>()
     val bookmarkUpdates: SharedFlow<String> = _bookmarkUpdates.asSharedFlow()
 
-    suspend fun addBookmark(article: Article) {
-        bookmarkDao.insertBookmark(article.toBookmarkedArticle())
-        _bookmarkUpdates.emit(article.url ?: "")
+    suspend fun removeBookmark(article: Article) {
+        bookmarkDao.deleteBookmarkByUrl(article.url)
+        _bookmarkUpdates.emit(article.url)
     }
 
-    suspend fun removeBookmark(article: Article) {
-        val bookmarkedArticle = bookmarkDao.getBookmarkByUrl(article.url ?: "")
-        bookmarkedArticle?.let {
-            bookmarkDao.deleteBookmark(it)
-            _bookmarkUpdates.emit(article.url ?: "")
-        }
+    suspend fun removeBookmark(url: String) {
+        bookmarkDao.deleteBookmarkByUrl(url)
+        _bookmarkUpdates.emit(url)
+    }
+
+    suspend fun addBookmark(article: Article) {
+        bookmarkDao.insertBookmark(article.toBookmarkedArticle())
+        _bookmarkUpdates.emit(article.url)
     }
 
     suspend fun isBookmarked(url: String): Boolean {

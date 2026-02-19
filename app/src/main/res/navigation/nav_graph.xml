@@ -1,0 +1,21 @@
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.newsapp.screens.fragments.HomeFragment" />
+
+    <fragment
+        android:id="@+id/discoverFragment"
+        android:name="com.example.newsapp.screens.fragments.DiscoverFragment" />
+
+    <fragment
+        android:id="@+id/bookmarksFragment"
+        android:name="com.example.newsapp.screens.fragments.BookmarksFragment" />
+
+    <fragment
+        android:id="@+id/articleDetailFragment"
+        android:name="com.example.newsapp.screens.fragments.ArticleDetailFragment" />
+</navigation>

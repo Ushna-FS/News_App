@@ -1,12 +1,8 @@
 package com.example.newsapp.adapters
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.core.view.isVisible
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
 import androidx.paging.LoadStateAdapter
 import androidx.paging.PagingDataAdapter
@@ -14,23 +10,21 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.newsapp.R
-import com.example.newsapp.ViewModels.NewsViewModel
 import com.example.newsapp.data.models.Article
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
+import com.example.newsapp.databinding.ItemLoadingBinding
+import com.example.newsapp.databinding.ItemNewsArticleBinding
+import com.example.newsapp.utils.DateFormatter
+import java.io.IOException
+import java.net.SocketTimeoutException
+
 
 class NewsPagingAdapter(
     private val onItemClick: (Article) -> Unit,
+    private val onBookmarkClick: (Article) -> Unit,
     private val onExtractSource: ((Article) -> Unit)? = null,
-    private val viewModel: NewsViewModel? = null,
-    private val lifecycleOwner: LifecycleOwner? = null
+    private val dateFormatter: DateFormatter
+
 ) : PagingDataAdapter<Article, NewsPagingAdapter.ArticleViewHolder>(ARTICLE_COMPARATOR) {
-
-    private val bookmarkStates = mutableMapOf<String, Boolean>()
-
     companion object {
         private val ARTICLE_COMPARATOR = object : DiffUtil.ItemCallback<Article>() {
             override fun areItemsTheSame(oldItem: Article, newItem: Article): Boolean {
@@ -44,204 +38,104 @@ class NewsPagingAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ArticleViewHolder {
-        val inflater = LayoutInflater.from(parent.context)
-        val view = inflater.inflate(R.layout.item_news_article, parent, false)
-        return ArticleViewHolder(view, onItemClick, onExtractSource, viewModel, lifecycleOwner)
+
+        val binding = ItemNewsArticleBinding.inflate(
+            LayoutInflater.from(parent.context), parent, false
+        )
+
+        return ArticleViewHolder(
+            binding, this, onItemClick, onBookmarkClick, onExtractSource, dateFormatter
+        )
+
     }
 
     override fun onBindViewHolder(holder: ArticleViewHolder, position: Int) {
-        getItem(position)?.let { holder.bind(it) }
+        getItem(position)?.let {
+            holder.bind(it)
+
+        }
     }
 
-    inner class ArticleViewHolder(
-        itemView: View,
-        private val onItemClick: (Article) -> Unit,
-        private val onExtractSource: ((Article) -> Unit)?,
-        private val viewModel: NewsViewModel?,
-        private val lifecycleOwner: LifecycleOwner?
-    ) : RecyclerView.ViewHolder(itemView) {
 
-        private val imageNews = itemView.findViewById<android.widget.ImageView>(R.id.ivNewsImage)
-        private val textTitle = itemView.findViewById<android.widget.TextView>(R.id.tvNewsTitle)
-        private val textDescription =
-            itemView.findViewById<android.widget.TextView>(R.id.tvNewsDescription)
-        private val textSource = itemView.findViewById<android.widget.TextView>(R.id.tvNewsSource)
-        private val textTime = itemView.findViewById<android.widget.TextView>(R.id.tvNewsTime)
-        private val bookmarkIcon = itemView.findViewById<android.widget.ImageView>(R.id.ivBookmark)
+    override fun onBindViewHolder(
+        holder: ArticleViewHolder, position: Int, payloads: MutableList<Any>
+    ) {
+        if (payloads.contains("BOOKMARK_STATE")) {
+            getItem(position)?.let { article ->
+                val isBookmarked = bookmarkedUrls.contains(article.url)
+                holder.updateBookmarkIconVisual(isBookmarked)
+            }
+        } else {
+            super.onBindViewHolder(holder, position, payloads)
+        }
+    }
+
+    fun updateBookmarkIconForUrl(url: String) {
+        for (i in 0 until itemCount) {
+            getItem(i)?.let { article ->
+                if (article.url == url) {
+                    notifyItemChanged(i, "BOOKMARK_STATE")
+                    return
+                }
+            }
+        }
+    }
+
+    var bookmarkedUrls: Set<String> = emptySet()
+
+    fun updateBookmarkedUrls(urls: Set<String>) {
+        bookmarkedUrls = urls
+        notifyItemRangeChanged(0, itemCount, "BOOKMARK_STATE")
+    }
+
+
+    class ArticleViewHolder(
+        private val binding: ItemNewsArticleBinding,
+        private val adapter: NewsPagingAdapter,
+        private val onItemClick: (Article) -> Unit,
+        private val onBookmarkClick: (Article) -> Unit,
+        private val onExtractSource: ((Article) -> Unit)? = null,
+        private val dateFormatter: DateFormatter
+
+    ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(article: Article) {
-            textTitle.text = article.title ?: ""
-            textDescription.text = article.description ?: ""
-            textSource.text = article.source?.name ?: "Unknown"
-            textTime.text = formatDate(article.publishedAt)
-            val articleUrl = article.url ?: ""
+            binding.tvNewsTitle.text = article.title
+            binding.tvNewsDescription.text = article.description ?: ""
+            binding.tvNewsSource.text = article.source.name
+            binding.tvNewsTime.text = dateFormatter.formatDisplayDate(article.publishedAt)
 
             // Extract source for filter
             onExtractSource?.invoke(article)
-            val isBookmarked = bookmarkStates[articleUrl] ?: false
-            updateBookmarkIconVisual(isBookmarked)
+            //bookmark state
+            val isBookmarkedNow = adapter.bookmarkedUrls.contains(article.url)
+            updateBookmarkIconVisual(isBookmarkedNow)
+
 
             // Load image with Glide
             article.urlToImage?.let { url ->
-                Glide.with(itemView.context)
-                    .load(url)
-                    .placeholder(R.drawable.ic_newspaper)
-                    .error(R.drawable.ic_newspaper)
-                    .into(imageNews)
+                Glide.with(binding.root.context).load(url).placeholder(R.drawable.ic_newspaper)
+                    .error(R.drawable.ic_newspaper).into(binding.ivNewsImage)
             } ?: run {
-                imageNews.setImageResource(R.drawable.ic_newspaper)
+                binding.ivNewsImage.setImageResource(R.drawable.ic_newspaper)
             }
 
-            // Set bookmark state
-            updateBookmarkIcon(article.url)
-
-            // Set click listeners
-            itemView.setOnClickListener {
+            binding.root.setOnClickListener {
                 onItemClick(article)
             }
 
-            bookmarkIcon.setOnClickListener {
-                // Toggle visual state immediately
-                val currentDrawable = bookmarkIcon.drawable
-                val isCurrentlyFilled = currentDrawable.constantState?.equals(
-                    itemView.context.getDrawable(R.drawable.ic_bookmark)?.constantState
-                ) == true
-
-                if (isCurrentlyFilled) {
-                    bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)
-                } else {
-                    bookmarkIcon.setImageResource(R.drawable.ic_bookmark)
-                }
-                bookmarkIcon.setColorFilter(itemView.context.getColor(R.color.blueMain))
-
-                // Show toast
-                val message = if (isCurrentlyFilled) {
-                    "Article removed from bookmarks"
-                } else {
-                    "Article added to bookmarks"
-                }
-                Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
-
-                // Perform bookmark operation
-                viewModel?.toggleBookmark(article)
+            binding.ivBookmark.setOnClickListener {
+                onBookmarkClick(article)
             }
-
-            bookmarkIcon.setOnClickListener {
-                // Get current state from our map
-                val currentState = bookmarkStates[articleUrl] ?: false
-
-                // Update visual immediately
-                updateBookmarkIconVisual(!currentState)
-
-                // Update our local state
-                bookmarkStates[articleUrl] = !currentState
-
-                // Show toast message
-                val message = if (!currentState) {
-                    "Article added to bookmarks"
-                } else {
-                    "Article removed from bookmarks"
-                }
-                Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
-
-                // Call ViewModel
-                viewModel?.toggleBookmark(article)
-            }
-
-            // Listen for bookmark state changes from ViewModel
-            viewModel?.bookmarkStateChanged?.let { flow ->
-                lifecycleOwner?.lifecycleScope?.launch {
-                    flow.collect { changed ->
-                        changed?.let { (changedUrl, isBookmarked) ->
-                            if (changedUrl == articleUrl) {
-                                updateBookmarkIconVisual(isBookmarked)
-                                bookmarkStates[articleUrl] = isBookmarked
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Initial bookmark state check
-            if (viewModel != null && lifecycleOwner != null) {
-                lifecycleOwner.lifecycleScope.launch {
-                    viewModel.isArticleBookmarked(articleUrl).collect { isBookmarked ->
-                        updateBookmarkIconVisual(isBookmarked)
-                        bookmarkStates[articleUrl] = isBookmarked
-                    }
-                }
-            }
-
         }
 
-        private fun updateBookmarkIconVisual(isBookmarked: Boolean) {
+        fun updateBookmarkIconVisual(isBookmarked: Boolean) {
             if (isBookmarked) {
-                bookmarkIcon.setImageResource(R.drawable.ic_bookmark)
-                bookmarkIcon.setColorFilter(itemView.context.getColor(R.color.blueMain))
+                binding.ivBookmark.setImageResource(R.drawable.ic_bookmark)
+                binding.ivBookmark.setColorFilter(itemView.context.getColor(R.color.blueMain))
             } else {
-                bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)
-                bookmarkIcon.setColorFilter(itemView.context.getColor(R.color.blueMain))
-            }
-        }
-
-        private fun formatDate(publishedAt: String?): String {
-            return try {
-                if (publishedAt.isNullOrEmpty()) return ""
-
-                val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault())
-                inputFormat.timeZone = TimeZone.getTimeZone("UTC")
-                val date = inputFormat.parse(publishedAt) ?: return ""
-
-                val outputFormat = SimpleDateFormat("dd MMM yyyy, h:mm a", Locale.getDefault())
-                outputFormat.format(date)
-            } catch (e: Exception) {
-                try {
-                    publishedAt?.substringBefore("T")?.let { datePart ->
-                        val dateOnlyFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                        val date = dateOnlyFormat.parse(datePart)
-                        val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-                        outputFormat.format(date ?: Date())
-                    } ?: ""
-                } catch (e: Exception) {
-                    publishedAt?.substringBefore("T") ?: ""
-                }
-            }
-        }
-
-        private fun showBookmarkToast(article: Article) {
-            // Check current bookmark state
-            val url = article.url
-            if (url != null) {
-                lifecycleOwner?.lifecycleScope?.launch {
-                    viewModel?.isArticleBookmarked(url)?.collect { isBookmarked ->
-                        val message = if (isBookmarked) {
-                            "Article removed from bookmarks"
-                        } else {
-                            "Article added to bookmarks"
-                        }
-                        Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        }
-
-        private fun updateBookmarkIcon(url: String?) {
-            if (viewModel != null && lifecycleOwner != null && !url.isNullOrEmpty()) {
-                lifecycleOwner.lifecycleScope.launch {
-                    viewModel.isArticleBookmarked(url).collect { isBookmarked ->
-                        if (isBookmarked) {
-                            bookmarkIcon.setImageResource(R.drawable.ic_bookmark)
-                            bookmarkIcon.setColorFilter(
-                                itemView.context.getColor(R.color.blueMain)
-                            )
-                        } else {
-                            bookmarkIcon.setImageResource(R.drawable.ic_bookmark_border)
-                            bookmarkIcon.setColorFilter(
-                                itemView.context.getColor(R.color.blueMain)
-                            )
-                        }
-                    }
-                }
+                binding.ivBookmark.setImageResource(R.drawable.ic_bookmark_border)
+                binding.ivBookmark.setColorFilter(itemView.context.getColor(R.color.blueMain))
             }
         }
     }
@@ -250,56 +144,50 @@ class NewsPagingAdapter(
         LoadStateAdapter<NewsLoadStateAdapter.LoadStateViewHolder>() {
 
         override fun onCreateViewHolder(
-            parent: ViewGroup,
-            loadState: LoadState
+            parent: ViewGroup, loadState: LoadState
         ): LoadStateViewHolder {
-            val view = LayoutInflater.from(parent.context)
-                .inflate(R.layout.item_loading, parent, false)
-            return LoadStateViewHolder(view, retry)
+            val binding = ItemLoadingBinding.inflate(
+                LayoutInflater.from(parent.context), parent, false
+            )
+
+            return LoadStateViewHolder(binding, retry)
         }
 
         override fun onBindViewHolder(holder: LoadStateViewHolder, loadState: LoadState) {
             holder.bind(loadState)
         }
 
+
         class LoadStateViewHolder(
-            itemView: View,
-            private val retry: () -> Unit
-        ) : RecyclerView.ViewHolder(itemView) {
-
-            private val progressBar =
-                itemView.findViewById<android.widget.ProgressBar>(R.id.progressBar)
-            private val textError =
-                itemView.findViewById<android.widget.TextView>(R.id.textError)
-            private val buttonRetry =
-                itemView.findViewById<com.google.android.material.button.MaterialButton>(R.id.buttonRetry)
-
+            private val binding: ItemLoadingBinding, private val retry: () -> Unit
+        ) : RecyclerView.ViewHolder(binding.root) {
             fun bind(loadState: LoadState) {
-                when (loadState) {
-                    is LoadState.Loading -> {
-                        progressBar.isVisible = true
-                        textError.isVisible = false
-                        buttonRetry.isVisible = false
+
+                binding.progressBar.isVisible = loadState is LoadState.Loading
+                binding.textError.isVisible = loadState is LoadState.Error
+                binding.buttonRetry.isVisible = loadState is LoadState.Error
+
+                if (loadState is LoadState.Error) {
+                    val error = loadState.error
+                    val ctx = binding.root.context
+
+                    binding.textError.text = when (error) {
+                        is IOException, is SocketTimeoutException -> ctx.getString(R.string.error_no_internet)
+
+                        else -> ctx.getString(R.string.error_generic)
                     }
 
-                    is LoadState.Error -> {
-                        progressBar.isVisible = false
-                        textError.isVisible = true
-                        buttonRetry.isVisible = true
+                    binding.buttonRetry.setOnClickListener { retry() }
+                }
 
-                        textError.text = loadState.error.message ?: "Unknown error"
-                        buttonRetry.setOnClickListener { retry() }
-                    }
-
-                    else -> {
-                        progressBar.isVisible = false
-                        textError.isVisible = false
-                        buttonRetry.isVisible = false
-                    }
+                if (loadState is LoadState.NotLoading && loadState.endOfPaginationReached) {
+                    binding.progressBar.isVisible = false
+                    binding.textError.isVisible = true
+                    binding.textError.text = binding.root.context.getString(R.string.pagination_end)
+                    binding.buttonRetry.isVisible = false
                 }
             }
+
         }
     }
 }
-
-

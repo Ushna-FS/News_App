@@ -4,19 +4,30 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.newsapp.R
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.databinding.FragmentHomeBinding
-import com.example.newsapp.ViewModels.NewsViewModel
+import com.example.newsapp.viewmodels.NewsViewModel
+import com.example.newsapp.data.models.Article
+import com.example.newsapp.utils.DateFormatter
 import dagger.hilt.android.AndroidEntryPoint
+import jakarta.inject.Inject
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.net.SocketTimeoutException
+
 
 @AndroidEntryPoint
 class HomeFragment : Fragment() {
@@ -27,10 +38,11 @@ class HomeFragment : Fragment() {
     private val newsViewModel: NewsViewModel by activityViewModels()
     private lateinit var newsAdapter: NewsPagingAdapter
 
+    @Inject
+    lateinit var dateFormatter: DateFormatter
+
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
@@ -39,30 +51,102 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.toolbarInclude.toolbar.title = getString(R.string.newsmate)
         setupRecyclerView()
         setupObservers()
+        setupRetryButton()
+        observeBookmarkUpdates()
         binding.textWelcome.text = getString(R.string.home_user)
+    }
+
+    private fun observeBookmarkUpdates() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                newsViewModel.bookmarkStateChanged.collect { (url) ->
+                    newsAdapter.updateBookmarkIconForUrl(url)
+                }
+            }
+        }
     }
 
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
             onItemClick = { article ->
-                // Handle article click
-            },
-            onExtractSource = { article ->
+                openArticleDetail(article)
+            }, onBookmarkClick = { article ->
+                newsViewModel.toggleBookmark(article)
+            }, onExtractSource = { article ->
                 newsViewModel.extractSourceFromArticle(article)
-            },
-            viewModel = newsViewModel,
-            lifecycleOwner = viewLifecycleOwner
+            }, dateFormatter = dateFormatter
         )
 
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = newsAdapter.withLoadStateFooter(
-                footer = NewsPagingAdapter.NewsLoadStateAdapter { newsAdapter.retry() }
-            )
+                footer = NewsPagingAdapter.NewsLoadStateAdapter { newsAdapter.retry() })
             setHasFixedSize(true)
         }
+
+        // Set up load state listener
+        newsAdapter.addLoadStateListener { loadState ->
+            val refresh = loadState.refresh
+            val isListEmpty = newsAdapter.itemCount == 0
+
+            // ---------------- INITIAL LOAD ERROR ----------------
+            if (refresh is LoadState.Error) {
+                binding.progressBar.isVisible = false
+                binding.recyclerView.isVisible = false
+                binding.llEmptyState.isVisible = true
+
+                // Show retry button for initial load errors
+                binding.btnRetry.isVisible = true
+
+                val error = refresh.error
+                binding.textEmpty.text = when (error) {
+                    is IOException, is SocketTimeoutException -> getString(R.string.error_check_internet)
+
+                    else -> getString(R.string.error_load_articles)
+                }
+                return@addLoadStateListener
+            }
+
+            // ---------------- INITIAL LOADING ----------------
+            if (refresh is LoadState.Loading) {
+                binding.progressBar.isVisible = true
+                binding.recyclerView.isVisible = false
+                binding.llEmptyState.isVisible = false
+                return@addLoadStateListener
+            }
+
+            // ---------------- SUCCESS ----------------
+            binding.progressBar.isVisible = false
+
+            if (isListEmpty) {
+                binding.recyclerView.isVisible = false
+                binding.llEmptyState.isVisible = true
+                binding.btnRetry.isVisible = false   // No retry on empty success
+                binding.textEmpty.text = context?.getString(R.string.no_articles_found)
+            } else {
+                binding.recyclerView.isVisible = true
+                binding.llEmptyState.isVisible = false
+            }
+        }
+    }
+
+    private fun setupRetryButton() {
+        binding.btnRetry.setOnClickListener {
+            // Retry loading
+            newsAdapter.retry()
+            binding.progressBar.isVisible = true
+            binding.llEmptyState.isVisible = false
+            binding.recyclerView.isVisible = false
+        }
+    }
+
+    private fun openArticleDetail(article: Article) {
+        findNavController().navigate(
+            R.id.articleDetailFragment, bundleOf("arg_article" to article)
+        )
     }
 
     private fun setupObservers() {
@@ -72,70 +156,21 @@ class HomeFragment : Fragment() {
                 newsAdapter.submitData(pagingData)
             }
         }
-
         viewLifecycleOwner.lifecycleScope.launch {
-            newsAdapter.loadStateFlow.collectLatest { loadState ->
-                binding.apply {
-                    // Handle initial loading
-                    when (loadState.refresh) {
-                        is LoadState.Loading -> {
-                            progressBar.isVisible = true
-                            recyclerView.isVisible = false
-                            footerLoading.root.isVisible = false
-                        }
-
-                        is LoadState.Error -> {
-                            progressBar.isVisible = false
-                            textEmpty.text = getString(
-                                R.string.error,
-                                (loadState.refresh as LoadState.Error).error.message
-                            )
-                            textEmpty.isVisible = true
-                            recyclerView.isVisible = false
-                            footerLoading.root.isVisible = false
-                        }
-
-                        else -> {
-                            progressBar.isVisible = false
-                            textEmpty.isVisible = false
-                            recyclerView.isVisible = true
-                        }
-                    }
-
-                    // Handle pagination loading
-                    when (loadState.append) {
-                        is LoadState.Loading -> {
-                            footerLoading.root.isVisible = true
-                        }
-
-                        is LoadState.Error -> {
-                            footerLoading.root.isVisible = true
-                            footerLoading.textError.text =
-                                (loadState.append as LoadState.Error).error.message
-                            footerLoading.textError.isVisible = true
-                            footerLoading.buttonRetry.isVisible = true
-                            footerLoading.buttonRetry.setOnClickListener {
-                                newsAdapter.retry()
-                            }
-                        }
-
-                        else -> {
-                            footerLoading.root.isVisible = false
-                        }
-                    }
-
-                    // Show empty state
-                    if (loadState.refresh !is LoadState.Loading &&
-                        loadState.append.endOfPaginationReached &&
-                        newsAdapter.itemCount == 0
-                    ) {
-                        textEmpty.text = getString(R.string.no_articles_found)
-                        textEmpty.isVisible = true
-                        recyclerView.isVisible = false
-                    }
-                }
+            newsViewModel.getAllBookmarkedUrls().collect { urls ->
+                newsAdapter.updateBookmarkedUrls(urls)
             }
         }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            newsViewModel.uiMessage.collect { resId ->
+                Toast.makeText(
+                    requireContext(), getString(resId), Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+
     }
 
     override fun onDestroyView() {
