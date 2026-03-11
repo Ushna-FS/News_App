@@ -6,6 +6,7 @@ plugins {
     id("androidx.navigation.safeargs.kotlin")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val apiKey: String = project.findProperty("NEWS_API_KEY")?.toString() ?: ""
@@ -39,14 +40,18 @@ android {
         }
     }
 
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.15"  // Add this line
+    }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        compose = true
     }
 }
 
@@ -79,18 +84,38 @@ dependencies {
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.activity)
+    implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.material3)
     ksp(libs.hilt.compiler)
 
     implementation(libs.androidx.core.splashscreen)
 
     // For ViewModel injection
     implementation(libs.androidx.hilt.navigation.fragment)
-    annotationProcessor(libs.androidx.hilt.compiler)
 
 //    implementation(libs.androidx.paging.runtime.ktx)
     implementation(libs.androidx.paging.runtime.ktx.v320)
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
+
+    // Compose
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.material)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.activity.compose)
+    implementation (libs.androidx.compose.ui.tooling.preview.v150)
+    debugImplementation (libs.androidx.compose.ui.tooling)
+
+    // Hilt + Compose
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.hilt.android.v259)
+    // Navigation Compose
+    implementation(libs.androidx.navigation.compose)
+
+    // Coil for Compose (image loading)
+    implementation(libs.coil.compose)
+    //icons
+    implementation(libs.androidx.material.icons.extended)
 
     implementation(libs.kotlinx.serialization.json)
 
