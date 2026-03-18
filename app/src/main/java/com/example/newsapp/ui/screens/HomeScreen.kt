@@ -8,6 +8,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,7 +21,7 @@ import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.ui.components.HomeArticleItem
 import com.example.newsapp.ui.components.EmptyState
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.newsapp.data.ArticleCategoryMapper
+import com.example.newsapp.utils.ArticleCategoryMapper
 import com.example.newsapp.ui.components.CategoryChips
 import com.example.newsapp.utils.DateFormatter
 
@@ -49,7 +50,7 @@ fun HomeScreen(
         bookmarkedUrls = bookmarkedUrls,
         onArticleClick = onArticleClick,
         onBookmarkClick = { viewModel.toggleBookmark(it) },
-                onCategorySelected = { viewModel.setHomeCategory(it) }
+        onCategorySelected = { viewModel.setHomeCategory(it) }
     )
 }
 
@@ -65,118 +66,137 @@ fun HomeScreenContent(
 
     val dateFormatter = remember { DateFormatter() }
 
-    var selectedCategory by remember { mutableStateOf("All") }
+    var selectedCategory by rememberSaveable { mutableStateOf("All") }
 
     val listState = rememberLazyListState()
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
     ) {
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
+        Text(
+            text = "Hello User",
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier.padding(top = 16.dp)
+        )
 
-            Text(
-                text = "Hello User",
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.padding(top = 16.dp)
-            )
+        Text(
+            text = "Stay updated with latest news",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+        )
 
-            Text(
-                text = "Stay updated with latest news",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
-            )
+        CategoryChips(
+            categories = ArticleCategoryMapper.categories,
+            selectedCategory = selectedCategory,
+            onCategorySelected = { category ->
 
-            CategoryChips(
-                categories = ArticleCategoryMapper.categories,
-                selectedCategory = selectedCategory,
-                onCategorySelected = { category ->
+                selectedCategory = category
+                onCategorySelected(category)
 
-                    selectedCategory = category
-                    onCategorySelected(category)
+            }
+        )
 
+        when (articles.loadState.refresh) {
+
+            is LoadState.Loading -> {
+
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
-            )
+            }
 
-            when (articles.loadState.refresh) {
+            is LoadState.Error -> {
 
-                is LoadState.Loading -> {
+                EmptyState(
+                    message = "Error loading articles",
+                    onRetry = { articles.retry() }
+                )
+            }
 
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+            else -> {
+
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+
+                    // 🔹 Initial Loading
+                    if (articles.loadState.refresh is LoadState.Loading) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillParentMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
                     }
-                }
 
-                is LoadState.Error -> {
+                    // 🔹 Initial Error
+                    if (articles.loadState.refresh is LoadState.Error) {
+                        item {
+                            EmptyState(
+                                message = "Error loading articles",
+                                onRetry = { articles.retry() }
+                            )
+                        }
+                    }
 
-                    EmptyState(
-                        message = "Error loading articles",
-                        onRetry = { articles.retry() }
-                    )
-                }
+                    // 🔹 Content
+                    items(
+                        count = articles.itemCount,
+                        key = { index ->
+                            articles[index]?.url ?: index
+                        }
+                    ) { index ->
 
-                else -> {
+                        val article = articles[index] ?: return@items
 
-                    LazyColumn(
-                        state = listState
-                    ) {
+                        val bookmarked = bookmarkedUrls.contains(article.url)
 
-                        items(
-                            count = articles.itemCount,
-                            key = { index -> articles[index]?.url ?: index }
-                        ) { index ->
+                        HomeArticleItem(
+                            article = article,
+                            isBookmarked = bookmarked,
+                            onClick = { onArticleClick(article) },
+                            onBookmarkClick = { onBookmarkClick(article) },
+                            dateFormatter = dateFormatter
+                        )
+                    }
 
-                            val article = articles[index]
+                    // 🔹 Pagination
+                    when (articles.loadState.append) {
 
-                            article?.let {
+                        is LoadState.Loading -> {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
 
-                                val bookmarked =
-                                    bookmarkedUrls.contains(it.url)
-
-                                HomeArticleItem(
-                                    article = it,
-                                    isBookmarked = bookmarked,
-                                    onClick = { onArticleClick(it) },
-                                    onBookmarkClick = { onBookmarkClick(it) },
-                                    dateFormatter = dateFormatter
+                        is LoadState.Error -> {
+                            item {
+                                EmptyState(
+                                    message = "Error loading more articles",
+                                    onRetry = { articles.retry() }
                                 )
                             }
                         }
 
-                        item {
-
-                            when (articles.loadState.append) {
-
-                                is LoadState.Loading -> {
-
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        CircularProgressIndicator()
-                                    }
-                                }
-
-                                is LoadState.Error -> {
-
-                                    EmptyState(
-                                        message = "Error loading more articles",
-                                        onRetry = { articles.retry() }
-                                    )
-                                }
-
-                                else -> {}
-                            }
-                        }
+                        else -> Unit
                     }
                 }
             }

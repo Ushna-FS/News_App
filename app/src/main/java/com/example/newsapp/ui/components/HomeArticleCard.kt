@@ -18,7 +18,7 @@ import com.example.newsapp.data.models.Article
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.example.newsapp.NewsAppTheme
-import com.example.newsapp.data.ArticleCategoryMapper
+import com.example.newsapp.utils.ArticleCategoryMapper
 import com.example.newsapp.data.models.Source
 import com.example.newsapp.utils.DateFormatter
 
