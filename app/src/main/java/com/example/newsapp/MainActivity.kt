@@ -3,7 +3,7 @@ package com.example.newsapp
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import com.example.newsapp.navigation.MainScreen
+import com.example.newsapp.navigation.RootNavigation
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -14,7 +14,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             NewsAppTheme {
-                MainScreen()
+                RootNavigation()
             }
         }
 
