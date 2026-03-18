@@ -40,9 +40,6 @@ android {
         }
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.15"  // Add this line
-    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -86,6 +83,8 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.ui.tooling)
     ksp(libs.hilt.compiler)
 
     implementation(libs.androidx.core.splashscreen)
@@ -98,14 +97,22 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
 
-    // Compose
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.material)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.activity.compose)
-    implementation (libs.androidx.compose.ui.tooling.preview.v150)
-    debugImplementation (libs.androidx.compose.ui.tooling)
+    // Compose BOM
+    implementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
 
+// Compose Core
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.ui.tooling.preview)
+
+// Debug
+    debugImplementation(libs.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+// Activity Compose
+    implementation(libs.androidx.activity.compose)
     // Hilt + Compose
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.hilt.android.v259)
@@ -114,8 +121,6 @@ dependencies {
 
     // Coil for Compose (image loading)
     implementation(libs.coil.compose)
-    //icons
-    implementation(libs.androidx.material.icons.extended)
 
     implementation(libs.kotlinx.serialization.json)
 
