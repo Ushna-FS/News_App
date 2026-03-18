@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.*
 import com.example.newsapp.R
-import com.example.newsapp.data.ArticleCategoryMapper
+import com.example.newsapp.utils.ArticleCategoryMapper
 import com.example.newsapp.data.repository.BookmarkRepository
 import com.example.newsapp.data.repository.NewsRepository
 import com.example.newsapp.data.repository.SortType
@@ -65,7 +65,6 @@ class NewsViewModel @Inject constructor(
     val homeNewsPagingData: Flow<PagingData<Article>> =
         selectedHomeCategory
             .flatMapLatest { category ->
-                categoryCache[category] ?: emptyFlow()
 
                 repository.getAllNewsStream().map { pagingData ->
                     if (category == "All") pagingData
@@ -100,8 +99,10 @@ class NewsViewModel @Inject constructor(
         .flatMapLatest { (categories, sources, sortType) ->
             repository.getCombinedNewsStream(
                 categories = categories, sources = sources, sortType = sortType
-            ).cachedIn(viewModelScope)
-        }.flowOn(Dispatchers.IO)
+            )
+        }
+        .cachedIn(viewModelScope)
+        .flowOn(Dispatchers.IO)
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val searchNewsPagingData: Flow<PagingData<Article>> =

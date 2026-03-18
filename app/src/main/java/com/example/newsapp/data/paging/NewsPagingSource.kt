@@ -2,6 +2,7 @@ package com.example.newsapp.data.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.example.newsapp.utils.ArticleCategoryMapper
 import com.example.newsapp.data.api.ApiService
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.repository.SortType
@@ -79,85 +80,82 @@ class FilteredCombinedNewsPagingSource(
     private val categories: List<String> = emptyList(),
     private val sources: List<String> = emptyList(),
     private val sortType: SortType = SortType.NEWEST_FIRST,
-    private val dateFormatter: DateFormatter,
+    private val dateFormatter: DateFormatter
 ) : PagingSource<Int, Article>() {
 
     override fun getRefreshKey(state: PagingState<Int, Article>): Int? {
-        return state.anchorPosition?.let { anchorPosition ->
-            state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
-                ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
+        return state.anchorPosition?.let { position ->
+            state.closestPageToPosition(position)?.prevKey?.plus(1)
+                ?: state.closestPageToPosition(position)?.nextKey?.minus(1)
         }
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Article> {
         return try {
             val page = params.key ?: 1
-            val currentPageSize = params.loadSize
+            val pageSize = params.loadSize
 
-            // Determine what to fetch based on categories
-            val shouldFetchBusiness =
-                categories.isEmpty() || categories.any { it.equals("Business", ignoreCase = true) }
-            val shouldFetchTech = categories.isEmpty() || categories.any {
-                it.equals(
-                    "Technology", ignoreCase = true
-                )
-            }
-
-            if (!shouldFetchBusiness && !shouldFetchTech) {
-                return LoadResult.Page(
-                    data = emptyList(), prevKey = null, nextKey = null
-                )
-            }
-            // Fetch business news if needed
-            val businessResponse =
-                apiService.getTopHeadlines(page = page, pageSize = currentPageSize)
-
-            val businessArticles = if (businessResponse.isSuccessful) {
-                businessResponse.body()?.articles ?: emptyList()
+            // Build query from selected categories
+            val query = if (categories.isNotEmpty() && !categories.contains("All")) {
+                categories.joinToString(" OR ") { it.lowercase() }
             } else {
-                throw HttpException(businessResponse)
-            }
-            // Fetch tech news if needed
-            val techArticles = if (shouldFetchTech) {
-                kotlin.runCatching {
-                    apiService.getTechCrunchHeadlines(page = page, pageSize = currentPageSize)
-                }.getOrNull()?.body()?.articles ?: emptyList()
-            } else {
-                emptyList()
+                "news"
             }
 
-            // Combine articles
-            var filteredArticles = (businessArticles + techArticles).distinctBy { it.url }
+            val response = apiService.searchNews(
+                query = query,
+                page = page,
+                pageSize = pageSize,
+                sortBy = when (sortType) {
+                    SortType.NEWEST_FIRST -> "publishedAt"
+                    SortType.OLDEST_FIRST -> "publishedAt"
+                }
+            )
 
-            // Apply source filter if sources are selected
-            if (sources.isNotEmpty()) {
-                filteredArticles = filteredArticles.filter { article ->
-                    val sourceName = article.source.name
-                    sources.any { source ->
-                        sourceName.contains(source, ignoreCase = true)
+            if (!response.isSuccessful) {
+                return LoadResult.Error(HttpException(response))
+            }
+
+            var articles = response.body()?.articles?.filter {
+                it.title != "[Removed]"
+            } ?: emptyList()
+
+            // Apply category filter
+            if (categories.isNotEmpty() && !categories.contains("All")) {
+                articles = articles.filter { article ->
+                    val articleCategory = ArticleCategoryMapper.getCategory(article)
+                    categories.any { category ->
+                        articleCategory.equals(category, ignoreCase = true)
                     }
                 }
             }
 
-            filteredArticles = when (sortType) {
-                SortType.NEWEST_FIRST ->
-                    filteredArticles.sortedByDescending {
-                        dateFormatter.parseToTimestamp(it.publishedAt)
+            // source filtering
+            if (sources.isNotEmpty()) {
+                articles = articles.filter { article ->
+                    val sourceName = article.source.name.lowercase()
+                    sources.any { selectedSource ->
+                        val selectedLower = selectedSource.lowercase()
+                        // Check various matching conditions
+                        sourceName.contains(selectedLower) || // CNN contains "cnn"
+                                selectedLower.contains(sourceName) || // "CNN International" contains "cnn"
+                                sourceName.split(" ")
+                                    .any { it == selectedLower } || // Exact word match
+                                selectedLower.split(" ")
+                                    .any { it == sourceName } // Reverse word match
                     }
-
-                SortType.OLDEST_FIRST ->
-                    filteredArticles.sortedBy {
-                        dateFormatter.parseToTimestamp(it.publishedAt)
-                    }
+                }
             }
 
-            val hasMore =
-                businessArticles.size == currentPageSize || techArticles.size == currentPageSize
+            // Check if we have more pages
+            val hasMore = response.body()?.totalResults?.let { total ->
+                total > page * pageSize
+            } ?: false
 
             LoadResult.Page(
-                data = filteredArticles,
+                data = articles.take(pageSize),
                 prevKey = if (page == 1) null else page - 1,
-                nextKey = if (hasMore) page + 1 else null
+                nextKey = if (hasMore && articles.isNotEmpty()) page + 1 else null
             )
         } catch (e: Exception) {
             LoadResult.Error(e)
