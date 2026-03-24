@@ -114,7 +114,6 @@ fun BookmarksScreenPreview() {
 
     val dummyList = listOf(
         BookmarkedArticle(
-            id = 1,
             title = "Sample News 1",
             description = "This is a sample description for news 1",
             url = "https://example.com/1",
@@ -127,7 +126,6 @@ fun BookmarksScreenPreview() {
             bookmarkedAt = System.currentTimeMillis()
         ),
         BookmarkedArticle(
-            id = 2,
             title = "Sample News 2",
             description = "This is a sample description for news 2",
             url = "https://example.com/2",

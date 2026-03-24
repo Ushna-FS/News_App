@@ -10,10 +10,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.*
+import com.example.newsapp.ui.screens.LoginScreen
+import com.example.newsapp.ui.screens.SignupScreen
 import com.example.newsapp.ui.screens.SplashScreen
 import com.example.newsapp.viewmodels.NewsViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 
 @Composable
@@ -30,8 +33,15 @@ fun RootNavigation() {
 
             SplashScreen(navController)
         }
+        composable(Routes.Login.route) {
+            LoginScreen(navController)
+        }
 
-        composable("main_tabs") {
+        composable(Routes.Signup.route) {
+            SignupScreen(navController)
+        }
+
+        composable(Routes.MainTabs.route) {
 
             MainTabs()
         }
@@ -44,8 +54,16 @@ fun MainTabs() {
 
     val newsViewModel: NewsViewModel = hiltViewModel()
 
-    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val user = FirebaseAuth.getInstance().currentUser
 
+    LaunchedEffect(user?.uid) {
+        user?.uid?.let {
+            newsViewModel.setCurrentUser(it)
+            newsViewModel.startBookmarkSync(it)
+        }
+    }
+
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
     var selectedTab by rememberSaveable { mutableStateOf("home") }
@@ -61,7 +79,7 @@ fun MainTabs() {
         else -> homeNavController
     }
 
-// Observe back stack safely
+    // Observe back stack safely
     val navBackStackEntry by currentNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: ""
     val isDetailScreen = currentRoute.contains("article_detail")

@@ -6,22 +6,36 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.newsapp.data.models.Article
 
-@Entity(tableName = "bookmarked_articles",
-indices = [Index(value = ["url"], unique = true)]
+@Entity(
+    tableName = "bookmarked_articles",
+    indices = [Index(value = ["url"], unique = true)]
 )
 data class BookmarkedArticle(
+
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0L,
-    val url: String,
-    val title: String,
-    val description: String?,
-    val urlToImage: String?,
-    val publishedAt: String?,
-    val content: String?,
-    val sourceName: String,
-    val sourceId: String?,
-    val author: String?,
-    val bookmarkedAt: Long = System.currentTimeMillis()
+
+    val url: String = "",
+
+    val title: String = "",
+
+    val description: String? = null,
+
+    val urlToImage: String? = null,
+
+    val publishedAt: String? = null,
+
+    val content: String? = null,
+
+    val sourceName: String = "",
+
+    val sourceId: String? = null,
+
+    val author: String? = null,
+
+    val bookmarkedAt: Long = System.currentTimeMillis(),
+
+    val isSynced: Boolean = false
 )
 
 // Extension function to convert Article to BookmarkedArticle

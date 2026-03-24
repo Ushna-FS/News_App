@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -54,7 +53,7 @@ fun BookmarkItem(
                 ) {
 
                     Text(
-                        text = article.sourceName ?: "",
+                        text = article.sourceName ,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                         maxLines = 1,
@@ -71,7 +70,7 @@ fun BookmarkItem(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = article.title ?: "",
+                    text = article.title ,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 2
@@ -130,7 +129,6 @@ fun BookmarkItem(
 fun BookmarkItemPreview() {
 
     val dummyArticle = BookmarkedArticle(
-        id = 1,
         title = "Breaking News: Jetpack Compose is Awesome",
         description = "Compose simplifies UI development",
         url = "https://example.com",
