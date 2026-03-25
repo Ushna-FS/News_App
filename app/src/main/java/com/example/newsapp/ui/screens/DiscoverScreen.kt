@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.example.newsapp.data.models.Article
+import com.example.shared.data.models.Article
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.ui.components.DiscoverNewsCard
 import com.example.newsapp.ui.components.FilterPanel

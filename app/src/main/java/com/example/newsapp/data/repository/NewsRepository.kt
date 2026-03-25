@@ -3,18 +3,18 @@ package com.example.newsapp.data.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import com.example.newsapp.data.api.ApiService
-import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.paging.FilteredCombinedNewsPagingSource
 import com.example.newsapp.data.paging.NewsPagingSource
 import com.example.newsapp.data.paging.NewsType
+import com.example.newsapp.utils.DateFormatter
+import com.example.shared.data.api.NewsApiService
+import com.example.shared.data.models.Article
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
-import com.example.newsapp.data.paging.FilteredCombinedNewsPagingSource
-import com.example.newsapp.utils.DateFormatter
 
 
 class NewsRepository @Inject constructor(
-    val apiService: ApiService,
+    val apiService: NewsApiService,
     private val dateFormatter: DateFormatter
 ) {
 
@@ -32,7 +32,7 @@ class NewsRepository @Inject constructor(
                     categories = categories,
                     sources = sources,
                     sortType = sortType,
-                    dateFormatter=dateFormatter
+                    dateFormatter = dateFormatter
                 )
             }).flow
     }

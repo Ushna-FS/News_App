@@ -4,7 +4,7 @@ package com.example.newsapp.data.local
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.example.newsapp.data.models.Article
+import com.example.shared.data.models.Article
 
 @Entity(
     tableName = "bookmarked_articles",

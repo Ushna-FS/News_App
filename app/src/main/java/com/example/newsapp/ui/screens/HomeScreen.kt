@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.example.newsapp.data.models.Article
+import com.example.shared.data.models.Article
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.ui.components.HomeArticleItem
 import com.example.newsapp.ui.components.EmptyState

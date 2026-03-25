@@ -9,7 +9,7 @@ import androidx.work.workDataOf
 import com.example.newsapp.data.local.BookmarkDao
 import com.example.newsapp.data.local.BookmarkedArticle
 import com.example.newsapp.data.local.toBookmarkedArticle
-import com.example.newsapp.data.models.Article
+import com.example.shared.data.models.Article
 import com.example.newsapp.data.workers.BookmarkSyncWorker
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration

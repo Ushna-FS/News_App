@@ -1,8 +1,8 @@
 package com.example.newsapp.utils
 
 import com.example.newsapp.data.local.BookmarkedArticle
-import com.example.newsapp.data.models.Article
-import com.example.newsapp.data.models.Source
+import com.example.shared.data.models.Article
+import com.example.shared.data.models.Source
 
 fun BookmarkedArticle.toArticle(): Article {
     return Article(

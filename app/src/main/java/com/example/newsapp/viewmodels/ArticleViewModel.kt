@@ -3,7 +3,7 @@ package com.example.newsapp.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.newsapp.data.repository.BookmarkRepository
-import com.example.newsapp.data.models.Article
+import com.example.shared.data.models.Article
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

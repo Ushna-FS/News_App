@@ -2,12 +2,11 @@ package com.example.newsapp.data.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.example.newsapp.utils.ArticleCategoryMapper
-import com.example.newsapp.data.api.ApiService
-import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.repository.SortType
+import com.example.newsapp.utils.ArticleCategoryMapper
 import com.example.newsapp.utils.DateFormatter
-import retrofit2.HttpException
+import com.example.shared.data.api.NewsApiService
+import com.example.shared.data.models.Article
 
 sealed class NewsType {
     object Business : NewsType()
@@ -18,7 +17,7 @@ sealed class NewsType {
 }
 
 class NewsPagingSource(
-    private val apiService: ApiService, private val newsType: NewsType
+    private val apiService: NewsApiService, private val newsType: NewsType
 ) : PagingSource<Int, Article>() {
 
     override fun getRefreshKey(state: PagingState<Int, Article>): Int? {
@@ -34,9 +33,11 @@ class NewsPagingSource(
             val pageSize = params.loadSize
 
             val response = when (newsType) {
-                is NewsType.Business -> apiService.getTopHeadlines(
-
-                    page = page, pageSize = pageSize
+                is NewsType.Business ->apiService.getTopHeadlines(
+                    country = "us",
+                    category = "business",
+                    page = page,
+                    pageSize = pageSize
                 )
 
                 is NewsType.TechCrunch -> apiService.getTechCrunchHeadlines(
@@ -52,31 +53,41 @@ class NewsPagingSource(
                     query = newsType.query, page = page, pageSize = pageSize
                 )
                 is NewsType.NewsCategory -> apiService.getTopHeadlines(
+                    country = "us",
                     category = newsType.name,
                     page = page,
                     pageSize = pageSize
                 )
 
             }
+            val articles = response.articles
+            val nextPage = if (articles.isNotEmpty()) page + 1 else null
 
-            if (response.isSuccessful) {
-                val articles = response.body()?.articles ?: emptyList()
-                val nextPage = if (articles.isNotEmpty()) page + 1 else null
+            LoadResult.Page(
+                data = articles,
+                prevKey = if (page == 1) null else page - 1,
+                nextKey = nextPage
+            )
 
-                LoadResult.Page(
-                    data = articles, prevKey = if (page == 1) null else page - 1, nextKey = nextPage
-                )
-            } else {
-                LoadResult.Error(HttpException(response))
-            }
-        } catch (e: Exception) {
+//            if (response.isSuccessful) {
+//                val articles = response.body()?.articles ?: emptyList()
+//                val nextPage = if (articles.isNotEmpty()) page + 1 else null
+//
+//                LoadResult.Page(
+//                    data = articles, prevKey = if (page == 1) null else page - 1, nextKey = nextPage
+//                )
+//            } else {
+//                LoadResult.Error(HttpException(response))
+//            }
+        }
+        catch (e: Exception) {
             LoadResult.Error(e)
         }
     }
 }
 
 class FilteredCombinedNewsPagingSource(
-    private val apiService: ApiService,
+    private val apiService: NewsApiService,
     private val categories: List<String> = emptyList(),
     private val sources: List<String> = emptyList(),
     private val sortType: SortType = SortType.NEWEST_FIRST,
@@ -106,19 +117,23 @@ class FilteredCombinedNewsPagingSource(
                 query = query,
                 page = page,
                 pageSize = pageSize,
-                sortBy = when (sortType) {
-                    SortType.NEWEST_FIRST -> "publishedAt"
-                    SortType.OLDEST_FIRST -> "publishedAt"
-                }
+//                sortBy = when (sortType) {
+//                    SortType.NEWEST_FIRST -> "publishedAt"
+//                    SortType.OLDEST_FIRST -> "publishedAt"
+//                }
             )
 
-            if (!response.isSuccessful) {
-                return LoadResult.Error(HttpException(response))
-            }
+//            if (!response.isSuccessful) {
+//                return LoadResult.Error(HttpException(response))
+//            }
+//
+//            var articles = response.body()?.articles?.filter {
+//                it.title != "[Removed]"
+//            } ?: emptyList()
 
-            var articles = response.body()?.articles?.filter {
+            var articles = response.articles.filter {
                 it.title != "[Removed]"
-            } ?: emptyList()
+            }
 
             // Apply category filter
             if (categories.isNotEmpty() && !categories.contains("All")) {
@@ -148,9 +163,9 @@ class FilteredCombinedNewsPagingSource(
             }
 
             // Check if we have more pages
-            val hasMore = response.body()?.totalResults?.let { total ->
+            val hasMore = response.totalResults.let {total ->
                 total > page * pageSize
-            } ?: false
+            }
 
             LoadResult.Page(
                 data = articles.take(pageSize),
