@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.newsapp.data.models.Article
+import com.example.shared.data.models.Article
 import com.example.newsapp.ui.screens.ArticleDetailScreen
 import com.example.newsapp.ui.screens.BookmarksScreen
 import com.example.newsapp.ui.screens.DiscoverScreen

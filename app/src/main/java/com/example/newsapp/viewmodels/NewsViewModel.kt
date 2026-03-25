@@ -9,7 +9,7 @@ import com.example.newsapp.data.repository.BookmarkRepository
 import com.example.newsapp.data.repository.NewsRepository
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.data.local.BookmarkedArticle
-import com.example.newsapp.data.models.Article
+import com.example.shared.data.models.Article
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers

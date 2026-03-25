@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.newsapp.R
-import com.example.newsapp.data.models.Article
+import com.example.shared.data.models.Article
 import com.example.newsapp.utils.DateFormatter
 
 @Composable

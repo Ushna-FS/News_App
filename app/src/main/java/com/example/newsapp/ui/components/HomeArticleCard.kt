@@ -14,12 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.newsapp.data.models.Article
+import com.example.shared.data.models.Article
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.example.newsapp.NewsAppTheme
 import com.example.newsapp.utils.ArticleCategoryMapper
-import com.example.newsapp.data.models.Source
+import com.example.shared.data.models.Source
 import com.example.newsapp.utils.DateFormatter
 
 @Composable
@@ -99,7 +99,7 @@ fun HomeArticleItem(
             // DESCRIPTION
             if (!article.description.isNullOrEmpty()) {
                 Text(
-                    text = article.description,
+                    text = article.description?:"",
                     maxLines = 2,
                     modifier = Modifier
                         .fillMaxWidth()

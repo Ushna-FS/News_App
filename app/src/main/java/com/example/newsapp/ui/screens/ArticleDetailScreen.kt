@@ -26,7 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.newsapp.data.models.Article
+import com.example.shared.data.models.Article
 import com.example.newsapp.ui.components.ArticleWebView
 import com.example.newsapp.viewmodels.ArticleDetailViewModel
 import com.example.newsapp.viewmodels.NewsViewModel

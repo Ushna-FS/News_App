@@ -1,6 +1,6 @@
 package com.example.newsapp.utils
 
-import com.example.newsapp.data.models.Article
+import com.example.shared.data.models.Article
 
 object ArticleCategoryMapper {
 
