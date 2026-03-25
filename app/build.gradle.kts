@@ -54,6 +54,8 @@ android {
 
 dependencies {
     implementation(project(":shared"))
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
     implementation(libs.androidx.core.ktx.v1120)
     implementation(libs.androidx.appcompat.v161)
     implementation(libs.material.v1100)
@@ -132,19 +134,19 @@ dependencies {
     implementation(libs.logging.interceptor)
 
     // Firebase BOM
-    implementation(platform(libs.firebase.bom.v3351))
+    implementation(platform(libs.firebase.bom))
 
     // Firebase Auth
-    implementation(libs.google.firebase.auth.ktx)
+    implementation(libs.firebase.auth.ktx)
     //firestore
-    implementation(libs.firebase.firestore.ktx)
-    implementation(libs.androidx.work.runtime.ktx)
-
 
     //crashlytics
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.firestore.ktx)
 
+
+    implementation(libs.androidx.work.runtime.ktx)
 
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)

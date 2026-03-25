@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
     id("com.android.kotlin.multiplatform.library")
 }
 kotlin {
@@ -63,6 +64,18 @@ kotlin {
             dependencies {
                 implementation(libs.kotlin.stdlib)
                 // Add KMP dependencies here
+                // Ktor core
+                implementation(libs.ktor.client.core)
+
+                // serialization
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.content.negotiation)
+
+                // logging
+                implementation(libs.ktor.client.logging)
+
+                // json
+                implementation(libs.kotlinx.serialization.json)
             }
         }
 
@@ -77,6 +90,7 @@ kotlin {
                 // Add Android-specific dependencies here. Note that this source set depends on
                 // commonMain by default and will correctly pull the Android artifacts of any KMP
                 // dependencies declared in commonMain.
+                implementation(libs.ktor.client.okhttp)
             }
         }
 
@@ -95,6 +109,8 @@ kotlin {
                 // part of KMP’s default source set hierarchy. Note that this source set depends
                 // on common by default and will correctly pull the iOS artifacts of any
                 // KMP dependencies declared in commonMain.
+
+                implementation(libs.ktor.client.darwin)
             }
         }
     }
