@@ -239,11 +239,13 @@ class NewsViewModel @Inject constructor(
             emit(bookmarks.map { it.url }.toSet())
         }
     }.flowOn(Dispatchers.IO)
-
-    fun isArticleBookmarked(url: String): Flow<Boolean> = flow {
-        val isBookmarked = bookmarkRepository.isBookmarked(url)
-        emit(isBookmarked)
-    }.flowOn(Dispatchers.IO)
+    fun isArticleBookmarked(url: String): Flow<Boolean> {
+        return bookmarkRepository.getAllBookmarks()
+            .map { bookmarks ->
+                bookmarks.any { it.url == url }
+            }
+            .distinctUntilChanged()
+    }
 
     val bookmarks: Flow<List<BookmarkedArticle>> =
         bookmarkRepository.getAllBookmarks().flowOn(Dispatchers.IO)
