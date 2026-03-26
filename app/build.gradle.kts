@@ -6,6 +6,7 @@ plugins {
     id("androidx.navigation.safeargs.kotlin")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val apiKey: String = project.findProperty("NEWS_API_KEY")?.toString() ?: ""
@@ -40,13 +41,14 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        compose = true
     }
 }
 
@@ -79,18 +81,46 @@ dependencies {
 
     implementation(libs.hilt.android)
     implementation(libs.androidx.activity)
+    implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.ui.tooling)
     ksp(libs.hilt.compiler)
 
     implementation(libs.androidx.core.splashscreen)
 
     // For ViewModel injection
     implementation(libs.androidx.hilt.navigation.fragment)
-    annotationProcessor(libs.androidx.hilt.compiler)
 
 //    implementation(libs.androidx.paging.runtime.ktx)
     implementation(libs.androidx.paging.runtime.ktx.v320)
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
+
+    // Compose BOM
+    implementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+
+// Compose Core
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.ui.tooling.preview)
+
+// Debug
+    debugImplementation(libs.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+// Activity Compose
+    implementation(libs.androidx.activity.compose)
+    // Hilt + Compose
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.hilt.android.v259)
+    // Navigation Compose
+    implementation(libs.androidx.navigation.compose)
+
+    // Coil for Compose (image loading)
+    implementation(libs.coil.compose)
 
     implementation(libs.kotlinx.serialization.json)
 
