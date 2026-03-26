@@ -1,11 +1,17 @@
 package com.example.newsapp.navigation
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -16,7 +22,8 @@ import com.example.newsapp.R
 fun AppDrawer(
     onHomeClick: () -> Unit,
     onDiscoverClick: () -> Unit,
-    onBookmarksClick: () -> Unit
+    onBookmarksClick: () -> Unit,
+    onLogoutClick: () -> Unit
 ) {
 
     ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.7f)) {
@@ -42,6 +49,13 @@ fun AppDrawer(
             selected = false,
             icon = { Icon(Icons.Default.Bookmark, null) },
             onClick = onBookmarksClick
+        )
+
+        NavigationDrawerItem(
+            label = { Text(stringResource(R.string.logout)) },
+            selected = false,
+            icon = { Icon(Icons.AutoMirrored.Filled.Logout, null) },
+            onClick = onLogoutClick
         )
     }
 }

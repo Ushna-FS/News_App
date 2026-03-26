@@ -12,11 +12,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.newsapp.R
 import com.example.newsapp.ui.screens.LoginScreen
 import com.example.newsapp.ui.screens.SignupScreen
 import com.example.newsapp.ui.screens.SplashScreen
+import com.example.newsapp.viewmodels.AuthViewModel
 import com.example.newsapp.viewmodels.NewsViewModel
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
@@ -47,17 +49,17 @@ fun RootNavigation() {
         composable(Routes.MainTabs.route) {
 
 
-            MainTabs()
+            MainTabs(navController)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTabs() {
+fun MainTabs(navController: NavHostController) {
 
     val newsViewModel: NewsViewModel = hiltViewModel()
-
+    val authViewModel: AuthViewModel = hiltViewModel()
     val user = FirebaseAuth.getInstance().currentUser
 
     LaunchedEffect(user?.uid) {
@@ -83,6 +85,12 @@ fun MainTabs() {
         else -> homeNavController
     }
 
+    fun closeDrawer(action: () -> Unit) {
+        scope.launch {
+            drawerState.close()
+        }
+        action()
+    }
 // Observe back stack safely
     val navBackStackEntry by currentNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: ""
@@ -95,13 +103,21 @@ fun MainTabs() {
 
             AppDrawer(
                 onHomeClick = {
-                    selectedTab = "home"
+                    closeDrawer { selectedTab = "home" }
                 },
                 onDiscoverClick = {
-                    selectedTab = "discover"
+                    closeDrawer { selectedTab = "discover" }
                 },
                 onBookmarksClick = {
-                    selectedTab = "bookmark"
+                    closeDrawer { selectedTab = "bookmark" }
+                },
+                onLogoutClick = {
+
+                    authViewModel.logout()
+
+                    navController.navigate(Routes.Login.route) {
+                        popUpTo(Routes.MainTabs.route) { inclusive = true }
+                    }
                 }
             )
         }

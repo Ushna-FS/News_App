@@ -89,5 +89,6 @@
     <string name="error_msg">Error: %1$s</string>
     <string name="failed_to_load_more">Failed to load more: %1$s</string>
     <string name="no_results_found_for">No results found for \"%1$s\"</string>
+    <string name="logout">Logout</string>
 
 </resources>
