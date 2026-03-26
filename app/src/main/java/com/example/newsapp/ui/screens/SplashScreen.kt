@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -63,14 +64,14 @@ fun SplashScreen(navController: NavController) {
 
             Image(
                 painter = painterResource(R.drawable.news_icon),
-                contentDescription = "News Icon",
+                contentDescription = null,
                 modifier = Modifier.size(135.dp, 125.dp)
             )
 
             Spacer(modifier = Modifier.height(15.dp))
 
             Text(
-                text = "NewsMate",
+                text = (stringResource(R.string.newsmate)),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.secondary

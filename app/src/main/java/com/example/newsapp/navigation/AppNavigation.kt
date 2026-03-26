@@ -10,11 +10,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.*
 import com.example.newsapp.ui.screens.SplashScreen
 import com.example.newsapp.viewmodels.NewsViewModel
 import kotlinx.coroutines.launch
+import com.example.newsapp.R
 
 @Composable
 fun RootNavigation() {
@@ -116,21 +118,21 @@ fun MainTabs() {
                         selected = selectedTab == "home",
                         onClick = { selectedTab = "home" },
                         icon = { Icon(Icons.Default.Home, null) },
-                        label = { Text("Home") }
+                        label = { Text(stringResource(R.string.home)) }
                     )
 
                     NavigationBarItem(
                         selected = selectedTab == "discover",
                         onClick = { selectedTab = "discover" },
                         icon = { Icon(Icons.Default.Search, null) },
-                        label = { Text("Discover") }
+                        label = { Text(stringResource(R.string.discover)) }
                     )
 
                     NavigationBarItem(
                         selected = selectedTab == "bookmark",
                         onClick = { selectedTab = "bookmark" },
                         icon = { Icon(Icons.Default.Bookmark, null) },
-                        label = { Text("Saved") }
+                        label = { Text(stringResource(R.string.saved)) }
                     )
                 }
             }
