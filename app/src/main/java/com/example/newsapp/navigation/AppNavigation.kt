@@ -10,14 +10,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.*
+import com.example.newsapp.R
 import com.example.newsapp.ui.screens.LoginScreen
 import com.example.newsapp.ui.screens.SignupScreen
 import com.example.newsapp.ui.screens.SplashScreen
 import com.example.newsapp.viewmodels.NewsViewModel
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+
 
 @Composable
 fun RootNavigation() {
@@ -43,6 +46,7 @@ fun RootNavigation() {
 
         composable(Routes.MainTabs.route) {
 
+
             MainTabs()
         }
     }
@@ -62,8 +66,8 @@ fun MainTabs() {
             newsViewModel.startBookmarkSync(it)
         }
     }
-
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+
     val scope = rememberCoroutineScope()
 
     var selectedTab by rememberSaveable { mutableStateOf("home") }
@@ -79,7 +83,7 @@ fun MainTabs() {
         else -> homeNavController
     }
 
-    // Observe back stack safely
+// Observe back stack safely
     val navBackStackEntry by currentNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: ""
     val isDetailScreen = currentRoute.contains("article_detail")
@@ -134,21 +138,22 @@ fun MainTabs() {
                         selected = selectedTab == "home",
                         onClick = { selectedTab = "home" },
                         icon = { Icon(Icons.Default.Home, null) },
-                        label = { Text("Home") }
-                    )
+
+                        label = { Text(stringResource(R.string.home)) })
 
                     NavigationBarItem(
                         selected = selectedTab == "discover",
                         onClick = { selectedTab = "discover" },
                         icon = { Icon(Icons.Default.Search, null) },
-                        label = { Text("Discover") }
+
+                        label = { Text(stringResource(R.string.discover)) }
                     )
 
                     NavigationBarItem(
                         selected = selectedTab == "bookmark",
                         onClick = { selectedTab = "bookmark" },
                         icon = { Icon(Icons.Default.Bookmark, null) },
-                        label = { Text("Saved") }
+                        label = { Text(stringResource(R.string.saved)) }
                     )
                 }
             }

@@ -1,6 +1,17 @@
 package com.example.newsapp.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,25 +20,47 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.newsapp.R
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.ui.components.DiscoverNewsCard
 import com.example.newsapp.ui.components.FilterPanel
+import com.example.newsapp.ui.components.SortMenuDialog
 import com.example.newsapp.viewmodels.NewsViewModel
 import kotlinx.coroutines.delay
-import androidx.compose.runtime.collectAsState
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.newsapp.ui.components.SortMenuDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,7 +146,7 @@ fun DiscoverScreen(
                 onApply = {
                     showFilterSheet = false
 
-                        pagingItems.refresh()
+                    pagingItems.refresh()
 
                 },
                 onClose = { showFilterSheet = false }
@@ -169,7 +202,7 @@ fun DiscoverSearchBar(
             TextField(
                 value = text,
                 onValueChange = onTextChange,
-                placeholder = { Text("Search news") },
+                placeholder = { Text(stringResource(R.string.search_news)) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
@@ -182,12 +215,16 @@ fun DiscoverSearchBar(
 
             if (text.isNotEmpty()) {
                 IconButton(onClick = onClear) {
-                    Icon(Icons.Default.Close, contentDescription = "Clear")
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = (stringResource(R.string.clear_search))
+                    )
                 }
             }
         }
     }
 }
+
 @Composable
 fun DiscoverNewsList(
     pagingItems: LazyPagingItems<Article>,
@@ -207,7 +244,7 @@ fun DiscoverNewsList(
         contentPadding = PaddingValues(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
 
-    ) {
+        ) {
         // Check for refresh loading state
         if (pagingItems.loadState.refresh is LoadState.Loading) {
             item {
@@ -225,10 +262,12 @@ fun DiscoverNewsList(
         else if (pagingItems.loadState.refresh is LoadState.Error) {
             item {
                 val error = (pagingItems.loadState.refresh as LoadState.Error).error
-                ErrorItem(
-                    message = "Error: ${error.message}",
-                    onRetry = { pagingItems.retry() }
-                )
+                error.message?.let {
+                    ErrorItem(
+                        message = stringResource(R.string.error_msg, it),
+                        onRetry = { pagingItems.retry() }
+                    )
+                }
             }
         }
         // Show items if any exist
@@ -274,10 +313,12 @@ fun DiscoverNewsList(
             if (pagingItems.loadState.append is LoadState.Error) {
                 item {
                     val error = (pagingItems.loadState.append as LoadState.Error).error
-                    ErrorItem(
-                        message = "Failed to load more: ${error.message}",
-                        onRetry = { pagingItems.retry() }
-                    )
+                    error.message?.let {
+                        ErrorItem(
+                            message = stringResource(R.string.failed_to_load_more, it),
+                            onRetry = { pagingItems.retry() }
+                        )
+                    }
                 }
             }
         }
@@ -292,14 +333,15 @@ fun DiscoverNewsList(
                 ) {
                     Text(
                         text = if (searchQuery.isNotEmpty())
-                            "No results found for \"$searchQuery\""
-                        else "No articles available"
+                            stringResource(R.string.no_results_found_for, searchQuery)
+                        else (stringResource(R.string.no_articles_found))
                     )
                 }
             }
         }
     }
 }
+
 //
 @Composable
 fun FilterSummary(
@@ -405,6 +447,7 @@ fun FilterSortRow(
         }
     }
 }
+
 @Composable
 fun ErrorItem(
     message: String,

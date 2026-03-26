@@ -1,29 +1,43 @@
 package com.example.newsapp.ui.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.newsapp.R
 import com.example.newsapp.data.models.Article
-import com.example.newsapp.viewmodels.NewsViewModel
-import com.example.newsapp.ui.components.HomeArticleItem
-import com.example.newsapp.ui.components.EmptyState
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.newsapp.utils.ArticleCategoryMapper
 import com.example.newsapp.ui.components.CategoryChips
+import com.example.newsapp.ui.components.EmptyState
+import com.example.newsapp.ui.components.HomeArticleItem
+import com.example.newsapp.utils.ArticleCategoryMapper
 import com.example.newsapp.utils.DateFormatter
+import com.example.newsapp.viewmodels.NewsViewModel
 
 @Composable
 fun HomeScreen(
@@ -77,13 +91,13 @@ fun HomeScreenContent(
     ) {
 
         Text(
-            text = "Hello User",
+            text = (stringResource(R.string.hello_user)),
             style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.padding(top = 16.dp)
         )
 
         Text(
-            text = "Stay updated with latest news",
+            text = (stringResource(R.string.home_desc)),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
         )
@@ -114,7 +128,7 @@ fun HomeScreenContent(
             is LoadState.Error -> {
 
                 EmptyState(
-                    message = "Error loading articles",
+                    message = (stringResource(R.string.error_load_articles)),
                     onRetry = { articles.retry() }
                 )
             }
@@ -144,7 +158,7 @@ fun HomeScreenContent(
                     if (articles.loadState.refresh is LoadState.Error) {
                         item {
                             EmptyState(
-                                message = "Error loading articles",
+                                message = (stringResource(R.string.error_load_articles)),
                                 onRetry = { articles.retry() }
                             )
                         }
@@ -190,7 +204,7 @@ fun HomeScreenContent(
                         is LoadState.Error -> {
                             item {
                                 EmptyState(
-                                    message = "Error loading more articles",
+                                    message = (stringResource(R.string.failed_to_load_more)),
                                     onRetry = { articles.retry() }
                                 )
                             }
