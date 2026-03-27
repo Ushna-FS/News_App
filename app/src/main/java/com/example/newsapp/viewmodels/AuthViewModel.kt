@@ -2,8 +2,10 @@ package com.example.newsapp.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.newsapp.R
 import com.example.newsapp.data.repository.BookmarkRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -46,18 +48,42 @@ class AuthViewModel @Inject constructor(
     fun signup(
         email: String,
         password: String,
+        username: String,
         onSuccess: () -> Unit,
-        onError: (String) -> Unit
+        onError: (Int) -> Unit
     ) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    onSuccess()
+
+                    val userId = auth.currentUser?.uid
+
+                    if (userId != null) {
+                        val db = FirebaseFirestore.getInstance()
+
+                        val userMap = hashMapOf(
+                            "username" to username,
+                            "email" to email
+                        )
+
+                        db.collection("users")
+                            .document(userId)
+                            .set(userMap)
+                            .addOnSuccessListener { onSuccess() }
+                            .addOnFailureListener {
+                                onError(R.string.failed_to_save_user)
+                            }
+
+                    } else {
+                        onError(R.string.user_id_not_found)
+                    }
+
                 } else {
-                    onError(task.exception?.localizedMessage ?: "Signup failed")
+                    onError(R.string.signup_failed)
                 }
             }
     }
+
     fun logout() {
         auth.signOut()
     }
