@@ -89,4 +89,27 @@ class AuthViewModel @Inject constructor(
     }
 
     fun currentUser() = FirebaseAuth.getInstance().currentUser
+
+    fun getCurrentUsername(onResult: (String?) -> Unit) {
+        val userId = auth.currentUser?.uid
+        if (userId == null) {
+            onResult(null)
+            return
+        }
+
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users")
+            .document(userId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document != null && document.exists()) {
+                    onResult(document.getString("username"))
+                } else {
+                    onResult(null)
+                }
+            }
+            .addOnFailureListener {
+                onResult(null)
+            }
+    }
 }

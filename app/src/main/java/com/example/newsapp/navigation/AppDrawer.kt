@@ -19,6 +19,11 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -73,14 +78,21 @@ fun AppDrawer(
 }
 
 
-
 @Composable
 fun AppDrawerHeader(authViewModel: AuthViewModel) {
+    var username by remember { mutableStateOf<String?>(null) }
     val user = authViewModel.currentUser()
 
     val backgroundColor = MaterialTheme.colorScheme.primary
     val contentColor = MaterialTheme.colorScheme.onPrimary
 
+    LaunchedEffect(user?.uid) {
+        if (user != null) {
+            authViewModel.getCurrentUsername { fetchedName ->
+                username = fetchedName
+            }
+        }
+    }
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -107,16 +119,18 @@ fun AppDrawerHeader(authViewModel: AuthViewModel) {
 
             // Username
             Text(
-                text = user?.displayName ?: stringResource(R.string.username),
-                style = MaterialTheme.typography.titleMedium,
-                color = contentColor
+                text = username ?: stringResource(R.string.username),
+                style = MaterialTheme.typography.titleLarge,
+                color = contentColor,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
             // Email
             Text(
                 text = user?.email ?: stringResource(R.string.mail),
                 style = MaterialTheme.typography.bodyMedium,
-                color = contentColor.copy(alpha = 0.8f)
+                color = contentColor.copy(alpha = 0.8f),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         }
     }
