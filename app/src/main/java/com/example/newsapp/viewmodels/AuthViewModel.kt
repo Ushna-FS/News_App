@@ -4,20 +4,67 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.newsapp.R
 import com.example.newsapp.data.repository.BookmarkRepository
+import com.example.newsapp.utils.NetworkMonitor
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val bookmarkRepository: BookmarkRepository
+    private val bookmarkRepository: BookmarkRepository,
+    val networkMonitor: NetworkMonitor
 ) : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
+
+    private val _connectionRestored = MutableSharedFlow<Unit>()
+    val connectionRestored = _connectionRestored.asSharedFlow()
+
+    private var wasOffline = false
+
+    init {
+        observeNetwork()
+    }
+
+    private fun observeNetwork() {
+
+        viewModelScope.launch {
+
+            networkMonitor.observe().collect { isConnected ->
+
+                if (!isConnected) {
+                    wasOffline = true
+                }
+
+                if (isConnected && wasOffline) {
+                    wasOffline = false
+                    _connectionRestored.emit(Unit)
+                }
+            }
+        }
+    }
+
+    fun checkConnectionRestored(): Boolean {
+
+        val isConnected = networkMonitor.isConnected()
+
+        if (!isConnected) {
+            wasOffline = true
+        }
+
+        if (isConnected && wasOffline) {
+            wasOffline = false
+            return true
+        }
+
+        return false
+    }
 
     fun login(
         email: String,
@@ -25,6 +72,11 @@ class AuthViewModel @Inject constructor(
         onSuccess: () -> Unit,
         onError: (Int) -> Unit
     ) {
+        if (!networkMonitor.isConnected()) {
+            onError(R.string.no_internet_connection)
+            return
+        }
+        checkConnectionRestored()
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -67,6 +119,11 @@ class AuthViewModel @Inject constructor(
         onSuccess: () -> Unit,
         onError: (Int) -> Unit
     ) {
+
+        if (!networkMonitor.isConnected()) {
+            onError(R.string.no_internet_connection)
+            return
+        }
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {

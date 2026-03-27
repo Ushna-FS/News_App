@@ -24,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,6 +58,19 @@ fun LoginScreen(navController: NavController) {
 
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+
+        viewModel.connectionRestored.collect {
+
+            Toast.makeText(
+                context,
+                R.string.connection_restored_msg,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -136,7 +150,6 @@ fun LoginScreen(navController: NavController) {
 
                 Button(
                     onClick = {
-
                         emailError = null
                         passwordError = null
 
@@ -177,7 +190,16 @@ fun LoginScreen(navController: NavController) {
                             },
                             onError = { message ->
                                 isLoading = false
-                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+
+                                if (message == R.string.no_internet_connection) {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.no_internet_connection,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                }
                             }
                         )
                     },

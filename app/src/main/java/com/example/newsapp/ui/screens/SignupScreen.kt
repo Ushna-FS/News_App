@@ -24,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,10 +37,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.newsapp.R
 import com.example.newsapp.navigation.Routes
 import com.example.newsapp.viewmodels.AuthViewModel
+import kotlinx.coroutines.delay
 
 @Composable
 fun SignupScreen(
@@ -65,6 +68,18 @@ fun SignupScreen(
     val passwordTooShort = stringResource(R.string.password_lenght_err)
     val passwordsDontMatch = stringResource(R.string.passwords_do_not_match)
     val accCreated = stringResource(R.string.account_created_successfully)
+
+    LaunchedEffect(Unit) {
+
+        authViewModel.connectionRestored.collect {
+
+            Toast.makeText(
+                context,
+                R.string.connection_restored_msg,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -225,14 +240,28 @@ fun SignupScreen(
                                 }
                             },
 
-                            onError = { errorMsg ->
+//                            onError = { errorMsg ->
+//                                isLoading = false
+//
+//                                Toast.makeText(
+//                                    context,
+//                                    errorMsg,
+//                                    Toast.LENGTH_SHORT
+//                                ).show()
+//                            }
+                            onError = { message ->
+
                                 isLoading = false
 
-                                Toast.makeText(
-                                    context,
-                                    errorMsg,
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                if (message == R.string.no_internet_connection) {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.no_internet_connection,
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else {
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                }
                             }
                         )
                     },
