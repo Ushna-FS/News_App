@@ -59,17 +59,6 @@ fun LoginScreen(navController: NavController) {
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(Unit) {
-
-        viewModel.connectionRestored.collect {
-
-            Toast.makeText(
-                context,
-                R.string.connection_restored_msg,
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
 
     Box(
         modifier = Modifier

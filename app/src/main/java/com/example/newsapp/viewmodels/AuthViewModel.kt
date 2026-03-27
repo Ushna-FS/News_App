@@ -23,48 +23,6 @@ class AuthViewModel @Inject constructor(
 
     private val auth = FirebaseAuth.getInstance()
 
-    private val _connectionRestored = MutableSharedFlow<Unit>()
-    val connectionRestored = _connectionRestored.asSharedFlow()
-
-    private var wasOffline = false
-
-    init {
-        observeNetwork()
-    }
-
-    private fun observeNetwork() {
-
-        viewModelScope.launch {
-
-            networkMonitor.observe().collect { isConnected ->
-
-                if (!isConnected) {
-                    wasOffline = true
-                }
-
-                if (isConnected && wasOffline) {
-                    wasOffline = false
-                    _connectionRestored.emit(Unit)
-                }
-            }
-        }
-    }
-
-    fun checkConnectionRestored(): Boolean {
-
-        val isConnected = networkMonitor.isConnected()
-
-        if (!isConnected) {
-            wasOffline = true
-        }
-
-        if (isConnected && wasOffline) {
-            wasOffline = false
-            return true
-        }
-
-        return false
-    }
 
     fun login(
         email: String,
@@ -76,7 +34,7 @@ class AuthViewModel @Inject constructor(
             onError(R.string.no_internet_connection)
             return
         }
-        checkConnectionRestored()
+
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {

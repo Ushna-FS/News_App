@@ -69,17 +69,6 @@ fun SignupScreen(
     val passwordsDontMatch = stringResource(R.string.passwords_do_not_match)
     val accCreated = stringResource(R.string.account_created_successfully)
 
-    LaunchedEffect(Unit) {
-
-        authViewModel.connectionRestored.collect {
-
-            Toast.makeText(
-                context,
-                R.string.connection_restored_msg,
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
 
     Box(
         modifier = Modifier
@@ -239,16 +228,6 @@ fun SignupScreen(
                                     popUpTo(Routes.Signup.route) { inclusive = true }
                                 }
                             },
-
-//                            onError = { errorMsg ->
-//                                isLoading = false
-//
-//                                Toast.makeText(
-//                                    context,
-//                                    errorMsg,
-//                                    Toast.LENGTH_SHORT
-//                                ).show()
-//                            }
                             onError = { message ->
 
                                 isLoading = false
