@@ -108,5 +108,8 @@
     <string name="failed_to_save_user">Failed to save user</string>
     <string name="user_id_not_found">User ID not found</string>
     <string name="signup_failed">Signup failed</string>
+    <string name="account_does_not_exist">Account does not exist</string>
+    <string name="incorrect_email_or_password">Incorrect email or password</string>
+    <string name="login_failed_please_try_again">Login failed. Please try again</string>
 
 </resources>

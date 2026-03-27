@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.newsapp.R
 import com.example.newsapp.data.repository.BookmarkRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
@@ -21,7 +23,7 @@ class AuthViewModel @Inject constructor(
         email: String,
         password: String,
         onSuccess: () -> Unit,
-        onError: (String) -> Unit
+        onError: (Int) -> Unit
     ) {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
@@ -37,10 +39,23 @@ class AuthViewModel @Inject constructor(
                             onSuccess()
                         }
                     } else {
-                        onError("User ID not found")
+                        onError(R.string.user_id_not_found)
                     }
                 } else {
-                    onError(task.exception?.localizedMessage ?: "Login failed")
+
+                    val message = when (task.exception) {
+
+                        is FirebaseAuthInvalidUserException ->
+                            (R.string.account_does_not_exist)
+
+                        is FirebaseAuthInvalidCredentialsException ->
+                            (R.string.incorrect_email_or_password)
+
+                        else ->
+                            (R.string.login_failed_please_try_again)
+                    }
+
+                    onError(message)
                 }
             }
     }

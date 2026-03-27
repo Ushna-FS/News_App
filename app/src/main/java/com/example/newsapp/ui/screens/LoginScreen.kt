@@ -31,16 +31,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.newsapp.R
 import com.example.newsapp.navigation.Routes
 import com.example.newsapp.viewmodels.AuthViewModel
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.google.firebase.auth.FirebaseAuth
-
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -54,6 +55,8 @@ fun LoginScreen(navController: NavController) {
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -74,12 +77,12 @@ fun LoginScreen(navController: NavController) {
             ) {
 
                 Text(
-                    text = "Welcome Back 👋",
+                    text = stringResource(R.string.welcome_back),
                     style = MaterialTheme.typography.headlineMedium
                 )
 
                 Text(
-                    text = "Login to continue",
+                    text = stringResource(R.string.login_to_continue),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -88,9 +91,16 @@ fun LoginScreen(navController: NavController) {
 
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email") },
+                    onValueChange = {
+                        email = it
+                        emailError = null
+                    },
+                    label = { Text(stringResource(R.string.email)) },
                     singleLine = true,
+                    isError = emailError != null,
+                    supportingText = {
+                        emailError?.let { Text(it) }
+                    },
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -99,9 +109,16 @@ fun LoginScreen(navController: NavController) {
 
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password") },
+                    onValueChange = {
+                        password = it
+                        passwordError = null
+                    },
+                    label = { Text(stringResource(R.string.password)) },
                     singleLine = true,
+                    isError = passwordError != null,
+                    supportingText = {
+                        passwordError?.let { Text(it) }
+                    },
                     shape = RoundedCornerShape(12.dp),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -119,6 +136,32 @@ fun LoginScreen(navController: NavController) {
 
                 Button(
                     onClick = {
+
+                        emailError = null
+                        passwordError = null
+
+                        when {
+                            email.isBlank() -> {
+                                emailError = "Email cannot be empty"
+                                return@Button
+                            }
+
+                            !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                                emailError = "Invalid email format"
+                                return@Button
+                            }
+
+                            password.isBlank() -> {
+                                passwordError = "Password cannot be empty"
+                                return@Button
+                            }
+
+                            password.length < 6 -> {
+                                passwordError = "Password must be at least 6 characters"
+                                return@Button
+                            }
+                        }
+
                         isLoading = true
                         viewModel.login(
                             email,
@@ -149,7 +192,7 @@ fun LoginScreen(navController: NavController) {
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text("Login")
+                        Text(stringResource(R.string.login))
                     }
                 }
 
@@ -158,7 +201,7 @@ fun LoginScreen(navController: NavController) {
                 TextButton(
                     onClick = { navController.navigate(Routes.Signup.route) }
                 ) {
-                    Text("Don't have an account? Sign Up")
+                    Text(stringResource(R.string.no_account_sign_up))
                 }
             }
         }
