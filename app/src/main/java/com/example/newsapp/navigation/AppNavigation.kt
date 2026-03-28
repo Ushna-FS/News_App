@@ -12,11 +12,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
+import com.example.newsapp.R
+import com.example.newsapp.ui.screens.LoginScreen
+import com.example.newsapp.ui.screens.SignupScreen
 import com.example.newsapp.ui.screens.SplashScreen
+import com.example.newsapp.viewmodels.AuthViewModel
 import com.example.newsapp.viewmodels.NewsViewModel
 import kotlinx.coroutines.launch
-import com.example.newsapp.R
+import com.google.firebase.auth.FirebaseAuth
+
 
 @Composable
 fun RootNavigation() {
@@ -32,20 +38,36 @@ fun RootNavigation() {
 
             SplashScreen(navController)
         }
+        composable(Routes.Login.route) {
+            LoginScreen(navController)
+        }
 
-        composable("main_tabs") {
+        composable(Routes.Signup.route) {
+            SignupScreen(navController)
+        }
 
-            MainTabs()
+        composable(Routes.MainTabs.route) {
+
+
+            MainTabs(navController)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTabs() {
+fun MainTabs(navController: NavHostController) {
 
     val newsViewModel: NewsViewModel = hiltViewModel()
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val user = FirebaseAuth.getInstance().currentUser
 
+    LaunchedEffect(user?.uid) {
+        user?.uid?.let {
+            newsViewModel.setCurrentUser(it)
+            newsViewModel.startBookmarkSync(it)
+        }
+    }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     val scope = rememberCoroutineScope()
@@ -63,6 +85,12 @@ fun MainTabs() {
         else -> homeNavController
     }
 
+    fun closeDrawer(action: () -> Unit) {
+        scope.launch {
+            drawerState.close()
+        }
+        action()
+    }
 // Observe back stack safely
     val navBackStackEntry by currentNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: ""
@@ -75,13 +103,21 @@ fun MainTabs() {
 
             AppDrawer(
                 onHomeClick = {
-                    selectedTab = "home"
+                    closeDrawer { selectedTab = "home" }
                 },
                 onDiscoverClick = {
-                    selectedTab = "discover"
+                    closeDrawer { selectedTab = "discover" }
                 },
                 onBookmarksClick = {
-                    selectedTab = "bookmark"
+                    closeDrawer { selectedTab = "bookmark" }
+                },
+                onLogoutClick = {
+
+                    authViewModel.logout()
+
+                    navController.navigate(Routes.Login.route) {
+                        popUpTo(Routes.MainTabs.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -118,13 +154,14 @@ fun MainTabs() {
                         selected = selectedTab == "home",
                         onClick = { selectedTab = "home" },
                         icon = { Icon(Icons.Default.Home, null) },
-                        label = { Text(stringResource(R.string.home)) }
-                    )
+
+                        label = { Text(stringResource(R.string.home)) })
 
                     NavigationBarItem(
                         selected = selectedTab == "discover",
                         onClick = { selectedTab = "discover" },
                         icon = { Icon(Icons.Default.Search, null) },
+
                         label = { Text(stringResource(R.string.discover)) }
                     )
 

@@ -2,6 +2,7 @@ package com.example.newsapp.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.work.WorkManager
 import com.example.newsapp.BuildConfig
 import com.example.newsapp.data.api.ApiKeyInterceptor
 import com.example.newsapp.data.api.ApiService
@@ -59,5 +60,10 @@ object AppModule {
     @Provides
     fun provideBookmarkDao(database: NewsDatabase): BookmarkDao {
         return database.bookmarkDao()
+    }
+    @Provides
+    @Singleton
+    fun provideWorkManager(@ApplicationContext context: Context): WorkManager {
+        return WorkManager.getInstance(context)
     }
 }

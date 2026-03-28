@@ -9,6 +9,12 @@ sealed class Routes(val route: String) {
 
     object Bookmarks : Routes("bookmarks")
 
+    object Login : Routes("login")
+
+    object Signup : Routes("signup")
+
+    object MainTabs : Routes("main_tabs")
+
     object ArticleDetail : Routes("article_detail/{article}") {
 
         fun createRoute(articleJson: String) = "article_detail/$articleJson"

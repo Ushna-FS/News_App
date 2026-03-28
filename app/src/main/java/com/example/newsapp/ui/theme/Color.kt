@@ -14,6 +14,7 @@ val GrayLightLight = Color(0xFFF5F5F5)
 val GrayMediumLight = Color(0xFF9E9E9E)
 
 val RedLight = Color(0xFFFF0000)
+val GreenLight = Color(0xFF69C26D)
 
 val ChipTextLight = Color(0xFF000000)
 val ChipSelectedBgLight = Color(0x803A3939)

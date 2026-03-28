@@ -10,6 +10,7 @@ import com.example.newsapp.data.repository.NewsRepository
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.data.local.BookmarkedArticle
 import com.example.newsapp.data.models.Article
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -130,6 +131,11 @@ class NewsViewModel @Inject constructor(
     val activeFilters: StateFlow<Triple<List<String>, List<String>, Boolean>> =
         _activeFilters.asStateFlow()
 
+    private var currentUserId: String? = null
+
+    fun setCurrentUser(userId: String) {
+        currentUserId = userId
+    }
     private fun updateActiveFilters() {
         val hasCustomCategories = _selectedCategories.value.isNotEmpty()
         val hasCustomSources = _selectedSources.value.isNotEmpty()
@@ -219,26 +225,27 @@ class NewsViewModel @Inject constructor(
     }
 
     fun toggleBookmark(article: Article) {
+
+        val userId = currentUserId ?: FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
-            val url = article.url
-            val isBookmarked = bookmarkRepository.isBookmarked(url)
+
+            val isBookmarked = bookmarkRepository.isBookmarked(article.url)
 
             if (isBookmarked) {
-                bookmarkRepository.removeBookmark(article) // This will emit
+                bookmarkRepository.removeBookmark(article.url, userId)
                 _uiMessage.emit(R.string.bookmark_removed)
             } else {
-                bookmarkRepository.addBookmark(article) // This will emit
+                bookmarkRepository.addBookmark(article, userId)
                 _uiMessage.emit(R.string.bookmark_added)
             }
-
         }
     }
-
     fun getAllBookmarkedUrls(): Flow<Set<String>> = flow {
         bookmarkRepository.getAllBookmarks().collect { bookmarks ->
             emit(bookmarks.map { it.url }.toSet())
         }
     }.flowOn(Dispatchers.IO)
+
     fun isArticleBookmarked(url: String): Flow<Boolean> {
         return bookmarkRepository.getAllBookmarks()
             .map { bookmarks ->
@@ -256,5 +263,7 @@ class NewsViewModel @Inject constructor(
         return hasCustomCategories || hasCustomSources
     }
 
-
+    fun startBookmarkSync(userId: String) {
+        bookmarkRepository.startRealtimeSync(userId)
+    }
 }
