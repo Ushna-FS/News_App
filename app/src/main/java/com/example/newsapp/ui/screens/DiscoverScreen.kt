@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,7 +19,6 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -41,12 +39,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -54,13 +50,17 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.newsapp.R
+import com.example.newsapp.data.api.mapErrorToMessage
 import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.models.NetworkError
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.ui.components.DiscoverNewsCard
+import com.example.newsapp.ui.components.EmptyState
 import com.example.newsapp.ui.components.FilterPanel
 import com.example.newsapp.ui.components.SortMenuDialog
 import com.example.newsapp.viewmodels.NewsViewModel
 import kotlinx.coroutines.delay
+import retrofit2.HttpException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,9 +68,6 @@ fun DiscoverScreen(
     viewModel: NewsViewModel = hiltViewModel(),
     onArticleClick: (Article) -> Unit
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
 
     // State
     val pagingItems = viewModel.newsPagingData.collectAsLazyPagingItems()
@@ -261,22 +258,35 @@ fun DiscoverNewsList(
         // Check for refresh error state
         else if (pagingItems.loadState.refresh is LoadState.Error) {
             item {
-                val error = (pagingItems.loadState.refresh as LoadState.Error).error
-                error.message?.let {
-                    ErrorItem(
-                        message = stringResource(R.string.error_msg, it),
-                        onRetry = { pagingItems.retry() }
-                    )
+                val rawError = (pagingItems.loadState.refresh as LoadState.Error).error
+                val error = when (rawError) {
+                    is NetworkError -> rawError
+                    is HttpException -> when (rawError.code()) {
+                        401 -> NetworkError.Unauthorized()
+                        404 -> NetworkError.NotFound()
+                        429 -> NetworkError.RateLimit()
+                        in 500..599 -> NetworkError.ServerError()
+                        else -> NetworkError.Unknown(rawError)
+                    }
+
+                    else -> NetworkError.Unknown(rawError)
                 }
+
+                EmptyState(
+                    error = error,
+                    message = stringResource(mapErrorToMessage(error)),
+                    onRetry = { pagingItems.retry() }
+                )
+
             }
         }
         // Show items if any exist
         else if (pagingItems.itemCount > 0) {
-//
             items(
                 count = pagingItems.itemCount,
                 key = { index ->
-                    pagingItems[index]?.url ?: "article_$index"
+                    val article = pagingItems[index]
+                    "${article?.url}_${index}"
                 }
             ) { index ->
 
@@ -312,13 +322,26 @@ fun DiscoverNewsList(
             // Pagination error
             if (pagingItems.loadState.append is LoadState.Error) {
                 item {
-                    val error = (pagingItems.loadState.append as LoadState.Error).error
-                    error.message?.let {
-                        ErrorItem(
-                            message = stringResource(R.string.failed_to_load_more, it),
-                            onRetry = { pagingItems.retry() }
-                        )
+                    val rawError = (pagingItems.loadState.append as LoadState.Error).error
+                    val error = when (rawError) {
+                        is NetworkError -> rawError
+                        is HttpException -> when (rawError.code()) {
+                            401 -> NetworkError.Unauthorized()
+                            404 -> NetworkError.NotFound()
+                            429 -> NetworkError.RateLimit()
+                            in 500..599 -> NetworkError.ServerError()
+                            else -> NetworkError.Unknown(rawError)
+                        }
+
+                        else -> NetworkError.Unknown(rawError)
                     }
+
+                    EmptyState(
+                        error = error,
+                        message = stringResource(mapErrorToMessage(error)),
+                        onRetry = { pagingItems.retry() }
+                    )
+
                 }
             }
         }
@@ -342,7 +365,6 @@ fun DiscoverNewsList(
     }
 }
 
-//
 @Composable
 fun FilterSummary(
     viewModel: NewsViewModel,
@@ -447,40 +469,3 @@ fun FilterSortRow(
         }
     }
 }
-
-@Composable
-fun ErrorItem(
-    message: String,
-    onRetry: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = message, color = MaterialTheme.colorScheme.error)
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
-        }
-    }
-}
-
-@Composable
-fun EmptyState(message: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-

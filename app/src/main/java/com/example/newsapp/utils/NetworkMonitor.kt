@@ -10,6 +10,7 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 class NetworkMonitor @Inject constructor(
     @ApplicationContext private val context: Context
@@ -40,7 +41,7 @@ class NetworkMonitor @Inject constructor(
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)
         }
-    }
+    }.distinctUntilChanged()
 
     fun isConnected(): Boolean {
         val network = connectivityManager.activeNetwork ?: return false

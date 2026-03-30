@@ -31,13 +31,16 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.newsapp.R
+import com.example.newsapp.data.api.mapErrorToMessage
 import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.models.NetworkError
 import com.example.newsapp.ui.components.CategoryChips
 import com.example.newsapp.ui.components.EmptyState
 import com.example.newsapp.ui.components.HomeArticleItem
 import com.example.newsapp.utils.ArticleCategoryMapper
 import com.example.newsapp.utils.DateFormatter
 import com.example.newsapp.viewmodels.NewsViewModel
+import retrofit2.HttpException
 
 @Composable
 fun HomeScreen(
@@ -126,9 +129,23 @@ fun HomeScreenContent(
             }
 
             is LoadState.Error -> {
+                val rawError = (articles.loadState.refresh as LoadState.Error).error
+                val error = when (rawError) {
+                    is NetworkError -> rawError
+                    is HttpException -> when (rawError.code()) {
+                        401 -> NetworkError.Unauthorized()
+                        404 -> NetworkError.NotFound()
+                        429 -> NetworkError.RateLimit()
+                        in 500..599 -> NetworkError.ServerError()
+                        else -> NetworkError.Unknown(rawError)
+                    }
+
+                    else -> NetworkError.Unknown(rawError)
+                }
 
                 EmptyState(
-                    message = (stringResource(R.string.error_load_articles)),
+                    error = error,
+                    message = stringResource(mapErrorToMessage(error)),
                     onRetry = { articles.retry() }
                 )
             }
@@ -154,35 +171,30 @@ fun HomeScreenContent(
                         }
                     }
 
-                    // 🔹 Initial Error
-                    if (articles.loadState.refresh is LoadState.Error) {
-                        item {
-                            EmptyState(
-                                message = (stringResource(R.string.error_load_articles)),
-                                onRetry = { articles.retry() }
-                            )
-                        }
-                    }
-
                     // 🔹 Content
                     items(
                         count = articles.itemCount,
                         key = { index ->
-                            articles[index]?.url ?: index
+                            val article = articles[index]
+                            "${article?.url}_${index}"
                         }
                     ) { index ->
 
-                        val article = articles[index] ?: return@items
+                        val article = articles[index]
 
-                        val bookmarked = bookmarkedUrls.contains(article.url)
 
-                        HomeArticleItem(
-                            article = article,
-                            isBookmarked = bookmarked,
-                            onClick = { onArticleClick(article) },
-                            onBookmarkClick = { onBookmarkClick(article) },
-                            dateFormatter = dateFormatter
-                        )
+                        if (article != null) {
+
+                            val bookmarked = bookmarkedUrls.contains(article.url)
+
+                            HomeArticleItem(
+                                article = article,
+                                isBookmarked = bookmarked,
+                                onClick = { onArticleClick(article) },
+                                onBookmarkClick = { onBookmarkClick(article) },
+                                dateFormatter = dateFormatter
+                            )
+                        }
                     }
 
                     // 🔹 Pagination
@@ -202,9 +214,26 @@ fun HomeScreenContent(
                         }
 
                         is LoadState.Error -> {
+
+                            val rawError = (articles.loadState.append as LoadState.Error).error
+
+                            val error = when (rawError) {
+                                is NetworkError -> rawError
+                                is HttpException -> when (rawError.code()) {
+                                    401 -> NetworkError.Unauthorized()
+                                    404 -> NetworkError.NotFound()
+                                    429 -> NetworkError.RateLimit()
+                                    in 500..599 -> NetworkError.ServerError()
+                                    else -> NetworkError.Unknown(rawError)
+                                }
+
+                                else -> NetworkError.Unknown(rawError)
+                            }
+
                             item {
                                 EmptyState(
-                                    message = (stringResource(R.string.failed_to_load_more)),
+                                    error = error,
+                                    message = stringResource(mapErrorToMessage(error)),
                                     onRetry = { articles.retry() }
                                 )
                             }
