@@ -258,7 +258,7 @@ fun SignupScreen(
 
                 Spacer(Modifier.height(12.dp))
 
-                TextButton(onClick = { navController.popBackStack() }) {
+                TextButton(    enabled = !isLoading, onClick = { navController.popBackStack() }) {
                     Text(stringResource(R.string.already_have_an_account_login))
                 }
             }

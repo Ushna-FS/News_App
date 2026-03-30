@@ -210,6 +210,7 @@ fun LoginScreen(navController: NavController) {
                 Spacer(Modifier.height(12.dp))
 
                 TextButton(
+                    enabled = !isLoading,
                     onClick = { navController.navigate(Routes.Signup.route) }
                 ) {
                     Text(stringResource(R.string.no_account_sign_up))
