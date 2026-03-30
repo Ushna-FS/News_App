@@ -47,13 +47,23 @@ object AppModule {
             .create(ApiService::class.java)
     }
 
-
     @Singleton
     @Provides
-    fun provideNewsDatabase(@ApplicationContext context: Context): NewsDatabase {
+    fun provideNewsDatabase(
+        @ApplicationContext context: Context
+    ): NewsDatabase {
+
         return Room.databaseBuilder(
-            context, NewsDatabase::class.java, NewsDatabase.DATABASE_NAME
-        ).fallbackToDestructiveMigration(false).build()
+            context,
+            NewsDatabase::class.java,
+            NewsDatabase.DATABASE_NAME
+        )
+            .addMigrations(
+                NewsDatabase.MIGRATION_1_2,
+                NewsDatabase.MIGRATION_2_3,
+                NewsDatabase.MIGRATION_3_4
+            )
+            .build()
     }
 
     @Singleton
