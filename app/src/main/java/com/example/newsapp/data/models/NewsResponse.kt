@@ -19,12 +19,13 @@ data class Article(
     val publishedAt: String?,
     val content: String?
 
-) : Parcelable
+): Parcelable
 
 @Parcelize
 data class Source(
-    val id: String?, val name: String
-) : Parcelable
+    val id: String?,
+    val name: String
+): Parcelable
 
 fun Article.getFormattedDate(): String {
     return publishedAt?.substringBefore("T") ?: ""
