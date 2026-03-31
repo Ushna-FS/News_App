@@ -12,42 +12,36 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.addCallback
-import androidx.core.os.bundleOf
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.newsapp.MainActivity
 import com.example.newsapp.R
+import com.example.newsapp.adapters.CardType
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.data.repository.SortType
-import com.example.newsapp.data.models.Article
 import com.example.newsapp.databinding.FragmentDiscoverBinding
-import com.example.newsapp.utils.DateFormatter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
-import jakarta.inject.Inject
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class DiscoverFragment : Fragment() {
+class DiscoverFragment : BaseNewsFragment() {
 
     private var _binding: FragmentDiscoverBinding? = null
     private val binding get() = _binding!!
 
-    private val newsViewModel: NewsViewModel by activityViewModels()
+    override val newsViewModel: NewsViewModel by activityViewModels()
     private lateinit var newsAdapter: NewsPagingAdapter
     private var filterFragment: FilterFragment? = null
     private var isFilterOpen = false
-
-    @Inject
-    lateinit var dateFormatter: DateFormatter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -59,7 +53,10 @@ class DiscoverFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.toolbarInclude.toolbar.title = "Latest News"
+        val toolbar = binding.toolbarInclude.toolbar
+        (requireActivity() as AppCompatActivity).setSupportActionBar(toolbar)
+
+        toolbar.title = "Discover"
         setupRecyclerView()
         setupSearchFunctionality()
         observePagingData()
@@ -74,6 +71,9 @@ class DiscoverFragment : Fragment() {
         // Initialize button highlights
         updateSortButtonHighlight()
         updateFilterButtonHighlight()
+        toolbar.setNavigationOnClickListener {
+            (requireActivity() as MainActivity).openDrawer()
+        }
     }
 
     private fun observeBookmarkUpdates() {
@@ -88,14 +88,11 @@ class DiscoverFragment : Fragment() {
 
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
-            onItemClick = { article ->
-            openArticleDetail(article)
-        }, onBookmarkClick = { article ->
-            newsViewModel.toggleBookmark(article)
-        }, onExtractSource = { article ->
-            newsViewModel.extractSourceFromArticle(article)
-        }, dateFormatter = dateFormatter
-
+            cardType = CardType.DISCOVER,
+            onItemClick = { article -> openArticleDetail(article) }, // now from BaseNewsFragment
+            onBookmarkClick = { article -> toggleBookmark(article) }, // from BaseNewsFragment
+            onExtractSource = { article -> newsViewModel.extractSourceFromArticle(article) },
+            dateFormatter = dateFormatter
         )
 
         newsAdapter.addLoadStateListener { loadState ->
@@ -165,11 +162,6 @@ class DiscoverFragment : Fragment() {
         }
     }
 
-    private fun openArticleDetail(article: Article) {
-        findNavController().navigate(
-            R.id.articleDetailFragment, bundleOf("arg_article" to article)
-        )
-    }
 
     private fun setupSearchFunctionality() {
         binding.etSearch.addTextChangedListener(object : TextWatcher {
@@ -290,8 +282,7 @@ class DiscoverFragment : Fragment() {
             categories.size > 1 && sources.isEmpty() -> getString(R.string.selected_categories)
 
             sources.isNotEmpty() && categories.isEmpty() -> getString(
-                R.string.sources_count,
-                sources.size
+                R.string.sources_count, sources.size
             )
 
             else -> getString(

@@ -5,14 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.newsapp.R
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.adapters.BookmarkAdapter
 import com.example.newsapp.data.local.BookmarkedArticle
@@ -23,12 +19,12 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class BookmarksFragment : Fragment() {
+class BookmarksFragment : BaseNewsFragment() {
 
     private var _binding: FragmentBookmarksBinding? = null
     private val binding get() = _binding!!
 
-    private val newsViewModel: NewsViewModel by activityViewModels()
+    override val newsViewModel: NewsViewModel by activityViewModels()
     private lateinit var bookmarkAdapter: BookmarkAdapter
 
     override fun onCreateView(
@@ -42,30 +38,39 @@ class BookmarksFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupRecyclerView()
         setupObservers()
+        observeBookmarkUpdates(bookmarkAdapter)
     }
 
-    private fun setupRecyclerView() {
-        bookmarkAdapter = BookmarkAdapter(onItemClick = { article ->
-            // Open ArticleDetailFragment
-            openArticleDetail(article)
-        }, toggleBookmark = { article ->
-            // Remove bookmark when clicked (since it's already bookmarked)
-            newsViewModel.toggleBookmark(article)
-        })
 
+    private fun setupRecyclerView() {
+        bookmarkAdapter = BookmarkAdapter(
+            onReadMoreClick = { bookmarked ->
+                // convert to Article only when opening detail
+                openArticleDetail(bookmarked.toArticle())
+            },
+            toggleBookmark = { bookmarked ->
+                toggleBookmark(bookmarked.toArticle())
+            },
+            onShareClick = { bookmarked ->
+                val shareIntent = android.content.Intent().apply {
+                    action = android.content.Intent.ACTION_SEND
+                    putExtra(android.content.Intent.EXTRA_TEXT, bookmarked.url)
+                    type = "text/plain"
+                }
+                startActivity(android.content.Intent.createChooser(shareIntent, "Share via"))
+            },
+            dateFormatter = dateFormatter
+        )
         binding.recyclerViewBookmarks.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = bookmarkAdapter
             setHasFixedSize(true)
         }
     }
-
     private fun setupObservers() {
         viewLifecycleOwner.lifecycleScope.launch {
             newsViewModel.bookmarks.collect { bookmarks ->
-                // Convert BookmarkedArticle to Article for the adapter
-                val bookmarkedArticles = bookmarks.map { it.toArticle() }
-                bookmarkAdapter.submitList(bookmarkedArticles)
+                bookmarkAdapter.submitList(bookmarks)
 
                 // Show/hide empty state and RecyclerView
                 val hasBookmarks = bookmarks.isNotEmpty()
@@ -76,20 +81,10 @@ class BookmarksFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             newsViewModel.uiMessage.collect { resId ->
                 Toast.makeText(
-                    requireContext(),
-                    getString(resId),
-                    Toast.LENGTH_SHORT
+                    requireContext(), getString(resId), Toast.LENGTH_SHORT
                 ).show()
             }
         }
-    }
-
-
-    private fun openArticleDetail(article: Article) {
-        findNavController().navigate(
-            R.id.articleDetailFragment,
-            bundleOf("arg_article" to article)
-        )
     }
 
     override fun onDestroyView() {

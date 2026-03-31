@@ -21,9 +21,6 @@ import javax.inject.Inject
 class NewsViewModel @Inject constructor(
     private val repository: NewsRepository, private val bookmarkRepository: BookmarkRepository,
 ) : ViewModel() {
-    // For HomeFragment - Only Business news
-    val businessNewsPagingData: Flow<PagingData<Article>> =
-        repository.getBusinessNewsStream().cachedIn(viewModelScope).flowOn(Dispatchers.IO)
 
     // StateFlows for filters and sort
     private val _selectedCategories = MutableStateFlow<List<String>>(emptyList())
@@ -56,6 +53,18 @@ class NewsViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+    private val _homeCategory = MutableStateFlow("all")
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val homeNewsPagingData: Flow<PagingData<Article>> =
+        _homeCategory.flatMapLatest { cat ->
+            if (cat == "all") {
+                repository.getAllNewsStream()
+            } else {
+                repository.getCategoryNewsStream(cat.lowercase())
+            }
+        }.cachedIn(viewModelScope)
+
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val newsPagingData: Flow<PagingData<Article>> = searchQuery
@@ -127,6 +136,10 @@ class NewsViewModel @Inject constructor(
     fun searchNews(query: String) {
         _searchQuery.value = query
     }
+    fun setHomeCategory(cat: String) {
+        _homeCategory.value = cat
+    }
+
 
     fun extractSourceFromArticle(article: Article) {
         val currentSources = _availableSources.value.toMutableSet()

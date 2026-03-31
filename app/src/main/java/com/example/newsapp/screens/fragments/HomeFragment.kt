@@ -5,24 +5,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.os.bundleOf
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.fragment.findNavController
 import androidx.paging.LoadState
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.newsapp.MainActivity
 import com.example.newsapp.R
+import com.example.newsapp.adapters.CardType
 import com.example.newsapp.adapters.NewsPagingAdapter
 import com.example.newsapp.databinding.FragmentHomeBinding
 import com.example.newsapp.viewmodels.NewsViewModel
-import com.example.newsapp.data.models.Article
-import com.example.newsapp.utils.DateFormatter
 import dagger.hilt.android.AndroidEntryPoint
-import jakarta.inject.Inject
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -30,16 +27,13 @@ import java.net.SocketTimeoutException
 
 
 @AndroidEntryPoint
-class HomeFragment : Fragment() {
+class HomeFragment : BaseNewsFragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    private val newsViewModel: NewsViewModel by activityViewModels()
+    override val newsViewModel: NewsViewModel by activityViewModels()
     private lateinit var newsAdapter: NewsPagingAdapter
-
-    @Inject
-    lateinit var dateFormatter: DateFormatter
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -50,13 +44,19 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        binding.toolbarInclude.toolbar.title = getString(R.string.newsmate)
+        val toolbar = binding.includeToolbar.toolbar
+        (requireActivity() as AppCompatActivity).setSupportActionBar(binding.includeToolbar.toolbar)
+        toolbar.title = "NewsMate"
         setupRecyclerView()
         setupObservers()
         setupRetryButton()
         observeBookmarkUpdates()
+        setupCategoryChips()
+
         binding.textWelcome.text = getString(R.string.home_user)
+        toolbar.setNavigationOnClickListener {
+            (requireActivity() as MainActivity).openDrawer()
+        }
     }
 
     private fun observeBookmarkUpdates() {
@@ -71,14 +71,13 @@ class HomeFragment : Fragment() {
 
     private fun setupRecyclerView() {
         newsAdapter = NewsPagingAdapter(
-            onItemClick = { article ->
-                openArticleDetail(article)
-            }, onBookmarkClick = { article ->
-                newsViewModel.toggleBookmark(article)
-            }, onExtractSource = { article ->
-                newsViewModel.extractSourceFromArticle(article)
-            }, dateFormatter = dateFormatter
+            cardType = CardType.HOME,
+            onItemClick = { article -> openArticleDetail(article) }, // now from BaseNewsFragment
+            onBookmarkClick = { article -> toggleBookmark(article) }, // from BaseNewsFragment
+            onExtractSource = { article -> newsViewModel.extractSourceFromArticle(article) },
+            dateFormatter = dateFormatter
         )
+        newsAdapter.currentCategory = "general"
 
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -133,6 +132,29 @@ class HomeFragment : Fragment() {
         }
     }
 
+    private fun setupCategoryChips() {
+
+        binding.chipGroupCategories.setOnCheckedStateChangeListener { _, checkedIds ->
+
+            val id = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
+
+            val category = when (id) {
+                R.id.chipAll -> "all"
+                R.id.chipBusiness -> "business"
+                R.id.chipTech -> "technology"
+                R.id.chipSports -> "sports"
+                R.id.chipHealth -> "health"
+                else -> "all"
+            }
+
+            newsViewModel.setHomeCategory(category)
+            newsAdapter.currentCategory = category
+
+            binding.recyclerView.scrollToPosition(0)
+        }
+    }
+
+
     private fun setupRetryButton() {
         binding.btnRetry.setOnClickListener {
             // Retry loading
@@ -143,16 +165,10 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun openArticleDetail(article: Article) {
-        findNavController().navigate(
-            R.id.articleDetailFragment, bundleOf("arg_article" to article)
-        )
-    }
-
     private fun setupObservers() {
         // Use Business news for HomeFragment
         viewLifecycleOwner.lifecycleScope.launch {
-            newsViewModel.businessNewsPagingData.collectLatest { pagingData ->
+            newsViewModel.homeNewsPagingData.collectLatest { pagingData ->
                 newsAdapter.submitData(pagingData)
             }
         }
