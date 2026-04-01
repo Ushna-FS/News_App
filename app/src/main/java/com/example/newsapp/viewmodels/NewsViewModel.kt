@@ -2,19 +2,34 @@ package com.example.newsapp.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.*
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.filter
 import com.example.newsapp.R
-import com.example.newsapp.utils.ArticleCategoryMapper
+import com.example.newsapp.data.local.BookmarkedArticle
+import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.models.getCategory
 import com.example.newsapp.data.repository.BookmarkRepository
 import com.example.newsapp.data.repository.NewsRepository
 import com.example.newsapp.data.repository.SortType
-import com.example.newsapp.data.local.BookmarkedArticle
-import com.example.newsapp.data.models.Article
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -33,6 +48,7 @@ class NewsViewModel @Inject constructor(
     private val _selectedCategories = MutableStateFlow<List<String>>(emptyList())
 
     val selectedCategories: StateFlow<List<String>> = _selectedCategories.asStateFlow()
+
 
     private val _selectedSources = MutableStateFlow<List<String>>(emptyList())
     val selectedSources: StateFlow<List<String>> = _selectedSources.asStateFlow()
@@ -69,7 +85,7 @@ class NewsViewModel @Inject constructor(
                 repository.getAllNewsStream().map { pagingData ->
                     if (category == "All") pagingData
                     else pagingData.filter {
-                        ArticleCategoryMapper.getCategory(it) == category
+                        it.getCategory().displayName == category
                     }
 
                 }
@@ -153,7 +169,7 @@ class NewsViewModel @Inject constructor(
                 val flow = repository.getAllNewsStream()
                     .map { pagingData ->
                         if (category == "All") pagingData
-                        else pagingData.filter { ArticleCategoryMapper.getCategory(it) == category }
+                        else pagingData.filter { it.getCategory().displayName == category }
                     }
                     .cachedIn(viewModelScope)
                 categoryCache[category] = flow
@@ -239,6 +255,7 @@ class NewsViewModel @Inject constructor(
             emit(bookmarks.map { it.url }.toSet())
         }
     }.flowOn(Dispatchers.IO)
+
     fun isArticleBookmarked(url: String): Flow<Boolean> {
         return bookmarkRepository.getAllBookmarks()
             .map { bookmarks ->

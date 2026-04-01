@@ -35,7 +35,7 @@ import com.example.newsapp.data.models.Article
 import com.example.newsapp.ui.components.CategoryChips
 import com.example.newsapp.ui.components.EmptyState
 import com.example.newsapp.ui.components.HomeArticleItem
-import com.example.newsapp.utils.ArticleCategoryMapper
+import com.example.newsapp.utils.Category
 import com.example.newsapp.utils.DateFormatter
 import com.example.newsapp.viewmodels.NewsViewModel
 
@@ -80,7 +80,7 @@ fun HomeScreenContent(
 
     val dateFormatter = remember { DateFormatter() }
 
-    var selectedCategory by rememberSaveable { mutableStateOf("All") }
+    var selectedCategory by rememberSaveable { mutableStateOf(Category.All) }
 
     val listState = rememberLazyListState()
 
@@ -103,13 +103,12 @@ fun HomeScreenContent(
         )
 
         CategoryChips(
-            categories = ArticleCategoryMapper.categories,
-            selectedCategory = selectedCategory,
-            onCategorySelected = { category ->
-
+            categories = Category.names,
+            selectedCategory = selectedCategory.displayName,  // selected string
+            onCategorySelected = { categoryName ->
+                val category = Category.values().first { it.displayName == categoryName }
                 selectedCategory = category
-                onCategorySelected(category)
-
+                onCategorySelected(category.displayName)
             }
         )
 

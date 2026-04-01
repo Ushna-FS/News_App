@@ -4,9 +4,9 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.example.newsapp.utils.ArticleCategoryMapper
 import com.example.newsapp.data.api.ApiService
 import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.models.getCategory
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.utils.DateFormatter
 import retrofit2.HttpException
@@ -131,7 +131,7 @@ class FilteredCombinedNewsPagingSource(
             // Apply filters BEFORE sorting
             if (categories.isNotEmpty() && !categories.contains("All")) {
                 articles = articles.filter { article ->
-                    val articleCategory = ArticleCategoryMapper.getCategory(article)
+                    val articleCategory = article.getCategory().displayName
                     categories.any { category ->
                         articleCategory.equals(
                             category,
