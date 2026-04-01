@@ -131,7 +131,8 @@ fun DiscoverScreen(
             pagingItems = pagingItems,
             viewModel = viewModel,
             onArticleClick = onArticleClick,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            sortType = sortType
         )
     }
 
@@ -146,7 +147,7 @@ fun DiscoverScreen(
                 onApply = {
                     showFilterSheet = false
 
-                    pagingItems.refresh()
+//                    pagingItems.refresh()
 
                 },
                 onClose = { showFilterSheet = false }
@@ -165,6 +166,7 @@ fun DiscoverScreen(
                 } else {
                     viewModel.resetSort()
                 }
+                pagingItems.refresh()
                 showSortMenu = false
             },
             onDismiss = { showSortMenu = false }
@@ -230,15 +232,25 @@ fun DiscoverNewsList(
     pagingItems: LazyPagingItems<Article>,
     viewModel: NewsViewModel,
     onArticleClick: (Article) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sortType: SortType
 ) {
     val listState = rememberLazyListState()
     val bookmarkedUrls by viewModel.getAllBookmarkedUrls()
         .collectAsState(initial = emptySet())
     val searchQuery by viewModel.searchQuery.collectAsState()
 
+    // At the top of DiscoverNewsList function, before LazyColumn
+    LaunchedEffect(sortType) {
+        // When switching to oldest-first, ensure we scroll to top to show oldest articles
+        if (sortType == SortType.OLDEST_FIRST && pagingItems.itemCount > 0) {
+            delay(100) // Small delay to ensure items are loaded
+            listState.scrollToItem(0)
+        }
+    }
 
     LazyColumn(
+//        reverseLayout = (sortType == SortType.OLDEST_FIRST),
         state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(8.dp),

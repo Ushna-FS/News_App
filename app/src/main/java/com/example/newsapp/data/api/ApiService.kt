@@ -28,6 +28,7 @@ interface ApiService {
         @Query("q") query: String = "",
 //        @Query("q") query: String,
         @Query("sortBy") sortBy: String = "publishedAt",
+        @Query("from") from: String? = null,
         @Query("language") language: String = "en",
         @Query("page") page: Int = 1,
         @Query("pageSize") pageSize: Int = 5
