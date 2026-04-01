@@ -48,11 +48,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.newsapp.NewsAppTheme
 import com.example.newsapp.R
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.repository.SortType
@@ -479,20 +481,26 @@ fun ErrorItem(
     }
 }
 
+@Preview(showBackground = true)
 @Composable
-fun EmptyState(message: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+fun DiscoverTopSectionPreview() {
+    NewsAppTheme {
+
+        Column {
+            DiscoverSearchBar(
+                text = "",
+                onTextChange = {},
+                onClear = {}
+            )
+
+            FilterSortRow(
+                hasActiveFilters = true,
+                isSearching = false,
+                hasUserSelectedSort = true,
+                sortType = SortType.NEWEST_FIRST,
+                onFilterClick = {},
+                onSortClick = {}
+            )
+        }
     }
 }
-
-
