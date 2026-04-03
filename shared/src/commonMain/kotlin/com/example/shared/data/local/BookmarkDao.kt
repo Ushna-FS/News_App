@@ -1,4 +1,4 @@
-package com.example.newsapp.data.local
+package com.example.shared.data.local
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow

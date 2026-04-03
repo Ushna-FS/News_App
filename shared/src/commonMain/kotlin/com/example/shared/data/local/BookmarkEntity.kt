@@ -1,15 +1,19 @@
-package com.example.newsapp.data.local
+package com.example.shared.data.local
 
 
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.example.shared.data.models.Article
+import kotlinx.datetime.Clock
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(
     tableName = "bookmarked_articles",
     indices = [Index(value = ["url"], unique = true)]
 )
+
 data class BookmarkedArticle(
 
     @PrimaryKey(autoGenerate = true)
@@ -33,7 +37,7 @@ data class BookmarkedArticle(
 
     val author: String? = null,
 
-    val bookmarkedAt: Long = System.currentTimeMillis(),
+    val bookmarkedAt: Long = Clock.System.now().toEpochMilliseconds(),
 
     val isSynced: Boolean = false
 )
@@ -51,6 +55,6 @@ fun Article.toBookmarkedArticle(): BookmarkedArticle {
         sourceName = this.source.name,
         sourceId = this.source.id,
         author = this.author,
-        bookmarkedAt = System.currentTimeMillis()
+        bookmarkedAt = Clock.System.now().toEpochMilliseconds()
     )
 }

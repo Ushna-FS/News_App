@@ -1,5 +1,4 @@
-package com.example.newsapp.data.local
-
+package com.example.shared.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

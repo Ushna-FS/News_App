@@ -1,6 +1,6 @@
-package com.example.newsapp.utils
+package com.example.shared.utils
 
-import com.example.newsapp.data.local.BookmarkedArticle
+import com.example.shared.data.local.BookmarkedArticle
 import com.example.shared.data.models.Article
 import com.example.shared.data.models.Source
 
