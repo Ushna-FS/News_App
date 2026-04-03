@@ -1,8 +1,14 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
+    id("com.google.devtools.ksp")
     id("com.android.kotlin.multiplatform.library")
 }
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 kotlin {
 
     // Target declarations - add or remove as needed below. These define
@@ -76,6 +82,24 @@ kotlin {
 
                 // json
                 implementation(libs.kotlinx.serialization.json)
+
+                // Koin Core (Multiplatform)
+                implementation(libs.koin.core)
+
+                //firebase
+                implementation(libs.gitlive.firebase.auth)
+                implementation(libs.gitlive.firebase.firestore)
+                implementation(libs.gitlive.firebase.crashlytics)
+
+                //paging
+                implementation(libs.paging.compose.common)
+                implementation(libs.paging.common)
+
+                //room
+                implementation(libs.androidx.room.runtime)
+                implementation(libs.androidx.sqlite.bundled)
+
+                implementation(libs.kotlinx.datetime)
             }
         }
 
@@ -91,6 +115,19 @@ kotlin {
                 // commonMain by default and will correctly pull the Android artifacts of any KMP
                 // dependencies declared in commonMain.
                 implementation(libs.ktor.client.okhttp)
+                // Android specific Koin features
+                implementation(libs.koin.android)
+                //firebase
+                implementation(project.dependencies.platform(libs.firebase.bom))
+
+                //room
+                implementation(libs.androidx.room.runtime)
+                //worker
+                implementation(libs.androidx.work.runtime.ktx)
+                implementation(libs.koin.androidx.workmanager)
+
+                // json
+                implementation(libs.kotlinx.serialization.json)
             }
         }
 
@@ -111,8 +148,14 @@ kotlin {
                 // KMP dependencies declared in commonMain.
 
                 implementation(libs.ktor.client.darwin)
+                implementation(libs.androidx.sqlite.bundled)
             }
         }
     }
-
+}
+dependencies {
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspIosX64", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
 }

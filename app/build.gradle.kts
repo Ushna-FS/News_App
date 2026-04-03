@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
     id("kotlin-parcelize")
     id("androidx.navigation.safeargs.kotlin")
@@ -62,13 +61,10 @@ dependencies {
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.constraintlayout.v214)
 
-    // Retrofit for API calls
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
 
     // Gson for JSON parsing
     implementation(libs.gson)
-
+    implementation(libs.converter.gson)
     // Coroutines for async operations
     implementation(libs.kotlinx.coroutines.android)
 
@@ -76,28 +72,17 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.livedata.ktx)
 
-    // RecyclerView for listing news
-    implementation(libs.androidx.recyclerview)
-
-    implementation(libs.androidx.cardview)
-    implementation(libs.glide)
-
-    implementation(libs.hilt.android)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.hilt.common)
     debugImplementation(libs.androidx.ui.tooling)
-    ksp(libs.hilt.compiler)
 
     implementation(libs.androidx.core.splashscreen)
 
-    // For ViewModel injection
-    implementation(libs.androidx.hilt.navigation.fragment)
-
-    //  implementation(libs.androidx.paging.runtime.ktx)
+    // For Paging
     implementation(libs.androidx.paging.runtime.ktx.v320)
+    // android room
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
 
@@ -117,11 +102,8 @@ dependencies {
 
     // Activity Compose
     implementation(libs.androidx.activity.compose)
-    // Hilt + Compose
-    implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.hilt.android.v259)
-    implementation(libs.androidx.hilt.work)
-    ksp(libs.androidx.hilt.compiler.v110)
+
+    //hilt migrated to koin
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)
 
@@ -135,16 +117,21 @@ dependencies {
 
     // Firebase BOM
     implementation(platform(libs.firebase.bom))
-
-    // Firebase Auth
-    implementation(libs.firebase.auth.ktx)
-    //firestore
+    // gitLive Auth
+    implementation(libs.gitlive.firebase.auth)
 
     //crashlytics
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
-    implementation(libs.firebase.firestore.ktx)
 
+
+    //KOIN
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.androidx.workmanager)
+
+    // koin for compose
+    implementation(libs.koin.androidx.compose)
 
     implementation(libs.androidx.work.runtime.ktx)
 
