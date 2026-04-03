@@ -4,23 +4,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.*
 import com.example.newsapp.R
-import com.example.newsapp.utils.ArticleCategoryMapper
-import com.example.newsapp.data.repository.BookmarkRepository
-import com.example.newsapp.data.repository.NewsRepository
-import com.example.newsapp.data.repository.SortType
-import com.example.newsapp.data.local.BookmarkedArticle
+import com.example.shared.data.local.BookmarkedArticle
 import com.example.shared.data.models.Article
-import com.google.firebase.auth.FirebaseAuth
-import dagger.hilt.android.lifecycle.HiltViewModel
+import com.example.shared.data.repository.BookmarkRepository
+import com.example.shared.data.repository.NewsRepository
+import com.example.shared.data.repository.SortType
+import com.example.shared.utils.ArticleCategoryMapper
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class NewsViewModel @Inject constructor(
+
+class NewsViewModel(
     private val repository: NewsRepository, private val bookmarkRepository: BookmarkRepository,
 ) : ViewModel() {
 
@@ -226,7 +225,7 @@ class NewsViewModel @Inject constructor(
 
     fun toggleBookmark(article: Article) {
 
-        val userId = currentUserId ?: FirebaseAuth.getInstance().currentUser?.uid ?: return
+        val userId = currentUserId ?: Firebase.auth.currentUser?.uid ?: return
         viewModelScope.launch {
 
             val isBookmarked = bookmarkRepository.isBookmarked(article.url)
