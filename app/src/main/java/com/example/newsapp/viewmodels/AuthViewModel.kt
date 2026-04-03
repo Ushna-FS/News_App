@@ -2,18 +2,16 @@ package com.example.newsapp.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.newsapp.data.repository.BookmarkRepository
-import com.google.firebase.auth.FirebaseAuth
-import dagger.hilt.android.lifecycle.HiltViewModel
+import com.example.shared.data.repository.BookmarkRepository
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class AuthViewModel @Inject constructor(
+class AuthViewModel(
     private val bookmarkRepository: BookmarkRepository
 ) : ViewModel() {
 
-    private val auth = FirebaseAuth.getInstance()
+    private val auth = Firebase.auth
 
     fun login(
         email: String,
@@ -21,26 +19,28 @@ class AuthViewModel @Inject constructor(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val userId = auth.currentUser?.uid
-                    if (userId != null) {
-                        viewModelScope.launch {
+        viewModelScope.launch {
+            try {
+                //  GitLive suspend call
+                val result = auth.signInWithEmailAndPassword(email, password)
 
-                            // 1️⃣ Fetch bookmarks from Firebase to Room
-                            bookmarkRepository.fetchBookmarksFromFirebase(userId)
-                            bookmarkRepository.startRealtimeSync(userId)
-                            // 2️⃣ Call success callback (NewsViewModel will start listener in UI)
-                            onSuccess()
-                        }
-                    } else {
-                        onError("User ID not found")
-                    }
+                val userId = result.user?.uid
+
+                if (userId != null) {
+                    // 1️⃣ Fetch bookmarks from Firebase to Room
+                    bookmarkRepository.fetchBookmarksFromFirebase(userId)
+                    // 2️⃣ Start realtime sync
+                    bookmarkRepository.startRealtimeSync(userId)
+                    // 3️⃣ Success callback (same as before)
+                    onSuccess()
                 } else {
-                    onError(task.exception?.localizedMessage ?: "Login failed")
+                    onError("User ID not found")
                 }
+
+            } catch (e: Exception) {
+                onError(e.message ?: "Login failed")
             }
+        }
     }
 
     fun signup(
@@ -49,13 +49,16 @@ class AuthViewModel @Inject constructor(
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    onSuccess()
-                } else {
-                    onError(task.exception?.localizedMessage ?: "Signup failed")
-                }
+        viewModelScope.launch {
+            try {
+                //  GitLive suspend call
+                auth.createUserWithEmailAndPassword(email, password)
+
+                onSuccess()
+
+            } catch (e: Exception) {
+                onError(e.message ?: "Signup failed")
             }
+        }
     }
 }
