@@ -18,9 +18,9 @@ import com.example.shared.data.models.Article
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.example.newsapp.NewsAppTheme
-import com.example.newsapp.utils.ArticleCategoryMapper
+import com.example.shared.utils.ArticleCategoryMapper
 import com.example.shared.data.models.Source
-import com.example.newsapp.utils.DateFormatter
+import com.example.shared.utils.DateFormatter
 
 @Composable
 fun HomeArticleItem(

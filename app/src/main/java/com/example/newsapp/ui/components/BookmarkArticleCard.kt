@@ -17,8 +17,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.newsapp.R
-import com.example.newsapp.data.local.BookmarkedArticle
-import com.example.newsapp.utils.DateFormatter
+import com.example.shared.data.local.BookmarkedArticle
+import com.example.shared.utils.DateFormatter
 
 @Composable
 fun BookmarkItem(

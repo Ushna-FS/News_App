@@ -1,4 +1,4 @@
-package com.example.newsapp.utils
+package com.example.shared.utils
 
 import com.example.shared.data.models.Article
 

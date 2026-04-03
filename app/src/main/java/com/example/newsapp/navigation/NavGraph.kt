@@ -11,7 +11,7 @@ import com.example.newsapp.ui.screens.ArticleDetailScreen
 import com.example.newsapp.ui.screens.BookmarksScreen
 import com.example.newsapp.ui.screens.DiscoverScreen
 import com.example.newsapp.ui.screens.HomeScreen
-import com.example.newsapp.utils.toArticle
+import com.example.shared.utils.toArticle
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.google.gson.Gson
 

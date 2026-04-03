@@ -17,7 +17,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.newsapp.R
 import com.example.shared.data.models.Article
-import com.example.newsapp.utils.DateFormatter
+import com.example.shared.utils.DateFormatter
 
 @Composable
 fun DiscoverNewsCard(
