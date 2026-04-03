@@ -1,19 +1,18 @@
-package com.example.newsapp.data.repository
+package com.example.shared.data.repository
 
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import com.example.newsapp.data.paging.FilteredCombinedNewsPagingSource
-import com.example.newsapp.data.paging.NewsPagingSource
-import com.example.newsapp.data.paging.NewsType
-import com.example.newsapp.utils.DateFormatter
+import com.example.shared.data.paging.FilteredCombinedNewsPagingSource
+import com.example.shared.data.paging.NewsPagingSource
+import com.example.shared.data.paging.NewsType
 import com.example.shared.data.api.NewsApiService
 import com.example.shared.data.models.Article
+import com.example.shared.utils.DateFormatter
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
 
 
-class NewsRepository @Inject constructor(
+class NewsRepository(
     val apiService: NewsApiService,
     private val dateFormatter: DateFormatter
 ) {

@@ -1,12 +1,11 @@
-package com.example.newsapp.data.paging
+package com.example.shared.data.paging
 
-import androidx.paging.PagingSource
-import androidx.paging.PagingState
-import com.example.newsapp.data.repository.SortType
-import com.example.newsapp.utils.ArticleCategoryMapper
-import com.example.newsapp.utils.DateFormatter
+import app.cash.paging.*
+import com.example.shared.data.repository.SortType
 import com.example.shared.data.api.NewsApiService
 import com.example.shared.data.models.Article
+import com.example.shared.utils.ArticleCategoryMapper
+import com.example.shared.utils.DateFormatter
 
 sealed class NewsType {
     object Business : NewsType()
