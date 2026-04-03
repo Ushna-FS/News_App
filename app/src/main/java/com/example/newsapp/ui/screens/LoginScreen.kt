@@ -34,19 +34,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.newsapp.navigation.Routes
 import com.example.newsapp.viewmodels.AuthViewModel
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.google.firebase.auth.FirebaseAuth
+import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
 fun LoginScreen(navController: NavController) {
 
-    val viewModel: AuthViewModel = hiltViewModel()
-    val newsViewModel: NewsViewModel = hiltViewModel()
+    val viewModel: AuthViewModel = koinViewModel()
+    val newsViewModel: NewsViewModel =koinViewModel()
     val context = LocalContext.current
 
     var email by remember { mutableStateOf("") }

@@ -20,19 +20,19 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.shared.data.models.Article
-import com.example.newsapp.data.repository.SortType
+import com.example.shared.data.repository.SortType
 import com.example.newsapp.ui.components.DiscoverNewsCard
 import com.example.newsapp.ui.components.FilterPanel
 import com.example.newsapp.viewmodels.NewsViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.collectAsState
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.newsapp.ui.components.SortMenuDialog
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiscoverScreen(
-    viewModel: NewsViewModel = hiltViewModel(),
+    viewModel: NewsViewModel = koinViewModel(),
     onArticleClick: (Article) -> Unit
 ) {
     val context = LocalContext.current

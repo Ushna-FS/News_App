@@ -25,11 +25,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.shared.data.models.Article
 import com.example.newsapp.ui.components.ArticleWebView
 import com.example.newsapp.viewmodels.ArticleDetailViewModel
 import com.example.newsapp.viewmodels.NewsViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,8 +113,8 @@ fun ArticleDetailContent(
 @Composable
 fun ArticleDetailScreen(
     article: Article,
-    newsViewModel: NewsViewModel = hiltViewModel(),
-    viewModel: ArticleDetailViewModel = hiltViewModel(),
+    newsViewModel: NewsViewModel =koinViewModel(),
+    viewModel: ArticleDetailViewModel = koinViewModel(),
     onBackClick: () -> Unit
 ) {
 

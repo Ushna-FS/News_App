@@ -1,20 +1,11 @@
 package com.example.newsapp.di
 
+import com.example.shared.utils.DateFormatter
+import org.koin.dsl.module
 
-import com.example.newsapp.utils.DateFormatter
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+val utilsModule = module {
 
-@Module
-@InstallIn(SingletonComponent::class)
-object UtilsModule {
-
-    @Provides
-    @Singleton
-    fun provideDateFormatter(): DateFormatter {
-        return DateFormatter()
+    single {
+        DateFormatter()
     }
 }

@@ -10,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.*
 import com.example.newsapp.ui.screens.LoginScreen
 import com.example.newsapp.ui.screens.SignupScreen
@@ -18,6 +17,7 @@ import com.example.newsapp.ui.screens.SplashScreen
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun RootNavigation() {
@@ -52,7 +52,7 @@ fun RootNavigation() {
 @Composable
 fun MainTabs() {
 
-    val newsViewModel: NewsViewModel = hiltViewModel()
+    val newsViewModel: NewsViewModel = koinViewModel()
 
     val user = FirebaseAuth.getInstance().currentUser
 

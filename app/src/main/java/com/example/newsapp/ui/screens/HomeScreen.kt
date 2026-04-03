@@ -20,14 +20,14 @@ import com.example.shared.data.models.Article
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.ui.components.HomeArticleItem
 import com.example.newsapp.ui.components.EmptyState
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.example.newsapp.utils.ArticleCategoryMapper
+import com.example.shared.utils.ArticleCategoryMapper
 import com.example.newsapp.ui.components.CategoryChips
-import com.example.newsapp.utils.DateFormatter
+import com.example.shared.utils.DateFormatter
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun HomeScreen(
-    viewModel: NewsViewModel = hiltViewModel(), onArticleClick: (Article) -> Unit
+    viewModel: NewsViewModel = koinViewModel(), onArticleClick: (Article) -> Unit
 ) {
     val articles = viewModel.homeNewsPagingData.collectAsLazyPagingItems()
 

@@ -2,15 +2,12 @@ package com.example.newsapp.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.newsapp.data.repository.BookmarkRepository
+import com.example.shared.data.repository.BookmarkRepository
 import com.example.shared.data.models.Article
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-@HiltViewModel
-class ArticleDetailViewModel @Inject constructor(
+class ArticleDetailViewModel(
     private val bookmarkRepository: BookmarkRepository
 ) : ViewModel() {
 

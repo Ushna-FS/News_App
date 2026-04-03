@@ -13,10 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.newsapp.data.local.BookmarkedArticle
+import com.example.shared.data.local.BookmarkedArticle
 import com.example.newsapp.viewmodels.NewsViewModel
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.newsapp.ui.components.BookmarkItem
+import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
@@ -69,7 +69,7 @@ fun BookmarksScreenContent(
 
 @Composable
 fun BookmarksScreen(
-    newsViewModel: NewsViewModel = hiltViewModel(),
+    newsViewModel: NewsViewModel = koinViewModel(),
     openArticleDetail: (BookmarkedArticle) -> Unit,
     toggleBookmark: (BookmarkedArticle) -> Unit
 ) {

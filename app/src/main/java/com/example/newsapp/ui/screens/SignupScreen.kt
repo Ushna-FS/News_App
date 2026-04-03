@@ -32,15 +32,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.newsapp.navigation.Routes
 import com.example.newsapp.viewmodels.AuthViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SignupScreen(
     navController: NavController,
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = koinViewModel()
 ) {
 
     var email by remember { mutableStateOf("") }
