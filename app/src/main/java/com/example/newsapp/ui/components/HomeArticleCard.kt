@@ -31,9 +31,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.newsapp.NewsAppTheme
 import com.example.newsapp.R
+import com.example.newsapp.data.mock.articleMock
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.models.Source
-import com.example.newsapp.utils.ArticleCategoryMapper
+import com.example.newsapp.data.models.getCategory
 import com.example.newsapp.utils.DateFormatter
 
 @Composable
@@ -125,7 +126,7 @@ fun HomeArticleItem(
             }
 
             // CATEGORY + READ MORE
-            val category = ArticleCategoryMapper.getCategory(article)
+            val category = article.getCategory()
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -134,7 +135,7 @@ fun HomeArticleItem(
             ) {
                 AssistChip(
                     onClick = {},
-                    label = { Text(category) },
+                    label = { Text(category.displayName) },
                     border = BorderStroke(1.dp, Color.Blue)
                 )
 
@@ -147,24 +148,12 @@ fun HomeArticleItem(
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
-fun ArticleItemPreview() {
+fun HomeArticleItemPreviewWithMock() {
     NewsAppTheme {
-        val sampleArticle = Article(
-            title = stringResource(R.string.news_title_here),
-            source = Source(
-                id = stringResource(R.string.samplesourceId),
-                name = stringResource(R.string.samplesource)
-            ),
-            author = null,
-            description = stringResource(R.string.sampleDescription),
-            url = "https://example.com",
-            urlToImage = null,
-            publishedAt = stringResource(R.string.sampledate),
-            content = null
-        )
+        // Use the mock article from your data.mock
+        val sampleArticle = articleMock()
 
         HomeArticleItem(
             article = sampleArticle,

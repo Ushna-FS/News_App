@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.newsapp.R
 import com.example.newsapp.data.local.BookmarkedArticle
+import com.example.newsapp.data.mock.bookmarkedArticleMock
 import com.example.newsapp.utils.DateFormatter
 
 @Composable
@@ -142,28 +143,12 @@ fun BookmarkItem(
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
 fun BookmarkItemPreview() {
-
-    val dummyArticle = BookmarkedArticle(
-        id = 1,
-        title = stringResource(R.string.breaking_news_jetpack_compose_is_awesome),
-        description = stringResource(R.string.sampleDescription),
-        url = "https://example.com",
-        urlToImage = "https://via.placeholder.com/150",
-        publishedAt = stringResource(R.string.sampledate),
-        content = stringResource(R.string.sampleContent),
-        sourceName = stringResource(R.string.samplesource),
-        sourceId = stringResource(R.string.samplesourceId),
-        author = stringResource(R.string.sampleAuthorname),
-        bookmarkedAt = System.currentTimeMillis() - 60 * 60 * 1000 // 1 hour ago
-    )
-
     MaterialTheme {
         BookmarkItem(
-            article = dummyArticle,
+            article = bookmarkedArticleMock(),
             onReadMore = {},
             onBookmark = {},
             onShare = {}

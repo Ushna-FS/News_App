@@ -35,7 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.newsapp.R
-import com.example.newsapp.utils.ArticleCategoryMapper
+import com.example.newsapp.utils.Category
 import com.example.newsapp.viewmodels.NewsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -48,19 +48,28 @@ fun FilterPanel(
     // Collect states with lifecycle awareness
     val availableSources by viewModel.availableSources.collectAsStateWithLifecycle()
     val selectedSources by viewModel.selectedSources.collectAsStateWithLifecycle()
-    val selectedCategories by viewModel.selectedCategories.collectAsStateWithLifecycle()
 
-    // Local state for UI
-    var localSelectedCategories by remember { mutableStateOf(selectedCategories.toSet()) }
+    val selectedCategoryStrings by viewModel.selectedCategories.collectAsStateWithLifecycle()
+
+
     var localSelectedSources by remember { mutableStateOf(selectedSources.toSet()) }
 
+    // Convert to Set<Category> for UI
+    var localSelectedCategories by remember {
+        mutableStateOf(selectedCategoryStrings.mapNotNull { str ->
+            Category.values().find { it.displayName == str }
+        }.toSet())
+    }
+
     // Update local state when ViewModel state changes
-    LaunchedEffect(selectedCategories, selectedSources) {
-        localSelectedCategories = selectedCategories.toSet()
+    LaunchedEffect(selectedCategoryStrings, selectedSources) {
+        localSelectedCategories = selectedCategoryStrings.mapNotNull { str ->
+            Category.values().find { it.displayName == str }
+        }.toSet()
         localSelectedSources = selectedSources.toSet()
     }
 
-    val categories = ArticleCategoryMapper.categories.filter { it != stringResource(R.string.all) }
+    val categories = Category.list
 
     Column(
         modifier = Modifier
@@ -111,11 +120,10 @@ fun FilterPanel(
                             localSelectedCategories + category
                         }
                     },
-                    label = { Text(category) }
+                    label = { Text(category.displayName) }  // enum display name
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(24.dp))
 
         // Sources Section
@@ -180,7 +188,7 @@ fun FilterPanel(
                 modifier = Modifier.weight(1f),
                 onClick = {
                     viewModel.applyFilters(
-                        localSelectedCategories.toList(),
+                        localSelectedCategories.map { it.displayName },
                         localSelectedSources.toList()
                     )
                     onClose()

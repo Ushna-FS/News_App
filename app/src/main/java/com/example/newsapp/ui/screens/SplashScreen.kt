@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -21,6 +22,7 @@ import com.example.newsapp.R
 import com.example.newsapp.navigation.Routes
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
+
 
 @Composable
 fun SplashScreen(navController: NavController) {
@@ -39,9 +41,7 @@ fun SplashScreen(navController: NavController) {
 
     val auth = FirebaseAuth.getInstance()
     LaunchedEffect(Unit) {
-
         startAnimation = true
-
         delay(2500)
 
         if (auth.currentUser != null) {
@@ -57,6 +57,17 @@ fun SplashScreen(navController: NavController) {
         }
     }
 
+    SplashContent(
+        offsetX = offsetX,
+        scale = scale
+    )
+}
+
+@Composable
+fun SplashContent(
+    offsetX: Float,
+    scale: Float
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -80,11 +91,20 @@ fun SplashScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(15.dp))
 
             Text(
-                text = (stringResource(R.string.newsmate)),
+                text = stringResource(R.string.newsmate),
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.secondary
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SplashContentPreview() {
+    SplashContent(
+        offsetX = 0f,   // final position
+        scale = 1f      // fully scaled
+    )
 }

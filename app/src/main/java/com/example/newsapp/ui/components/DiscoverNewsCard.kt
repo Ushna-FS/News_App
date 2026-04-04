@@ -24,10 +24,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.newsapp.R
+import com.example.newsapp.data.mock.articleMock
 import com.example.newsapp.data.models.Article
 import com.example.newsapp.utils.DateFormatter
 
@@ -131,5 +133,31 @@ fun DiscoverNewsCard(
                 }
             }
         }
+    }
+}
+
+@Preview(showBackground = false)
+@Composable
+fun DiscoverNewsCardPreviewBookmarked() {
+    MaterialTheme {
+        DiscoverNewsCard(
+            article = articleMock(),
+            isBookmarked = true,
+            onClick = {},
+            onBookmarkClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DiscoverNewsCardPreviewNotBookmarked() {
+    MaterialTheme {
+        DiscoverNewsCard(
+            article = articleMock(),
+            isBookmarked = false,
+            onClick = {},
+            onBookmarkClick = {}
+        )
     }
 }

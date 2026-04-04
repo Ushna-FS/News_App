@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.newsapp.R
 import com.example.newsapp.data.local.BookmarkedArticle
+import com.example.newsapp.data.mock.bookmarkedArticleMock
 import com.example.newsapp.ui.components.BookmarkItem
 import com.example.newsapp.viewmodels.NewsViewModel
 
@@ -120,21 +121,7 @@ fun BookmarksScreen(
 @Composable
 fun BookmarksScreenPreview() {
 
-    val dummyList = listOf(
-        BookmarkedArticle(
-            id = 1,
-            title = stringResource(R.string.news_title_here),
-            description = stringResource(R.string.sampleDescription),
-            url = "https://example.com/1",
-            urlToImage = "https://example.com/image1.jpg",
-            publishedAt = stringResource(R.string.sampledate),
-            content = stringResource(R.string.sampleContent),
-            sourceName = stringResource(R.string.samplesource),
-            sourceId = stringResource(R.string.samplesourceId),
-            author = stringResource(R.string.sampleAuthorname),
-            bookmarkedAt = System.currentTimeMillis()
-        )
-    )
+    val dummyList = listOf(bookmarkedArticleMock())
 
     BookmarksScreenContent(
         bookmarks = dummyList,

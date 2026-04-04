@@ -44,11 +44,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.newsapp.NewsAppTheme
 import com.example.newsapp.R
 import com.example.newsapp.data.api.mapErrorToMessage
 import com.example.newsapp.data.models.Article
@@ -128,7 +130,8 @@ fun DiscoverScreen(
             pagingItems = pagingItems,
             viewModel = viewModel,
             onArticleClick = onArticleClick,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            sortType = sortType
         )
     }
 
@@ -143,7 +146,7 @@ fun DiscoverScreen(
                 onApply = {
                     showFilterSheet = false
 
-                    pagingItems.refresh()
+//                    pagingItems.refresh()
 
                 },
                 onClose = { showFilterSheet = false }
@@ -162,6 +165,7 @@ fun DiscoverScreen(
                 } else {
                     viewModel.resetSort()
                 }
+                pagingItems.refresh()
                 showSortMenu = false
             },
             onDismiss = { showSortMenu = false }
@@ -227,15 +231,25 @@ fun DiscoverNewsList(
     pagingItems: LazyPagingItems<Article>,
     viewModel: NewsViewModel,
     onArticleClick: (Article) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    sortType: SortType
 ) {
     val listState = rememberLazyListState()
     val bookmarkedUrls by viewModel.getAllBookmarkedUrls()
         .collectAsState(initial = emptySet())
     val searchQuery by viewModel.searchQuery.collectAsState()
 
+    // At the top of DiscoverNewsList function, before LazyColumn
+    LaunchedEffect(sortType) {
+        // When switching to oldest-first, ensure we scroll to top to show oldest articles
+        if (sortType == SortType.OLDEST_FIRST && pagingItems.itemCount > 0) {
+            delay(100) // Small delay to ensure items are loaded
+            listState.scrollToItem(0)
+        }
+    }
 
     LazyColumn(
+//        reverseLayout = (sortType == SortType.OLDEST_FIRST),
         state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(8.dp),
@@ -465,6 +479,49 @@ fun FilterSortRow(
                 } else {
                     "Sort"
                 }
+            )
+        }
+    }
+}
+
+@Composable
+fun ErrorItem(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = message, color = MaterialTheme.colorScheme.error)
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = onRetry) {
+            Text("Retry")
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DiscoverTopSectionPreview() {
+    NewsAppTheme {
+
+        Column {
+            DiscoverSearchBar(
+                text = "",
+                onTextChange = {},
+                onClear = {}
+            )
+
+            FilterSortRow(
+                hasActiveFilters = true,
+                isSearching = false,
+                hasUserSelectedSort = true,
+                sortType = SortType.NEWEST_FIRST,
+                onFilterClick = {},
+                onSortClick = {}
             )
         }
     }
