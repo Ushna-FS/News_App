@@ -2,8 +2,10 @@
 
 package com.example.newsapp.di
 
+import com.example.newsapp.viewmodels.AppViewModel
 import com.example.newsapp.viewmodels.ArticleDetailViewModel
 import com.example.newsapp.viewmodels.AuthViewModel
+import com.example.newsapp.viewmodels.NetworkViewModel
 import com.example.newsapp.viewmodels.NewsViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -16,6 +18,8 @@ val viewModelModule = module {
             bookmarkRepository = get()
         )
     }
-    viewModel { AuthViewModel(get()) }
+    viewModel { AuthViewModel(get(),get()) }
     viewModel { ArticleDetailViewModel(get()) }
+    viewModel { NetworkViewModel(get()) }
+    viewModel { AppViewModel(get()) }
 }

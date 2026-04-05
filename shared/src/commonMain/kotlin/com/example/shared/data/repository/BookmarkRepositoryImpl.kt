@@ -9,6 +9,7 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -25,6 +26,7 @@ class BookmarkRepositoryImpl(
     override val bookmarkUpdates = _bookmarkUpdates.asSharedFlow()
 
     private val firestore = Firebase.firestore
+    private var syncJob: Job? = null
 
     override suspend fun addBookmark(article: Article, userId: String) {
 
@@ -79,13 +81,14 @@ class BookmarkRepositoryImpl(
 
     // 🔹 Realtime Firebase sync
     override fun startRealtimeSync(userId: String) {
+        syncJob?.cancel()
 
         val flow = firestore.collection("users")
             .document(userId)
             .collection("bookmarks")
             .snapshots()
 
-        CoroutineScope(Dispatchers.Default).launch {
+        syncJob = CoroutineScope(Dispatchers.Default).launch {
 
             flow.collectLatest { snapshot ->
 
@@ -108,5 +111,10 @@ class BookmarkRepositoryImpl(
                 }
             }
         }
+    }
+
+     override fun stopRealtimeSync() {
+        syncJob?.cancel()
+        syncJob = null
     }
 }

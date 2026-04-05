@@ -1,11 +1,12 @@
 package com.example.shared.data.paging
 
 import app.cash.paging.*
-import com.example.shared.data.repository.SortType
 import com.example.shared.data.api.NewsApiService
 import com.example.shared.data.models.Article
+import com.example.shared.data.repository.SortType
 import com.example.shared.utils.ArticleCategoryMapper
 import com.example.shared.utils.DateFormatter
+import com.example.shared.utils.ErrorMapper
 
 sealed class NewsType {
     object Business : NewsType()
@@ -16,13 +17,14 @@ sealed class NewsType {
 }
 
 class NewsPagingSource(
-    private val apiService: NewsApiService, private val newsType: NewsType
+    private val apiService: NewsApiService,
+    private val newsType: NewsType
 ) : PagingSource<Int, Article>() {
 
     override fun getRefreshKey(state: PagingState<Int, Article>): Int? {
-        return state.anchorPosition?.let { anchorPosition ->
-            state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
-                ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
+        return state.anchorPosition?.let { position ->
+            state.closestPageToPosition(position)?.prevKey?.plus(1)
+                ?: state.closestPageToPosition(position)?.nextKey?.minus(1)
         }
     }
 
@@ -32,7 +34,7 @@ class NewsPagingSource(
             val pageSize = params.loadSize
 
             val response = when (newsType) {
-                is NewsType.Business ->apiService.getTopHeadlines(
+                is NewsType.Business -> apiService.getTopHeadlines(
                     country = "us",
                     category = "business",
                     page = page,
@@ -40,8 +42,10 @@ class NewsPagingSource(
                 )
 
                 is NewsType.TechCrunch -> apiService.getTechCrunchHeadlines(
-                    page = page, pageSize = pageSize
+                    page = page,
+                    pageSize = pageSize
                 )
+
                 is NewsType.Everything -> apiService.searchNews(
                     query = "general",
                     page = page,
@@ -49,47 +53,45 @@ class NewsPagingSource(
                 )
 
                 is NewsType.Search -> apiService.searchNews(
-                    query = newsType.query, page = page, pageSize = pageSize
+                    query = newsType.query,
+                    page = page,
+                    pageSize = pageSize
                 )
+
                 is NewsType.NewsCategory -> apiService.getTopHeadlines(
                     country = "us",
                     category = newsType.name,
                     page = page,
                     pageSize = pageSize
                 )
-
             }
+
             val articles = response.articles
-            val nextPage = if (articles.isNotEmpty()) page + 1 else null
+            val total = response.totalResults
+
+            val endReached = page * pageSize >= total
 
             LoadResult.Page(
                 data = articles,
                 prevKey = if (page == 1) null else page - 1,
-                nextKey = nextPage
+                nextKey = if (endReached) null else page + 1
             )
 
-//            if (response.isSuccessful) {
-//                val articles = response.body()?.articles ?: emptyList()
-//                val nextPage = if (articles.isNotEmpty()) page + 1 else null
-//
-//                LoadResult.Page(
-//                    data = articles, prevKey = if (page == 1) null else page - 1, nextKey = nextPage
-//                )
-//            } else {
-//                LoadResult.Error(HttpException(response))
-//            }
-        }
-        catch (e: Exception) {
-            LoadResult.Error(e)
+        } catch (e: Throwable) {
+
+            val error = ErrorMapper.mapToNetworkError(e)
+
+            LoadResult.Error(error)
         }
     }
 }
+
 
 class FilteredCombinedNewsPagingSource(
     private val apiService: NewsApiService,
     private val categories: List<String> = emptyList(),
     private val sources: List<String> = emptyList(),
-    private val sortType: SortType = SortType.NEWEST_FIRST,
+    private val sortType: SortType,
     private val dateFormatter: DateFormatter
 ) : PagingSource<Int, Article>() {
 
@@ -115,20 +117,8 @@ class FilteredCombinedNewsPagingSource(
             val response = apiService.searchNews(
                 query = query,
                 page = page,
-                pageSize = pageSize,
-//                sortBy = when (sortType) {
-//                    SortType.NEWEST_FIRST -> "publishedAt"
-//                    SortType.OLDEST_FIRST -> "publishedAt"
-//                }
+                pageSize = pageSize
             )
-
-//            if (!response.isSuccessful) {
-//                return LoadResult.Error(HttpException(response))
-//            }
-//
-//            var articles = response.body()?.articles?.filter {
-//                it.title != "[Removed]"
-//            } ?: emptyList()
 
             var articles = response.articles.filter {
                 it.title != "[Removed]"
@@ -161,18 +151,20 @@ class FilteredCombinedNewsPagingSource(
                 }
             }
 
-            // Check if we have more pages
-            val hasMore = response.totalResults.let {total ->
-                total > page * pageSize
-            }
+            val total = response.totalResults
+            val endReached = page * pageSize >= total
 
             LoadResult.Page(
                 data = articles.take(pageSize),
                 prevKey = if (page == 1) null else page - 1,
-                nextKey = if (hasMore && articles.isNotEmpty()) page + 1 else null
+                nextKey = if (endReached) null else page + 1
             )
-        } catch (e: Exception) {
-            LoadResult.Error(e)
+
+        } catch (e: Throwable) {
+
+            val error = ErrorMapper.mapToNetworkError(e)
+
+            LoadResult.Error(error)
         }
     }
 }

@@ -15,4 +15,5 @@
 local.properties
 /.idea
 .kotlin/metadata
-build/
+androidApp/build/
+**/build/

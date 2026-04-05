@@ -1,0 +1,18 @@
+package com.example.shared.data.models
+
+sealed class NetworkError : Exception() {
+
+    class NoInternet : NetworkError()
+
+    class RateLimit : NetworkError()
+
+    class ServerError : NetworkError()
+
+    class Unauthorized : NetworkError()
+
+    class NotFound : NetworkError()
+
+    class PaginationEnd : NetworkError()
+
+    data class Unknown(val error: Throwable) : NetworkError()
+}

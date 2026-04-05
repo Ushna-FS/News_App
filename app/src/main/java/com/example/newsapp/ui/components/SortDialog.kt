@@ -12,7 +12,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.newsapp.R
 import com.example.shared.data.repository.SortType
 
 
@@ -25,25 +27,24 @@ fun SortMenuDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Sort Articles") },
+        title = { Text(stringResource(R.string.sort_by)) },
         text = {
             Column {
                 SortOption(
-                    label = "Newest First",
+                    label = stringResource(R.string.newest_first),
                     isSelected = currentSortType == SortType.NEWEST_FIRST && hasUserSelected,
                     onClick = {
                         onSortSelected(SortType.NEWEST_FIRST, true)
                     }
                 )
                 SortOption(
-                    label = "Oldest First",
+                    label = stringResource(R.string.oldest_first),
                     isSelected = currentSortType == SortType.OLDEST_FIRST && hasUserSelected,
                     onClick = {
                         onSortSelected(SortType.OLDEST_FIRST, true)
-                    }
-                )
+                    })
                 SortOption(
-                    label = "Reset to Default",
+                    label = stringResource(R.string.reset_to_default),
                     isSelected = !hasUserSelected,
                     onClick = {
                         onSortSelected(SortType.NEWEST_FIRST, false)
@@ -53,7 +54,7 @@ fun SortMenuDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

@@ -51,6 +51,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(project(":shared"))
     implementation(libs.ktor.client.core)
@@ -119,6 +123,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     // gitLive Auth
     implementation(libs.gitlive.firebase.auth)
+    implementation(libs.gitlive.firebase.firestore)
 
     //crashlytics
     implementation(libs.firebase.analytics)

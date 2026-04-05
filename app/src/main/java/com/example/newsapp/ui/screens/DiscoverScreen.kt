@@ -14,7 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -22,12 +22,17 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.shared.data.models.Article
 import com.example.shared.data.repository.SortType
 import com.example.newsapp.ui.components.DiscoverNewsCard
+import com.example.newsapp.ui.components.EmptyState
 import com.example.newsapp.ui.components.FilterPanel
+import com.example.newsapp.ui.components.SortMenuDialog
 import com.example.newsapp.viewmodels.NewsViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.collectAsState
-import com.example.newsapp.ui.components.SortMenuDialog
+import com.example.newsapp.R
+import com.example.newsapp.utils.mapErrorToMessage
+import com.example.shared.data.models.NetworkError
 import org.koin.androidx.compose.koinViewModel
+import retrofit2.HttpException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,9 +40,6 @@ fun DiscoverScreen(
     viewModel: NewsViewModel = koinViewModel(),
     onArticleClick: (Article) -> Unit
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
 
     // State
     val pagingItems = viewModel.newsPagingData.collectAsLazyPagingItems()
@@ -58,7 +60,7 @@ fun DiscoverScreen(
 
     // Debounce search
     LaunchedEffect(localSearchText) {
-        delay(500)
+        delay(800)
         if (localSearchText != searchQuery) {
             viewModel.searchNews(localSearchText)
         }
@@ -113,7 +115,7 @@ fun DiscoverScreen(
                 onApply = {
                     showFilterSheet = false
 
-                        pagingItems.refresh()
+                    pagingItems.refresh()
 
                 },
                 onClose = { showFilterSheet = false }
@@ -169,7 +171,7 @@ fun DiscoverSearchBar(
             TextField(
                 value = text,
                 onValueChange = onTextChange,
-                placeholder = { Text("Search news") },
+                placeholder = { Text(stringResource(R.string.search_news)) },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 colors = TextFieldDefaults.colors(
@@ -182,12 +184,16 @@ fun DiscoverSearchBar(
 
             if (text.isNotEmpty()) {
                 IconButton(onClick = onClear) {
-                    Icon(Icons.Default.Close, contentDescription = "Clear")
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = (stringResource(R.string.clear_search))
+                    )
                 }
             }
         }
     }
 }
+
 @Composable
 fun DiscoverNewsList(
     pagingItems: LazyPagingItems<Article>,
@@ -207,7 +213,7 @@ fun DiscoverNewsList(
         contentPadding = PaddingValues(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
 
-    ) {
+        ) {
         // Check for refresh loading state
         if (pagingItems.loadState.refresh is LoadState.Loading) {
             item {
@@ -223,21 +229,50 @@ fun DiscoverNewsList(
         }
         // Check for refresh error state
         else if (pagingItems.loadState.refresh is LoadState.Error) {
+            val errorState = pagingItems.loadState.refresh as LoadState.Error
+
+            val error = errorState.error
+                .let { it as? NetworkError ?: NetworkError.Unknown(it) }
+
             item {
-                val error = (pagingItems.loadState.refresh as LoadState.Error).error
-                ErrorItem(
-                    message = "Error: ${error.message}",
+                EmptyState(
+                    error = error,
+                    message = stringResource(mapErrorToMessage(error)),
                     onRetry = { pagingItems.retry() }
                 )
             }
         }
+//        else if (pagingItems.loadState.refresh is LoadState.Error) {
+//            item {
+//                val rawError = (pagingItems.loadState.refresh as LoadState.Error).error
+//
+//                val error = when (rawError) {
+//                    is NetworkError -> rawError
+//                    is HttpException -> when (rawError.code()) {
+//                        401 -> NetworkError.Unauthorized()
+//                        404 -> NetworkError.NotFound()
+//                        429 -> NetworkError.RateLimit()
+//                        in 500..599 -> NetworkError.ServerError()
+//                        else -> NetworkError.Unknown(rawError)
+//                    }
+//
+//                    else -> NetworkError.Unknown(rawError)
+//                }
+//
+//                EmptyState(
+//                    error = error,
+//                    message = stringResource(mapErrorToMessage(error)),
+//                    onRetry = { pagingItems.retry() }
+//                )
+//            }
+//        }
         // Show items if any exist
         else if (pagingItems.itemCount > 0) {
-//
             items(
                 count = pagingItems.itemCount,
                 key = { index ->
-                    pagingItems[index]?.url ?: "article_$index"
+                    val article = pagingItems[index]
+                    "${article?.url}_${index}"
                 }
             ) { index ->
 
@@ -270,16 +305,46 @@ fun DiscoverNewsList(
                 }
             }
 
-            // Pagination error
             if (pagingItems.loadState.append is LoadState.Error) {
+                val errorState = pagingItems.loadState.append as LoadState.Error
+
+                val error = errorState.error
+                    .let { it as? NetworkError ?: NetworkError.Unknown(it) }
+
                 item {
-                    val error = (pagingItems.loadState.append as LoadState.Error).error
-                    ErrorItem(
-                        message = "Failed to load more: ${error.message}",
+                    EmptyState(
+                        error = error,
+                        message = stringResource(mapErrorToMessage(error)),
                         onRetry = { pagingItems.retry() }
                     )
                 }
             }
+            // Pagination error
+//            if (pagingItems.loadState.append is LoadState.Error) {
+//                item {
+//                    val rawError = (pagingItems.loadState.append as LoadState.Error).error
+//
+//                    val error = when (rawError) {
+//                        is NetworkError -> rawError
+//                        is HttpException -> when (rawError.code()) {
+//                            401 -> NetworkError.Unauthorized()
+//                            404 -> NetworkError.NotFound()
+//                            429 -> NetworkError.RateLimit()
+//                            in 500..599 -> NetworkError.ServerError()
+//                            else -> NetworkError.Unknown(rawError)
+//                        }
+//
+//                        else -> NetworkError.Unknown(rawError)
+//                    }
+//
+//                    EmptyState(
+//                        error = error,
+//                        message = stringResource(mapErrorToMessage(error)),
+//                        onRetry = { pagingItems.retry() }
+//                    )
+//
+//                }
+//            }
         }
         // Empty state
         else {
@@ -292,15 +357,15 @@ fun DiscoverNewsList(
                 ) {
                     Text(
                         text = if (searchQuery.isNotEmpty())
-                            "No results found for \"$searchQuery\""
-                        else "No articles available"
+                            stringResource(R.string.no_results_found_for, searchQuery)
+                        else (stringResource(R.string.no_articles_found))
                     )
                 }
             }
         }
     }
 }
-//
+
 @Composable
 fun FilterSummary(
     viewModel: NewsViewModel,
@@ -405,39 +470,3 @@ fun FilterSortRow(
         }
     }
 }
-@Composable
-fun ErrorItem(
-    message: String,
-    onRetry: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = message, color = MaterialTheme.colorScheme.error)
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
-        }
-    }
-}
-
-@Composable
-fun EmptyState(message: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
-
-

@@ -1,27 +1,43 @@
 package com.example.newsapp.ui.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.example.shared.data.models.Article
-import com.example.newsapp.viewmodels.NewsViewModel
-import com.example.newsapp.ui.components.HomeArticleItem
-import com.example.newsapp.ui.components.EmptyState
-import com.example.shared.utils.ArticleCategoryMapper
+import com.example.newsapp.R
 import com.example.newsapp.ui.components.CategoryChips
+import com.example.newsapp.ui.components.EmptyState
+import com.example.newsapp.ui.components.HomeArticleItem
+import com.example.newsapp.utils.mapErrorToMessage
+import com.example.newsapp.viewmodels.NewsViewModel
+import com.example.shared.data.models.Article
+import com.example.shared.data.models.NetworkError
+import com.example.shared.utils.ArticleCategoryMapper
 import com.example.shared.utils.DateFormatter
 import org.koin.androidx.compose.koinViewModel
 
@@ -77,13 +93,13 @@ fun HomeScreenContent(
     ) {
 
         Text(
-            text = "Hello User",
+            text = (stringResource(R.string.hello_user)),
             style = MaterialTheme.typography.headlineLarge,
             modifier = Modifier.padding(top = 16.dp)
         )
 
         Text(
-            text = "Stay updated with latest news",
+            text = (stringResource(R.string.home_desc)),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
         )
@@ -113,8 +129,12 @@ fun HomeScreenContent(
 
             is LoadState.Error -> {
 
+                val error = (articles.loadState.refresh as LoadState.Error)
+                    .error
+                    .let { it as? NetworkError ?: NetworkError.Unknown(it) }
                 EmptyState(
-                    message = "Error loading articles",
+                    error = error,
+                    message = stringResource(mapErrorToMessage(error)),
                     onRetry = { articles.retry() }
                 )
             }
@@ -140,35 +160,30 @@ fun HomeScreenContent(
                         }
                     }
 
-                    // 🔹 Initial Error
-                    if (articles.loadState.refresh is LoadState.Error) {
-                        item {
-                            EmptyState(
-                                message = "Error loading articles",
-                                onRetry = { articles.retry() }
-                            )
-                        }
-                    }
-
                     // 🔹 Content
                     items(
                         count = articles.itemCount,
                         key = { index ->
-                            articles[index]?.url ?: index
+                            val article = articles[index]
+                            "${article?.url}_${index}"
                         }
                     ) { index ->
 
-                        val article = articles[index] ?: return@items
+                        val article = articles[index]
 
-                        val bookmarked = bookmarkedUrls.contains(article.url)
 
-                        HomeArticleItem(
-                            article = article,
-                            isBookmarked = bookmarked,
-                            onClick = { onArticleClick(article) },
-                            onBookmarkClick = { onBookmarkClick(article) },
-                            dateFormatter = dateFormatter
-                        )
+                        if (article != null) {
+
+                            val bookmarked = bookmarkedUrls.contains(article.url)
+
+                            HomeArticleItem(
+                                article = article,
+                                isBookmarked = bookmarked,
+                                onClick = { onArticleClick(article) },
+                                onBookmarkClick = { onBookmarkClick(article) },
+                                dateFormatter = dateFormatter
+                            )
+                        }
                     }
 
                     // 🔹 Pagination
@@ -188,9 +203,16 @@ fun HomeScreenContent(
                         }
 
                         is LoadState.Error -> {
+
+                            val error = (articles.loadState.append as? LoadState.Error)
+                                ?.error
+                                ?.let { it as? NetworkError ?: NetworkError.Unknown(it) }
+                                ?: NetworkError.Unknown(Throwable("Unknown paging error"))
+
                             item {
                                 EmptyState(
-                                    message = "Error loading more articles",
+                                    error = error,
+                                    message = stringResource(mapErrorToMessage(error)),
                                     onRetry = { articles.retry() }
                                 )
                             }

@@ -12,4 +12,5 @@ interface BookmarkRepository {
     fun getAllBookmarks(): Flow<List<BookmarkedArticle>>
     suspend fun fetchBookmarksFromFirebase(userId: String)
     fun startRealtimeSync(userId: String)
+    fun stopRealtimeSync()
 }

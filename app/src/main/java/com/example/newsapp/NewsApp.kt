@@ -7,6 +7,7 @@ import com.example.newsapp.di.utilsModule
 import com.example.newsapp.di.viewModelModule
 import com.example.shared.data.di.apiModule
 import com.example.shared.data.di.databaseModule
+import com.example.shared.data.di.httpModule
 import com.example.shared.data.di.networkModule
 import com.example.shared.data.di.repositoryModule
 import com.example.shared.data.di.workerModule
@@ -24,6 +25,7 @@ class NewsApp : Application(), Configuration.Provider {
             workManagerFactory()
             modules(
                 apiModule(BuildConfig.NEWS_API_KEY),
+                httpModule,
                 networkModule,
                 androidModule,
                 repositoryModule,

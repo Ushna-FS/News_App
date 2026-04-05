@@ -1,5 +1,6 @@
 package com.example.newsapp.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +32,9 @@ import com.example.newsapp.ui.components.ArticleWebView
 import com.example.newsapp.viewmodels.ArticleDetailViewModel
 import com.example.newsapp.viewmodels.NewsViewModel
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.example.newsapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,7 +61,7 @@ fun ArticleDetailContent(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = null,
                             tint = Color.White
                         )
                     }
@@ -68,7 +73,7 @@ fun ArticleDetailContent(
                                 Icons.Filled.Bookmark
                             else
                                 Icons.Outlined.BookmarkBorder,
-                            contentDescription = "Bookmark",
+                            contentDescription = stringResource(R.string.bookmark),
                             tint = Color.White
                         )
                     }
@@ -101,7 +106,7 @@ fun ArticleDetailContent(
 
             if (showError) {
                 Text(
-                    text = "Failed to load article",
+                    text = stringResource(R.string.article_load_error),
                     color = Color.Red,
                     modifier = Modifier.align(Alignment.Center)
                 )
@@ -126,6 +131,18 @@ fun ArticleDetailScreen(
     }
 
     val isBookmarked by bookmarkFlow.collectAsState(initial = false)
+
+    val context = LocalContext.current
+    val currentContext by rememberUpdatedState(context)
+    LaunchedEffect(Unit) {
+        newsViewModel.uiMessage.collect { messageRes ->
+            Toast.makeText(
+                currentContext,
+                currentContext.getString(messageRes),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
     LaunchedEffect(article) {
         viewModel.setArticle(article)

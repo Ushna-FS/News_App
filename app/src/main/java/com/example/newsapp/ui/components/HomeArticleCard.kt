@@ -12,15 +12,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.shared.data.models.Article
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.example.newsapp.NewsAppTheme
 import com.example.shared.utils.ArticleCategoryMapper
 import com.example.shared.data.models.Source
 import com.example.shared.utils.DateFormatter
+import com.example.newsapp.R
 
 @Composable
 fun HomeArticleItem(
@@ -127,7 +129,7 @@ fun HomeArticleItem(
                 Spacer(Modifier.weight(1f))
 
                 TextButton(onClick = onClick) {
-                    Text("Read More")
+                    Text(stringResource(R.string.read_more))
                 }
             }
         }
@@ -139,16 +141,16 @@ fun HomeArticleItem(
 fun ArticleItemPreview() {
     NewsAppTheme {
         val sampleArticle = Article(
-            title = "Jetpack Compose is transforming Android UI development",
+            title = stringResource(R.string.news_title_here),
             source = Source(
-                id = "techcrunch",
-                name = "TechCrunch"
+                id = stringResource(R.string.samplesourceId),
+                name = stringResource(R.string.samplesource)
             ),
             author = null,
-            description = "Compose simplifies UI creation with less code and real-time previews.",
+            description = stringResource(R.string.sampleDescription),
             url = "https://example.com",
             urlToImage = null,
-            publishedAt = "2026-03-10T12:00:00Z",
+            publishedAt = stringResource(R.string.sampledate),
             content = null
         )
 

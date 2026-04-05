@@ -10,8 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.newsapp.R
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.shared.utils.ArticleCategoryMapper
 import com.example.newsapp.viewmodels.NewsViewModel
@@ -38,7 +40,7 @@ fun FilterPanel(
         localSelectedSources = selectedSources.toSet()
     }
 
-    val categories = ArticleCategoryMapper.categories.filter { it != "All" }
+    val categories = ArticleCategoryMapper.categories.filter { it != stringResource(R.string.all) }
 
     Column(
         modifier = Modifier
@@ -51,7 +53,7 @@ fun FilterPanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Filter News",
+                text = stringResource(R.string.filter_news),
                 fontSize = MaterialTheme.typography.titleLarge.fontSize,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -59,7 +61,7 @@ fun FilterPanel(
             )
 
             IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Close")
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
             }
         }
 
@@ -67,7 +69,7 @@ fun FilterPanel(
 
         // Categories Section
         Text(
-            text = "Categories",
+            text = stringResource(R.string.categories),
             fontSize = MaterialTheme.typography.titleMedium.fontSize,
             fontWeight = FontWeight.Bold
         )
@@ -99,7 +101,7 @@ fun FilterPanel(
         // Sources Section
         if (availableSources.isNotEmpty()) {
             Text(
-                text = "Sources",
+                text = stringResource(R.string.sources),
                 fontSize = MaterialTheme.typography.titleMedium.fontSize,
                 fontWeight = FontWeight.Bold
             )
@@ -151,7 +153,7 @@ fun FilterPanel(
                     viewModel.applyFilters(emptyList(), emptyList())
                 }
             ) {
-                Text("Clear All")
+                Text(stringResource(R.string.clear_all))
             }
 
             Button(
@@ -161,10 +163,10 @@ fun FilterPanel(
                         localSelectedCategories.toList(),
                         localSelectedSources.toList()
                     )
-
+                    onClose()
                 }
             ) {
-                Text("Apply")
+                Text(stringResource(R.string.apply))
             }
         }
     }

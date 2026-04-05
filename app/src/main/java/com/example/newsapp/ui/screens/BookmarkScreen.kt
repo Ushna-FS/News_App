@@ -11,12 +11,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.shared.data.local.BookmarkedArticle
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.newsapp.ui.components.BookmarkItem
 import org.koin.androidx.compose.koinViewModel
+import com.example.newsapp.R
 
 
 @Composable
@@ -32,7 +34,7 @@ fun BookmarksScreenContent(
     ) {
 
         Text(
-            text = "Your Saved Articles",
+            text = stringResource(R.string.your_saved_articles),
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(16.dp)
         )
@@ -43,7 +45,7 @@ fun BookmarksScreenContent(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No bookmarks yet")
+                Text(stringResource(R.string.no_bookmarks_yet))
             }
 
         } else {
@@ -114,27 +116,16 @@ fun BookmarksScreenPreview() {
 
     val dummyList = listOf(
         BookmarkedArticle(
-            title = "Sample News 1",
-            description = "This is a sample description for news 1",
+            id = 1,
+            title = stringResource(R.string.news_title_here),
+            description = stringResource(R.string.sampleDescription),
             url = "https://example.com/1",
             urlToImage = "https://example.com/image1.jpg",
-            publishedAt = "2024-01-01",
-            content = "Sample content",
-            sourceName = "BBC",
-            sourceId = "bbc-news",
-            author = "John Doe",
-            bookmarkedAt = System.currentTimeMillis()
-        ),
-        BookmarkedArticle(
-            title = "Sample News 2",
-            description = "This is a sample description for news 2",
-            url = "https://example.com/2",
-            urlToImage = "https://example.com/image2.jpg",
-            publishedAt = "2024-01-02",
-            content = "Sample content 2",
-            sourceName = "CNN",
-            sourceId = "cnn",
-            author = "Jane Smith",
+            publishedAt = stringResource(R.string.sampledate),
+            content = stringResource(R.string.sampleContent),
+            sourceName = stringResource(R.string.samplesource),
+            sourceId = stringResource(R.string.samplesourceId),
+            author = stringResource(R.string.sampleAuthorname),
             bookmarkedAt = System.currentTimeMillis()
         )
     )
