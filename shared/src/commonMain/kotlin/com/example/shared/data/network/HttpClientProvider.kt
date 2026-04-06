@@ -8,7 +8,10 @@ import kotlinx.serialization.json.Json
 
 fun createHttpClient(): HttpClient {
     return HttpClient {
-      install(ContentNegotiation) {
+
+        expectSuccess = true
+
+        install(ContentNegotiation) {
             json(Json {
                 ignoreUnknownKeys = true
             })
