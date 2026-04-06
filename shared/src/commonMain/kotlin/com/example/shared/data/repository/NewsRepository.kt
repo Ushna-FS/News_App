@@ -22,10 +22,15 @@ class NewsRepository(
         sources: List<String> = emptyList(),
         sortType: SortType = SortType.NEWEST_FIRST
     ): Flow<PagingData<Article>> {
+        val isOldest = sortType == SortType.OLDEST_FIRST
         return Pager(
             config = PagingConfig(
-                pageSize = 5, enablePlaceholders = false, prefetchDistance = 1, initialLoadSize = 5
-            ), pagingSourceFactory = {
+                pageSize = if (isOldest) 20 else 10,      // Increased for oldest to get more data
+                initialLoadSize = if (isOldest) 60 else 20, // Load more initially for oldest
+                prefetchDistance = if (isOldest) 10 else 2,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = {
                 FilteredCombinedNewsPagingSource(
                     apiService = apiService,
                     categories = categories,
@@ -33,7 +38,8 @@ class NewsRepository(
                     sortType = sortType,
                     dateFormatter = dateFormatter
                 )
-            }).flow
+            }
+        ).flow
     }
 
     fun getAllNewsStream(): Flow<PagingData<Article>> {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -25,11 +26,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.newsapp.NewsAppTheme
 import com.example.newsapp.R
+import com.example.newsapp.data.mock.articleMock
 import com.example.newsapp.ui.components.CategoryChips
 import com.example.newsapp.ui.components.EmptyState
 import com.example.newsapp.ui.components.HomeArticleItem
@@ -37,7 +41,7 @@ import com.example.newsapp.utils.mapErrorToMessage
 import com.example.newsapp.viewmodels.NewsViewModel
 import com.example.shared.data.models.Article
 import com.example.shared.data.models.NetworkError
-import com.example.shared.utils.ArticleCategoryMapper
+import com.example.shared.utils.Category
 import com.example.shared.utils.DateFormatter
 import org.koin.androidx.compose.koinViewModel
 
@@ -82,7 +86,7 @@ fun HomeScreenContent(
 
     val dateFormatter = remember { DateFormatter() }
 
-    var selectedCategory by rememberSaveable { mutableStateOf("All") }
+    var selectedCategory by rememberSaveable { mutableStateOf(Category.All) }
 
     val listState = rememberLazyListState()
 
@@ -105,13 +109,12 @@ fun HomeScreenContent(
         )
 
         CategoryChips(
-            categories = ArticleCategoryMapper.categories,
-            selectedCategory = selectedCategory,
-            onCategorySelected = { category ->
-
+            categories = Category.names,
+            selectedCategory = selectedCategory.displayName,  // selected string
+            onCategorySelected = { categoryName ->
+                val category = Category.values().first { it.displayName == categoryName }
                 selectedCategory = category
-                onCategorySelected(category)
-
+                onCategorySelected(category.displayName)
             }
         )
 
@@ -223,5 +226,62 @@ fun HomeScreenContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun HomeScreenPreviewContent(
+    articles: List<Article>
+) {
+    val dateFormatter = remember { DateFormatter() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+
+        Text(
+            text = stringResource(R.string.hello_user),
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier.padding(top = 16.dp)
+        )
+
+        Text(
+            text = stringResource(R.string.home_desc),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+        )
+
+        CategoryChips(
+            categories = Category.names,
+            selectedCategory = Category.All.displayName,
+            onCategorySelected = {}
+        )
+
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items(articles) { article ->
+                HomeArticleItem(
+                    article = article,
+                    isBookmarked = false,
+                    onClick = {},
+                    onBookmarkClick = {},
+                    dateFormatter = dateFormatter
+                )
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+    NewsAppTheme {
+
+        val articles = List(5) { articleMock() }
+
+        HomeScreenPreviewContent(articles = articles)
     }
 }

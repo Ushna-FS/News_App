@@ -19,7 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.example.shared.data.models.Article
+import com.example.newsapp.NewsAppTheme
+import com.example.newsapp.R
 import com.example.shared.data.repository.SortType
 import com.example.newsapp.ui.components.DiscoverNewsCard
 import com.example.newsapp.ui.components.EmptyState
@@ -28,11 +29,11 @@ import com.example.newsapp.ui.components.SortMenuDialog
 import com.example.newsapp.viewmodels.NewsViewModel
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.collectAsState
-import com.example.newsapp.R
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.newsapp.utils.mapErrorToMessage
+import com.example.shared.data.models.Article
 import com.example.shared.data.models.NetworkError
 import org.koin.androidx.compose.koinViewModel
-import retrofit2.HttpException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -240,32 +241,9 @@ fun DiscoverNewsList(
                     message = stringResource(mapErrorToMessage(error)),
                     onRetry = { pagingItems.retry() }
                 )
+
             }
         }
-//        else if (pagingItems.loadState.refresh is LoadState.Error) {
-//            item {
-//                val rawError = (pagingItems.loadState.refresh as LoadState.Error).error
-//
-//                val error = when (rawError) {
-//                    is NetworkError -> rawError
-//                    is HttpException -> when (rawError.code()) {
-//                        401 -> NetworkError.Unauthorized()
-//                        404 -> NetworkError.NotFound()
-//                        429 -> NetworkError.RateLimit()
-//                        in 500..599 -> NetworkError.ServerError()
-//                        else -> NetworkError.Unknown(rawError)
-//                    }
-//
-//                    else -> NetworkError.Unknown(rawError)
-//                }
-//
-//                EmptyState(
-//                    error = error,
-//                    message = stringResource(mapErrorToMessage(error)),
-//                    onRetry = { pagingItems.retry() }
-//                )
-//            }
-//        }
         // Show items if any exist
         else if (pagingItems.itemCount > 0) {
             items(
@@ -317,6 +295,7 @@ fun DiscoverNewsList(
                         message = stringResource(mapErrorToMessage(error)),
                         onRetry = { pagingItems.retry() }
                     )
+
                 }
             }
             // Pagination error
@@ -466,6 +445,49 @@ fun FilterSortRow(
                 } else {
                     "Sort"
                 }
+            )
+        }
+    }
+}
+
+@Composable
+fun ErrorItem(
+    message: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = message, color = MaterialTheme.colorScheme.error)
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = onRetry) {
+            Text("Retry")
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DiscoverTopSectionPreview() {
+    NewsAppTheme {
+
+        Column {
+            DiscoverSearchBar(
+                text = "",
+                onTextChange = {},
+                onClear = {}
+            )
+
+            FilterSortRow(
+                hasActiveFilters = true,
+                isSearching = false,
+                hasUserSelectedSort = true,
+                sortType = SortType.NEWEST_FIRST,
+                onFilterClick = {},
+                onSortClick = {}
             )
         }
     }

@@ -6,10 +6,10 @@ import androidx.paging.*
 import com.example.newsapp.R
 import com.example.shared.data.local.BookmarkedArticle
 import com.example.shared.data.models.Article
+import com.example.shared.data.models.getCategory
 import com.example.shared.data.repository.BookmarkRepository
 import com.example.shared.data.repository.NewsRepository
 import com.example.shared.data.repository.SortType
-import com.example.shared.utils.ArticleCategoryMapper
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.Dispatchers
@@ -69,7 +69,7 @@ class NewsViewModel(
                 repository.getAllNewsStream().map { pagingData ->
                     if (category == "All") pagingData
                     else pagingData.filter {
-                        ArticleCategoryMapper.getCategory(it) == category
+                        it.getCategory().displayName == category
                     }
 
                 }
@@ -135,6 +135,7 @@ class NewsViewModel(
     fun setCurrentUser(userId: String) {
         currentUserId = userId
     }
+
     private fun updateActiveFilters() {
         val hasCustomCategories = _selectedCategories.value.isNotEmpty()
         val hasCustomSources = _selectedSources.value.isNotEmpty()
@@ -158,7 +159,7 @@ class NewsViewModel(
                 val flow = repository.getAllNewsStream()
                     .map { pagingData ->
                         if (category == "All") pagingData
-                        else pagingData.filter { ArticleCategoryMapper.getCategory(it) == category }
+                        else pagingData.filter { it.getCategory().displayName == category }
                     }
                     .cachedIn(viewModelScope)
                 categoryCache[category] = flow
@@ -239,6 +240,7 @@ class NewsViewModel(
             }
         }
     }
+
     fun getAllBookmarkedUrls(): Flow<Set<String>> = flow {
         bookmarkRepository.getAllBookmarks().collect { bookmarks ->
             emit(bookmarks.map { it.url }.toSet())

@@ -2,12 +2,24 @@ package com.example.newsapp.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
-import androidx.compose.material3.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,13 +28,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.shared.data.models.Article
 import androidx.compose.ui.unit.sp
 import com.example.newsapp.NewsAppTheme
-import com.example.shared.utils.ArticleCategoryMapper
-import com.example.shared.data.models.Source
-import com.example.shared.utils.DateFormatter
 import com.example.newsapp.R
+import com.example.newsapp.data.mock.articleMock
+import com.example.shared.data.models.Article
+import com.example.shared.data.models.getCategory
+import com.example.shared.utils.DateFormatter
 
 @Composable
 fun HomeArticleItem(
@@ -113,7 +125,7 @@ fun HomeArticleItem(
             }
 
             // CATEGORY + READ MORE
-            val category = ArticleCategoryMapper.getCategory(article)
+            val category = article.getCategory()
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -122,7 +134,7 @@ fun HomeArticleItem(
             ) {
                 AssistChip(
                     onClick = {},
-                    label = { Text(category) },
+                    label = { Text(category.displayName) },
                     border = BorderStroke(1.dp, Color.Blue)
                 )
 
@@ -135,24 +147,12 @@ fun HomeArticleItem(
         }
     }
 }
-
 @Preview(showBackground = true)
 @Composable
-fun ArticleItemPreview() {
+fun HomeArticleItemPreviewWithMock() {
     NewsAppTheme {
-        val sampleArticle = Article(
-            title = stringResource(R.string.news_title_here),
-            source = Source(
-                id = stringResource(R.string.samplesourceId),
-                name = stringResource(R.string.samplesource)
-            ),
-            author = null,
-            description = stringResource(R.string.sampleDescription),
-            url = "https://example.com",
-            urlToImage = null,
-            publishedAt = stringResource(R.string.sampledate),
-            content = null
-        )
+        // Use the mock article from your data.mock
+        val sampleArticle = articleMock()
 
         HomeArticleItem(
             article = sampleArticle,

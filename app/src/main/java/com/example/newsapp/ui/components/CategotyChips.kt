@@ -8,6 +8,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.newsapp.NewsAppTheme
+import com.example.shared.utils.Category
 
 @Composable
 fun CategoryChips(
@@ -32,5 +35,22 @@ fun CategoryChips(
             )
 
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CategoryChipsPreview() {
+    NewsAppTheme {
+        var selected by remember { mutableStateOf("Technology") }
+
+        // Use the enum helper
+        val categories = Category.names
+
+        CategoryChips(
+            categories = categories,
+            selectedCategory = selected,
+            onCategorySelected = { selected = it }
+        )
     }
 }
