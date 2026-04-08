@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     id("com.google.devtools.ksp")
     id("com.android.kotlin.multiplatform.library")
+    alias(libs.plugins.jetbrainsCompose)
+    alias(libs.plugins.compose.compiler)
 }
 
 ksp {
@@ -22,6 +24,7 @@ kotlin {
             }
         }
         minSdk = 24
+        androidResources.enable = true
 
         withHostTestBuilder {
         }
@@ -85,6 +88,13 @@ kotlin {
 
                 // Koin Core (Multiplatform)
                 implementation(libs.koin.core)
+                //koin VM
+
+                implementation(libs.koin.compose)
+                implementation(libs.koin.compose.viewmodel)
+
+                // Material Icons
+                implementation(libs.material.icons.extended)
 
                 //firebase
                 implementation(libs.gitlive.firebase.auth)
@@ -100,6 +110,32 @@ kotlin {
                 implementation(libs.androidx.sqlite.bundled)
 
                 implementation(libs.kotlinx.datetime)
+
+                // Compose Multiplatform
+                implementation(libs.compose.material3)
+                implementation(libs.compose.ui)
+                implementation(libs.compose.components.resources)
+                implementation(libs.compose.foundation)
+
+                // Compose lifecycle
+                implementation(libs.lifecycle.viewmodel.compose)
+
+                // Compose navigation (multiplatform)
+                implementation(libs.navigation.compose)
+
+                // Compose ViewModel
+                implementation(libs.lifecycle.viewmodel)
+
+                // Compose coroutine support
+                implementation(libs.kotlinx.coroutines.core)
+                //preview
+                implementation(libs.jetbrains.ui.tooling.preview)
+                implementation(libs.lifecycle.runtime.compose)
+
+                //coil
+                implementation(libs.coil.compose)
+                implementation(libs.coil.network.ktor)
+
             }
         }
 
@@ -136,6 +172,10 @@ kotlin {
                 implementation(libs.androidx.runner)
                 implementation(libs.androidx.core)
                 implementation(libs.androidx.junit.v115)
+                implementation(libs.compose.material3)
+                implementation(libs.compose.ui)
+                implementation(libs.compose.components.resources)
+                implementation(libs.compose.foundation)
             }
         }
 
@@ -153,9 +193,15 @@ kotlin {
         }
     }
 }
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "me.sample.library.resources"
+    generateResClass = auto
+}
 dependencies {
     add("kspAndroid", libs.androidx.room.compiler)
     add("kspIosX64", libs.androidx.room.compiler)
     add("kspIosArm64", libs.androidx.room.compiler)
     add("kspIosSimulatorArm64", libs.androidx.room.compiler)
+    androidRuntimeClasspath(libs.jetbrains.ui.tooling)
 }

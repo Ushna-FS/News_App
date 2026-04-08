@@ -6,20 +6,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
-import com.example.newsapp.navigation.RootNavigation
-import com.example.newsapp.ui.theme.LightColors
-import com.example.newsapp.viewmodels.NetworkViewModel
-import kotlinx.coroutines.delay
+import com.example.shared.NewsAppTheme
+import com.example.shared.navigation.RootNavigation
+import com.example.shared.ui.theme.LightColors
+import com.example.shared.utils.NetworkSnackbarHandler
+import com.example.shared.viewmodels.NetworkViewModel
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
@@ -34,37 +31,11 @@ class MainActivity : ComponentActivity() {
 
             val snackbarHostState = remember { SnackbarHostState() }
 
-            var firstEmission by remember { mutableStateOf(true) }
-
-            LaunchedEffect(isConnected) {
-
-                if (firstEmission) {
-                    firstEmission = false
-                    return@LaunchedEffect
-                }
-
-                snackbarHostState.currentSnackbarData?.dismiss()
-
-                if (!isConnected) {
-
-                    while (true) {
-
-                        snackbarHostState.showSnackbar(
-                            message = getString(R.string.no_internet_connection),
-                            duration = SnackbarDuration.Short
-                        )
-
-                        delay(6000) // show again after 6 seconds
-                    }
-
-                } else {
-
-                    snackbarHostState.showSnackbar(
-                        message = getString(R.string.connection_restored_msg),
-                        duration = SnackbarDuration.Short
-                    )
-                }
-            }
+            // network shared logic
+            NetworkSnackbarHandler(
+                isConnected = isConnected,
+                snackbarHostState = snackbarHostState
+            )
             NewsAppTheme {
 
                 Scaffold(
@@ -72,13 +43,24 @@ class MainActivity : ComponentActivity() {
                         SnackbarHost(
                             hostState = snackbarHostState
                         ) { data ->
+                            // Determine color based on snackbar type
+                            val containerColor = when {
+                                data.visuals.message.contains(
+                                    "no internet",
+                                    ignoreCase = true
+                                ) -> LightColors.error
 
-                            val isOffline =
-                                data.visuals.message == getString(R.string.no_internet_connection)
+                                data.visuals.message.contains(
+                                    "restored",
+                                    ignoreCase = true
+                                ) -> LightColors.tertiary
+
+                                else -> LightColors.tertiary
+                            }
 
                             Snackbar(
                                 snackbarData = data,
-                                containerColor = if (isOffline) LightColors.error else LightColors.tertiary,
+                                containerColor = containerColor,
                                 contentColor = Color.White
                             )
                         }

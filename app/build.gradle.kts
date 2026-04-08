@@ -6,6 +6,7 @@ plugins {
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
     id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.jetbrainsCompose)
 }
 
 val apiKey: String = project.findProperty("NEWS_API_KEY")?.toString() ?: ""
