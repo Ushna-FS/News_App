@@ -9,7 +9,6 @@ import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.models.NetworkError
 import com.example.newsapp.data.models.getCategory
 import com.example.newsapp.data.repository.SortType
-import com.example.newsapp.utils.ArticleCategoryMapper
 import com.example.newsapp.utils.DateFormatter
 import retrofit2.HttpException
 import java.net.SocketTimeoutException

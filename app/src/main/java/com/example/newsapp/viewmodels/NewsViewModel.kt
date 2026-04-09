@@ -6,8 +6,6 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
 import com.example.newsapp.R
-import com.example.newsapp.data.local.BookmarkedArticle
-import com.example.newsapp.data.models.Article
 import com.example.newsapp.data.models.getCategory
 import com.example.newsapp.data.repository.BookmarkRepository
 import com.example.newsapp.data.repository.NewsRepository
