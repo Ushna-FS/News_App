@@ -37,15 +37,34 @@ class NewsRepository @Inject constructor(
             }).flow
     }
 
-    // For HomeFragment - Only Business news
-    fun getBusinessNewsStream(): Flow<PagingData<Article>> {
+    fun getAllNewsStream(): Flow<PagingData<Article>> {
         return Pager(
             config = PagingConfig(
-                pageSize = 5, enablePlaceholders = false, prefetchDistance = 1, initialLoadSize = 5
-            ), pagingSourceFactory = {
-                NewsPagingSource(apiService, NewsType.Business)
-            }).flow
+                pageSize = 5,
+                enablePlaceholders = false,
+                prefetchDistance = 1,
+                initialLoadSize = 5
+            ),
+            pagingSourceFactory = {
+                NewsPagingSource(apiService, NewsType.Everything)
+            }
+        ).flow
     }
+
+    fun getCategoryNewsStream(category: String): Flow<PagingData<Article>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 5,
+                enablePlaceholders = false,
+                prefetchDistance = 1,
+                initialLoadSize = 5
+            ),
+            pagingSourceFactory = {
+                NewsPagingSource(apiService, NewsType.NewsCategory(category))
+            }
+        ).flow
+    }
+
 
     // Search stream
     fun searchNewsStream(query: String): Flow<PagingData<Article>> {
