@@ -1,8 +1,6 @@
 package com.example.newsapp.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
 
 /* ---------- Light Theme ---------- */
 
@@ -21,7 +19,11 @@ val LightColors = lightColorScheme(
     onSurface = Black,
 
     error = RedLight,
-    onError = White
+    onError = White,
+
+    tertiary = GreenLight,
+    onTertiary = White
+
 )
 
 /* ---------- Dark Theme ---------- */

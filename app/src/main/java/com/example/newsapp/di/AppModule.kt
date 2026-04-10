@@ -3,6 +3,7 @@ package com.example.newsapp.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.work.WorkManager
 import com.example.newsapp.BuildConfig
 import com.example.newsapp.data.api.ApiKeyInterceptor
 import com.example.newsapp.data.api.ApiService
@@ -47,18 +48,33 @@ object AppModule {
             .create(ApiService::class.java)
     }
 
-
     @Singleton
     @Provides
-    fun provideNewsDatabase(@ApplicationContext context: Context): NewsDatabase {
+    fun provideNewsDatabase(
+        @ApplicationContext context: Context
+    ): NewsDatabase {
+
         return Room.databaseBuilder(
-            context, NewsDatabase::class.java, NewsDatabase.DATABASE_NAME
-        ).fallbackToDestructiveMigration(false).build()
+            context,
+            NewsDatabase::class.java,
+            NewsDatabase.DATABASE_NAME
+        )
+            .addMigrations(
+                NewsDatabase.MIGRATION_1_2,
+                NewsDatabase.MIGRATION_2_3,
+                NewsDatabase.MIGRATION_3_4
+            )
+            .build()
     }
 
     @Singleton
     @Provides
     fun provideBookmarkDao(database: NewsDatabase): BookmarkDao {
         return database.bookmarkDao()
+    }
+    @Provides
+    @Singleton
+    fun provideWorkManager(@ApplicationContext context: Context): WorkManager {
+        return WorkManager.getInstance(context)
     }
 }

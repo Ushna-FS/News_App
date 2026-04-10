@@ -9,14 +9,27 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
-import com.example.newsapp.ui.screens.SplashScreen
-import com.example.newsapp.viewmodels.NewsViewModel
-import kotlinx.coroutines.launch
 import com.example.newsapp.R
+import com.example.newsapp.ui.screens.LoginScreen
+import com.example.newsapp.ui.screens.SignupScreen
+import com.example.newsapp.ui.screens.SplashScreen
+import com.example.newsapp.viewmodels.AuthViewModel
+import com.example.newsapp.viewmodels.NewsViewModel
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
+
+
+enum class MainTab {
+    HOME,
+    DISCOVER,
+    BOOKMARK
+}
 
 @Composable
 fun RootNavigation() {
@@ -32,38 +45,61 @@ fun RootNavigation() {
 
             SplashScreen(navController)
         }
+        composable(Routes.Login.route) {
+            LoginScreen(navController)
+        }
 
-        composable("main_tabs") {
+        composable(Routes.Signup.route) {
+            SignupScreen(navController)
+        }
 
-            MainTabs()
+        composable(Routes.MainTabs.route) {
+
+
+            MainTabs(navController)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTabs() {
+fun MainTabs(navController: NavHostController) {
 
     val newsViewModel: NewsViewModel = hiltViewModel()
+    val authViewModel: AuthViewModel = hiltViewModel()
+    val user = FirebaseAuth.getInstance().currentUser
 
+    LaunchedEffect(user?.uid) {
+        user?.uid?.let {
+            newsViewModel.setCurrentUser(it)
+            newsViewModel.startBookmarkSync(it)
+        }
+    }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     val scope = rememberCoroutineScope()
 
-    var selectedTab by rememberSaveable { mutableStateOf("home") }
+    var selectedTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
 
     // Separate NavControllers for each tab
     val homeNavController = rememberNavController()
     val discoverNavController = rememberNavController()
     val bookmarkNavController = rememberNavController()
     val currentNavController = when (selectedTab) {
-        "home" -> homeNavController
-        "discover" -> discoverNavController
-        "bookmark" -> bookmarkNavController
+        MainTab.HOME -> homeNavController
+        MainTab.DISCOVER -> discoverNavController
+        MainTab.BOOKMARK -> bookmarkNavController
         else -> homeNavController
     }
 
-// Observe back stack safely
+    fun closeDrawer(action: () -> Unit) {
+        scope.launch {
+            drawerState.close()
+        }
+        action()
+    }
+    // Observe back stack safely
+
     val navBackStackEntry by currentNavController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: ""
     val isDetailScreen = currentRoute.contains("article_detail")
@@ -75,13 +111,21 @@ fun MainTabs() {
 
             AppDrawer(
                 onHomeClick = {
-                    selectedTab = "home"
+                    closeDrawer { selectedTab = MainTab.HOME }
                 },
                 onDiscoverClick = {
-                    selectedTab = "discover"
+                    closeDrawer { selectedTab = MainTab.DISCOVER }
                 },
                 onBookmarksClick = {
-                    selectedTab = "bookmark"
+                    closeDrawer { selectedTab = MainTab.BOOKMARK }
+                },
+                onLogoutClick = {
+
+                    authViewModel.logout()
+
+                    navController.navigate(Routes.Login.route) {
+                        popUpTo(Routes.MainTabs.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -93,7 +137,7 @@ fun MainTabs() {
                 if (!isDetailScreen) {
 
                     TopAppBar(
-                        title = { Text("NewsMate") },
+                        title = { Text(stringResource(R.string.newsmate)) },
                         navigationIcon = {
 
                             IconButton(
@@ -115,22 +159,23 @@ fun MainTabs() {
                 NavigationBar {
 
                     NavigationBarItem(
-                        selected = selectedTab == "home",
-                        onClick = { selectedTab = "home" },
+                        selected = selectedTab == MainTab.HOME,
+                        onClick = { selectedTab = MainTab.HOME },
                         icon = { Icon(Icons.Default.Home, null) },
-                        label = { Text(stringResource(R.string.home)) }
-                    )
+
+                        label = { Text(stringResource(R.string.home)) })
 
                     NavigationBarItem(
-                        selected = selectedTab == "discover",
-                        onClick = { selectedTab = "discover" },
+                        selected = selectedTab == MainTab.DISCOVER,
+                        onClick = { selectedTab = MainTab.DISCOVER },
                         icon = { Icon(Icons.Default.Search, null) },
+
                         label = { Text(stringResource(R.string.discover)) }
                     )
 
                     NavigationBarItem(
-                        selected = selectedTab == "bookmark",
-                        onClick = { selectedTab = "bookmark" },
+                        selected = selectedTab == MainTab.BOOKMARK,
+                        onClick = { selectedTab = MainTab.BOOKMARK },
                         icon = { Icon(Icons.Default.Bookmark, null) },
                         label = { Text(stringResource(R.string.saved)) }
                     )
@@ -141,7 +186,7 @@ fun MainTabs() {
 
             when (selectedTab) {
 
-                "home" -> {
+                MainTab.HOME -> {
 
                     HomeNavGraph(
                         navController = homeNavController,
@@ -149,7 +194,7 @@ fun MainTabs() {
                     )
                 }
 
-                "discover" -> {
+                MainTab.DISCOVER -> {
 
                     DiscoverNavGraph(
                         navController = discoverNavController,
@@ -157,7 +202,7 @@ fun MainTabs() {
                     )
                 }
 
-                "bookmark" -> {
+                MainTab.BOOKMARK -> {
 
                     BookmarkNavGraph(
                         navController = bookmarkNavController,

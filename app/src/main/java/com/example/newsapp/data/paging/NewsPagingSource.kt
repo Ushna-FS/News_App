@@ -6,10 +6,13 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.newsapp.data.api.ApiService
 import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.models.NetworkError
 import com.example.newsapp.data.models.getCategory
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.utils.DateFormatter
 import retrofit2.HttpException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Locale
@@ -68,16 +71,40 @@ class NewsPagingSource(
 
             if (response.isSuccessful) {
                 val articles = response.body()?.articles ?: emptyList()
-                val nextPage = if (articles.isNotEmpty()) page + 1 else null
+                val total = response.body()?.totalResults ?: 0
+                val endReached = page * pageSize >= total
 
                 LoadResult.Page(
-                    data = articles, prevKey = if (page == 1) null else page - 1, nextKey = nextPage
+                    data = articles,
+                    prevKey = if (page == 1) null else page - 1,
+                    nextKey = if (endReached) null else page + 1
                 )
             } else {
                 LoadResult.Error(HttpException(response))
             }
         } catch (e: Exception) {
-            LoadResult.Error(e)
+
+            val error = when (e) {
+
+                is NetworkError -> e
+
+                is UnknownHostException,
+                is SocketTimeoutException -> NetworkError.NoInternet()
+
+                is HttpException -> {
+                    when (e.code()) {
+                        401 -> NetworkError.Unauthorized()
+                        404 -> NetworkError.NotFound()
+                        429 -> NetworkError.RateLimit()
+                        in 500..599 -> NetworkError.ServerError()
+                        else -> NetworkError.Unknown(e)
+                    }
+                }
+
+                else -> NetworkError.Unknown(e)
+            }
+
+            LoadResult.Error(error)
         }
     }
 }
@@ -212,7 +239,28 @@ class FilteredCombinedNewsPagingSource(
             )
 
         } catch (e: Exception) {
-            LoadResult.Error(e)
+
+            val error = when (e) {
+
+                is NetworkError -> e
+
+                is UnknownHostException,
+                is SocketTimeoutException -> NetworkError.NoInternet()
+
+                is HttpException -> {
+                    when (e.code()) {
+                        401 -> NetworkError.Unauthorized()
+                        404 -> NetworkError.NotFound()
+                        429 -> NetworkError.RateLimit()
+                        in 500..599 -> NetworkError.ServerError()
+                        else -> NetworkError.Unknown(e)
+                    }
+                }
+
+                else -> NetworkError.Unknown(e)
+            }
+
+            LoadResult.Error(error)
         }
     }
 }

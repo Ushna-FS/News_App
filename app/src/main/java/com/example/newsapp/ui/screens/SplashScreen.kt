@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.newsapp.R
 import com.example.newsapp.navigation.Routes
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 
 
@@ -38,13 +39,21 @@ fun SplashScreen(navController: NavController) {
         animationSpec = tween(800)
     )
 
+    val auth = FirebaseAuth.getInstance()
     LaunchedEffect(Unit) {
         startAnimation = true
         delay(2500)
 
-        navController.navigate("main_tabs") {
-            popUpTo(Routes.Splash.route) { inclusive = true }
-            launchSingleTop = true
+        if (auth.currentUser != null) {
+            navController.navigate(Routes.MainTabs.route) {
+                popUpTo(Routes.Splash.route) { inclusive = true }
+                launchSingleTop = true
+            }
+        } else {
+            navController.navigate(Routes.Login.route) {
+                popUpTo(Routes.Splash.route) { inclusive = true }
+                launchSingleTop = true
+            }
         }
     }
 

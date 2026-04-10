@@ -52,6 +52,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx.v1120)
     implementation(libs.androidx.appcompat.v161)
@@ -84,6 +88,7 @@ dependencies {
     implementation(libs.androidx.paging.compose)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.hilt.common)
     debugImplementation(libs.androidx.ui.tooling)
     ksp(libs.hilt.compiler)
 
@@ -92,7 +97,7 @@ dependencies {
     // For ViewModel injection
     implementation(libs.androidx.hilt.navigation.fragment)
 
-//    implementation(libs.androidx.paging.runtime.ktx)
+    //  implementation(libs.androidx.paging.runtime.ktx)
     implementation(libs.androidx.paging.runtime.ktx.v320)
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
@@ -101,21 +106,23 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(platform(libs.androidx.compose.bom))
 
-// Compose Core
+    // Compose Core
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.ui.tooling.preview)
 
-// Debug
+    // Debug
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-// Activity Compose
+    // Activity Compose
     implementation(libs.androidx.activity.compose)
     // Hilt + Compose
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.hilt.android.v259)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler.v110)
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)
 
@@ -127,14 +134,23 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.logging.interceptor)
 
-    implementation(libs.androidx.navigation.fragment.ktx)
-    implementation(libs.androidx.navigation.ui.ktx)
+    // Firebase BOM
+    implementation(platform(libs.firebase.bom.v3351))
+
+    // Firebase Auth
+    implementation(libs.google.firebase.auth.ktx)
+    //firestore
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.androidx.work.runtime.ktx)
 
 
+    //crashlytics
     implementation(libs.firebase.analytics)
-    implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
 
+
+    implementation(libs.androidx.navigation.fragment.ktx)
+    implementation(libs.androidx.navigation.ui.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit.v115)

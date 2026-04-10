@@ -41,12 +41,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -56,13 +54,17 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.newsapp.NewsAppTheme
 import com.example.newsapp.R
+import com.example.newsapp.data.api.mapErrorToMessage
 import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.models.NetworkError
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.ui.components.DiscoverNewsCard
+import com.example.newsapp.ui.components.EmptyState
 import com.example.newsapp.ui.components.FilterPanel
 import com.example.newsapp.ui.components.SortMenuDialog
 import com.example.newsapp.viewmodels.NewsViewModel
 import kotlinx.coroutines.delay
+import retrofit2.HttpException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,9 +72,6 @@ fun DiscoverScreen(
     viewModel: NewsViewModel = hiltViewModel(),
     onArticleClick: (Article) -> Unit
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
 
     // State
     val pagingItems = viewModel.newsPagingData.collectAsLazyPagingItems()
@@ -275,22 +274,35 @@ fun DiscoverNewsList(
         // Check for refresh error state
         else if (pagingItems.loadState.refresh is LoadState.Error) {
             item {
-                val error = (pagingItems.loadState.refresh as LoadState.Error).error
-                error.message?.let {
-                    ErrorItem(
-                        message = stringResource(R.string.error_msg, it),
-                        onRetry = { pagingItems.retry() }
-                    )
+                val rawError = (pagingItems.loadState.refresh as LoadState.Error).error
+                val error = when (rawError) {
+                    is NetworkError -> rawError
+                    is HttpException -> when (rawError.code()) {
+                        401 -> NetworkError.Unauthorized()
+                        404 -> NetworkError.NotFound()
+                        429 -> NetworkError.RateLimit()
+                        in 500..599 -> NetworkError.ServerError()
+                        else -> NetworkError.Unknown(rawError)
+                    }
+
+                    else -> NetworkError.Unknown(rawError)
                 }
+
+                EmptyState(
+                    error = error,
+                    message = stringResource(mapErrorToMessage(error)),
+                    onRetry = { pagingItems.retry() }
+                )
+
             }
         }
         // Show items if any exist
         else if (pagingItems.itemCount > 0) {
-//
             items(
                 count = pagingItems.itemCount,
                 key = { index ->
-                    pagingItems[index]?.url ?: "article_$index"
+                    val article = pagingItems[index]
+                    "${article?.url}_${index}"
                 }
             ) { index ->
 
@@ -326,13 +338,26 @@ fun DiscoverNewsList(
             // Pagination error
             if (pagingItems.loadState.append is LoadState.Error) {
                 item {
-                    val error = (pagingItems.loadState.append as LoadState.Error).error
-                    error.message?.let {
-                        ErrorItem(
-                            message = stringResource(R.string.failed_to_load_more, it),
-                            onRetry = { pagingItems.retry() }
-                        )
+                    val rawError = (pagingItems.loadState.append as LoadState.Error).error
+                    val error = when (rawError) {
+                        is NetworkError -> rawError
+                        is HttpException -> when (rawError.code()) {
+                            401 -> NetworkError.Unauthorized()
+                            404 -> NetworkError.NotFound()
+                            429 -> NetworkError.RateLimit()
+                            in 500..599 -> NetworkError.ServerError()
+                            else -> NetworkError.Unknown(rawError)
+                        }
+
+                        else -> NetworkError.Unknown(rawError)
                     }
+
+                    EmptyState(
+                        error = error,
+                        message = stringResource(mapErrorToMessage(error)),
+                        onRetry = { pagingItems.retry() }
+                    )
+
                 }
             }
         }
@@ -356,7 +381,6 @@ fun DiscoverNewsList(
     }
 }
 
-//
 @Composable
 fun FilterSummary(
     viewModel: NewsViewModel,
