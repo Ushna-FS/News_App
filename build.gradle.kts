@@ -3,16 +3,16 @@ plugins {
     alias(libs.plugins.android.application) apply false
     id("com.google.dagger.hilt.android") version "2.59.2" apply false
     id("com.google.devtools.ksp") version "2.3.4" apply false
-    id("org.jetbrains.kotlin.plugin.parcelize") version "2.3.10" apply false
+    id("org.jetbrains.kotlin.plugin.parcelize") version "2.3.20" apply false
     id("com.google.gms.google-services") version "4.4.4" apply false
     id("com.google.firebase.crashlytics") version "3.0.6" apply false
-    id("org.jetbrains.kotlin.plugin.compose") version "2.3.10" apply false
+    id("org.jetbrains.kotlin.plugin.compose") version "2.3.20" apply false
+    alias(libs.plugins.kotlin.multiplatform) apply false
 }
 buildscript {
     dependencies {
         classpath(libs.androidx.navigation.safe.args.gradle.plugin)
         classpath(libs.firebase.crashlytics.gradle)
-        classpath (libs.gradle)
-        classpath (libs.hilt.android.gradle.plugin)
+        classpath(libs.gradle)
     }
 }
