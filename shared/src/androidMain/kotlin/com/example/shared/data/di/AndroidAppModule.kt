@@ -1,4 +1,4 @@
-package com.example.shared.data.di
+package com.example.shared.data.di //AppModule moved here and renamed
 
 import androidx.room.Room
 import androidx.work.WorkManager
