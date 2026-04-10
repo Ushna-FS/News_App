@@ -1,18 +1,34 @@
 package com.example.newsapp.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.*
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import androidx.paging.filter
 import com.example.newsapp.R
+import com.example.newsapp.data.local.BookmarkedArticle
+import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.models.getCategory
 import com.example.newsapp.data.repository.BookmarkRepository
 import com.example.newsapp.data.repository.NewsRepository
 import com.example.newsapp.data.repository.SortType
-import com.example.newsapp.data.local.BookmarkedArticle
-import com.example.newsapp.data.models.Article
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,10 +37,17 @@ class NewsViewModel @Inject constructor(
     private val repository: NewsRepository, private val bookmarkRepository: BookmarkRepository,
 ) : ViewModel() {
 
+    private val selectedHomeCategory = MutableStateFlow("All")
+    private val categoryCache = mutableMapOf<String, Flow<PagingData<Article>>>()
+    private val _homeCategoryLoader = MutableStateFlow(false)
+    val homeCategoryLoader: StateFlow<Boolean> = _homeCategoryLoader
+
+
     // StateFlows for filters and sort
     private val _selectedCategories = MutableStateFlow<List<String>>(emptyList())
 
     val selectedCategories: StateFlow<List<String>> = _selectedCategories.asStateFlow()
+
 
     private val _selectedSources = MutableStateFlow<List<String>>(emptyList())
     val selectedSources: StateFlow<List<String>> = _selectedSources.asStateFlow()
@@ -52,18 +75,21 @@ class NewsViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-    private val _homeCategory = MutableStateFlow("all")
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val homeNewsPagingData: Flow<PagingData<Article>> =
-        _homeCategory.flatMapLatest { cat ->
-            if (cat == "all") {
-                repository.getAllNewsStream()
-            } else {
-                repository.getCategoryNewsStream(cat.lowercase())
-            }
-        }.cachedIn(viewModelScope)
+        selectedHomeCategory
+            .flatMapLatest { category ->
 
+                repository.getAllNewsStream().map { pagingData ->
+                    if (category == "All") pagingData
+                    else pagingData.filter {
+                        it.getCategory().displayName == category
+                    }
+
+                }
+            }
+            .cachedIn(viewModelScope)
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val newsPagingData: Flow<PagingData<Article>> = searchQuery
@@ -88,8 +114,10 @@ class NewsViewModel @Inject constructor(
         .flatMapLatest { (categories, sources, sortType) ->
             repository.getCombinedNewsStream(
                 categories = categories, sources = sources, sortType = sortType
-            ).cachedIn(viewModelScope)
-        }.flowOn(Dispatchers.IO)
+            )
+        }
+        .cachedIn(viewModelScope)
+        .flowOn(Dispatchers.IO)
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val searchNewsPagingData: Flow<PagingData<Article>> =
@@ -127,6 +155,32 @@ class NewsViewModel @Inject constructor(
         )
     }
 
+    fun setHomeCategory(category: String) {
+        viewModelScope.launch {
+            _homeCategoryLoader.value = true  // show loader
+
+            val loaderDelay = launch {
+                kotlinx.coroutines.delay(5000)
+            }
+
+            // Fetch only if not cached
+            if (!categoryCache.containsKey(category)) {
+                val flow = repository.getAllNewsStream()
+                    .map { pagingData ->
+                        if (category == "All") pagingData
+                        else pagingData.filter { it.getCategory().displayName == category }
+                    }
+                    .cachedIn(viewModelScope)
+                categoryCache[category] = flow
+            }
+
+            loaderDelay.join()  // ensure loader shows
+
+            selectedHomeCategory.value = category
+            _homeCategoryLoader.value = false
+        }
+    }
+
 
     fun clearSearch() {
         _searchQuery.value = ""
@@ -135,10 +189,6 @@ class NewsViewModel @Inject constructor(
     fun searchNews(query: String) {
         _searchQuery.value = query
     }
-    fun setHomeCategory(cat: String) {
-        _homeCategory.value = cat
-    }
-
 
     fun extractSourceFromArticle(article: Article) {
         val currentSources = _availableSources.value.toMutableSet()
@@ -205,10 +255,13 @@ class NewsViewModel @Inject constructor(
         }
     }.flowOn(Dispatchers.IO)
 
-    fun isArticleBookmarked(url: String): Flow<Boolean> = flow {
-        val isBookmarked = bookmarkRepository.isBookmarked(url)
-        emit(isBookmarked)
-    }.flowOn(Dispatchers.IO)
+    fun isArticleBookmarked(url: String): Flow<Boolean> {
+        return bookmarkRepository.getAllBookmarks()
+            .map { bookmarks ->
+                bookmarks.any { it.url == url }
+            }
+            .distinctUntilChanged()
+    }
 
     val bookmarks: Flow<List<BookmarkedArticle>> =
         bookmarkRepository.getAllBookmarks().flowOn(Dispatchers.IO)

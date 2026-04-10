@@ -38,15 +38,15 @@ class ArticleDetailViewModel @Inject constructor(
     fun setArticle(article: Article) {
         _isLoading.value = true
         _article.value = article
-        updateBookmarkStatus()
-        _isLoading.value = false
+        viewModelScope.launch {
+            updateBookmarkStatus()
+            _isLoading.value = false
+        }
     }
 
-    private fun updateBookmarkStatus() {
-        viewModelScope.launch {
-            _article.value?.let { article ->
-                _isBookmarked.value = bookmarkRepository.isBookmarked(article.url)
-            }
+    private suspend fun updateBookmarkStatus() {
+        _article.value?.let { article ->
+            _isBookmarked.value = bookmarkRepository.isBookmarked(article.url)
         }
     }
 }

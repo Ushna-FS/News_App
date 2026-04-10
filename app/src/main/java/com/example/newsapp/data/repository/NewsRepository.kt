@@ -23,27 +23,33 @@ class NewsRepository @Inject constructor(
         sources: List<String> = emptyList(),
         sortType: SortType = SortType.NEWEST_FIRST
     ): Flow<PagingData<Article>> {
+        val isOldest = sortType == SortType.OLDEST_FIRST
         return Pager(
             config = PagingConfig(
-                pageSize = 5, enablePlaceholders = false, prefetchDistance = 1, initialLoadSize = 5
-            ), pagingSourceFactory = {
+                pageSize = if (isOldest) 20 else 10,      // Increased for oldest to get more data
+                initialLoadSize = if (isOldest) 60 else 20, // Load more initially for oldest
+                prefetchDistance = if (isOldest) 10 else 2,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = {
                 FilteredCombinedNewsPagingSource(
                     apiService = apiService,
                     categories = categories,
                     sources = sources,
                     sortType = sortType,
-                    dateFormatter=dateFormatter
+                    dateFormatter = dateFormatter
                 )
-            }).flow
+            }
+        ).flow
     }
 
     fun getAllNewsStream(): Flow<PagingData<Article>> {
         return Pager(
             config = PagingConfig(
-                pageSize = 5,
-                enablePlaceholders = false,
-                prefetchDistance = 1,
-                initialLoadSize = 5
+                pageSize = 10,
+                enablePlaceholders = true,
+                prefetchDistance = 2,
+                initialLoadSize = 10
             ),
             pagingSourceFactory = {
                 NewsPagingSource(apiService, NewsType.Everything)
@@ -54,10 +60,10 @@ class NewsRepository @Inject constructor(
     fun getCategoryNewsStream(category: String): Flow<PagingData<Article>> {
         return Pager(
             config = PagingConfig(
-                pageSize = 5,
-                enablePlaceholders = false,
-                prefetchDistance = 1,
-                initialLoadSize = 5
+                pageSize = 10,
+                enablePlaceholders = true,
+                prefetchDistance = 2,
+                initialLoadSize = 10
             ),
             pagingSourceFactory = {
                 NewsPagingSource(apiService, NewsType.NewsCategory(category))
@@ -70,7 +76,10 @@ class NewsRepository @Inject constructor(
     fun searchNewsStream(query: String): Flow<PagingData<Article>> {
         return Pager(
             config = PagingConfig(
-                pageSize = 5, enablePlaceholders = false, prefetchDistance = 1, initialLoadSize = 5
+                pageSize = 10,
+                enablePlaceholders = true,
+                prefetchDistance = 2,
+                initialLoadSize = 10
             ), pagingSourceFactory = {
                 NewsPagingSource(apiService, NewsType.Search(query))
             }).flow

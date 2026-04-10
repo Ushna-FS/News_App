@@ -12,21 +12,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NewsApp">
 
-        <!-- Splash Activity -->
-        <activity
-            android:name=".screens.activities.SplashActivity"
-            android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity> <!-- Main Activity -->
+        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
-            android:windowSoftInputMode="adjustNothing|stateHidden"
-            android:exported="false"
-            android:theme="@style/Theme.NewsApp" />
+            android:exported="true"
+            android:theme="@style/Theme.NewsApp"
+            android:windowSoftInputMode="adjustNothing|stateHidden" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

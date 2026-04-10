@@ -71,5 +71,23 @@
     <string name="username">Username</string>
     <string name="notification">Notifications</string>
     <string name="saved">Saved</string>
+    <string name="all">All</string>
+    <string name="breaking_news_jetpack_compose_is_awesome">sampleTitle</string>
+    <string name="sampleDescription">Compose simplifies UI development</string>
+    <string name="sampleContent">Full content here</string>
+    <string name="samplesource">TechCrunch</string>
+    <string name="samplesourceId">techcrunch</string>
+    <string name="sampleAuthorname">John Doe</string>
+    <string name="read_more__"><![CDATA[Read More >>]]></string>
+    <string name="sampledate">2024-01-01</string>
+    <string name="remove_bookmark">Remove Bookmark</string>
+    <string name="add_bookmark">Add Bookmark</string>
+    <string name="newest_first">Newest First</string>
+    <string name="oldest_first">Oldest First</string>
+    <string name="reset_to_default">Reset to Default</string>
+    <string name="cancel">Cancel</string>
+    <string name="error_msg">Error: %1$s</string>
+    <string name="failed_to_load_more">Failed to load more: %1$s</string>
+    <string name="no_results_found_for">No results found for \"%1$s\"</string>
 
 </resources>

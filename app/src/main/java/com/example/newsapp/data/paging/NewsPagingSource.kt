@@ -1,12 +1,18 @@
 package com.example.newsapp.data.paging
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.example.newsapp.data.api.ApiService
 import com.example.newsapp.data.models.Article
+import com.example.newsapp.data.models.getCategory
 import com.example.newsapp.data.repository.SortType
 import com.example.newsapp.utils.DateFormatter
 import retrofit2.HttpException
+import java.time.Instant
+import java.time.ZoneId
+import java.util.Locale
 
 sealed class NewsType {
     object Business : NewsType()
@@ -41,6 +47,7 @@ class NewsPagingSource(
                 is NewsType.TechCrunch -> apiService.getTechCrunchHeadlines(
                     page = page, pageSize = pageSize
                 )
+
                 is NewsType.Everything -> apiService.searchNews(
                     query = "general",
                     page = page,
@@ -50,6 +57,7 @@ class NewsPagingSource(
                 is NewsType.Search -> apiService.searchNews(
                     query = newsType.query, page = page, pageSize = pageSize
                 )
+
                 is NewsType.NewsCategory -> apiService.getTopHeadlines(
                     category = newsType.name,
                     page = page,
@@ -79,86 +87,130 @@ class FilteredCombinedNewsPagingSource(
     private val categories: List<String> = emptyList(),
     private val sources: List<String> = emptyList(),
     private val sortType: SortType = SortType.NEWEST_FIRST,
-    private val dateFormatter: DateFormatter,
+    private val dateFormatter: DateFormatter
 ) : PagingSource<Int, Article>() {
 
     override fun getRefreshKey(state: PagingState<Int, Article>): Int? {
-        return state.anchorPosition?.let { anchorPosition ->
-            state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
-                ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
+        return state.anchorPosition?.let { position ->
+            state.closestPageToPosition(position)?.prevKey?.plus(1)
+                ?: state.closestPageToPosition(position)?.nextKey?.minus(1)
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Article> {
         return try {
             val page = params.key ?: 1
-            val currentPageSize = params.loadSize
+            val pageSize = params.loadSize
 
-            // Determine what to fetch based on categories
-            val shouldFetchBusiness =
-                categories.isEmpty() || categories.any { it.equals("Business", ignoreCase = true) }
-            val shouldFetchTech = categories.isEmpty() || categories.any {
-                it.equals(
-                    "Technology", ignoreCase = true
-                )
-            }
-
-            if (!shouldFetchBusiness && !shouldFetchTech) {
-                return LoadResult.Page(
-                    data = emptyList(), prevKey = null, nextKey = null
-                )
-            }
-            // Fetch business news if needed
-            val businessResponse =
-                apiService.getTopHeadlines(page = page, pageSize = currentPageSize)
-
-            val businessArticles = if (businessResponse.isSuccessful) {
-                businessResponse.body()?.articles ?: emptyList()
+            val query = if (categories.isNotEmpty() && !categories.contains("All")) {
+                categories.joinToString(" OR ") { it.lowercase(Locale.getDefault()) }
             } else {
-                throw HttpException(businessResponse)
+                "news"
             }
-            // Fetch tech news if needed
-            val techArticles = if (shouldFetchTech) {
-                kotlin.runCatching {
-                    apiService.getTechCrunchHeadlines(page = page, pageSize = currentPageSize)
-                }.getOrNull()?.body()?.articles ?: emptyList()
+
+            // For OLDEST_FIRST, we need to fetch more pages to get complete month data
+            val actualPageSize = if (sortType == SortType.OLDEST_FIRST) {
+                pageSize * 3
             } else {
-                emptyList()
+                pageSize
             }
 
-            // Combine articles
-            var filteredArticles = (businessArticles + techArticles).distinctBy { it.url }
+            val response = apiService.searchNews(
+                query = query,
+                page = page,
+                pageSize = actualPageSize,
+                sortBy = "publishedAt"
+            )
 
-            // Apply source filter if sources are selected
-            if (sources.isNotEmpty()) {
-                filteredArticles = filteredArticles.filter { article ->
-                    val sourceName = article.source.name
-                    sources.any { source ->
-                        sourceName.contains(source, ignoreCase = true)
+            if (!response.isSuccessful) return LoadResult.Error(HttpException(response))
+
+            var articles =
+                response.body()?.articles?.filter { it.title != "[Removed]" } ?: emptyList()
+
+            // Apply filters BEFORE sorting
+            if (categories.isNotEmpty() && !categories.contains("All")) {
+                articles = articles.filter { article ->
+                    val articleCategory = article.getCategory().displayName
+                    categories.any { category ->
+                        articleCategory.equals(
+                            category,
+                            ignoreCase = true
+                        )
                     }
                 }
             }
 
-            filteredArticles = when (sortType) {
-                SortType.NEWEST_FIRST ->
-                    filteredArticles.sortedByDescending {
-                        dateFormatter.parseToTimestamp(it.publishedAt)
+            if (sources.isNotEmpty()) {
+                articles = articles.filter { article ->
+                    val sourceName = article.source.name.lowercase(Locale.getDefault())
+                    sources.any { selectedSource ->
+                        sourceName.contains(selectedSource.lowercase(Locale.getDefault()))
                     }
-
-                SortType.OLDEST_FIRST ->
-                    filteredArticles.sortedBy {
-                        dateFormatter.parseToTimestamp(it.publishedAt)
-                    }
+                }
             }
 
-            val hasMore =
-                businessArticles.size == currentPageSize || techArticles.size == currentPageSize
+            // Store original articles before sorting for pagination
+            val originalArticles = articles
+
+            // ---------- Oldest First Logic ----------
+            if (sortType == SortType.OLDEST_FIRST) {
+                val articlesWithDates = articles.mapNotNull { article ->
+                    try {
+                        val zonedDateTime = Instant.parse(article.publishedAt)
+                            .atZone(ZoneId.systemDefault())
+                        article to zonedDateTime
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+
+                if (articlesWithDates.isNotEmpty()) {
+                    // Find the latest month that has articles
+                    val latestMonth = articlesWithDates.maxByOrNull { it.second }?.second
+
+                    // Filter only articles from that latest month
+                    val latestMonthArticles = articlesWithDates.filter { (_, date) ->
+                        latestMonth?.let {
+                            date.year == it.year && date.monthValue == it.monthValue
+                        } ?: false
+                    }
+
+                    // Sort these articles from oldest to newest
+                    articles = latestMonthArticles
+                        .sortedBy { it.second }
+                        .map { it.first }
+                } else {
+                    articles = emptyList()
+                }
+            }
+
+            // Determine if there are more pages
+            val hasMore = if (sortType == SortType.OLDEST_FIRST) {
+                val hasNextMonth = originalArticles.any { article ->
+                    try {
+                        val date = Instant.parse(article.publishedAt).atZone(ZoneId.systemDefault())
+                        val latestMonth = articles.firstOrNull()?.let {
+                            Instant.parse(it.publishedAt).atZone(ZoneId.systemDefault())
+                        }
+                        latestMonth?.let {
+                            date.year < it.year || (date.year == it.year && date.monthValue < it.monthValue)
+                        } ?: false
+                    } catch (e: Exception) {
+                        false
+                    }
+                }
+                hasNextMonth
+            } else {
+                response.body()?.totalResults?.let { total -> total > page * pageSize } ?: false
+            }
 
             LoadResult.Page(
-                data = filteredArticles,
+                data = articles,
                 prevKey = if (page == 1) null else page - 1,
-                nextKey = if (hasMore) page + 1 else null
+                nextKey = if (hasMore && articles.isNotEmpty()) page + 1 else null
             )
+
         } catch (e: Exception) {
             LoadResult.Error(e)
         }
