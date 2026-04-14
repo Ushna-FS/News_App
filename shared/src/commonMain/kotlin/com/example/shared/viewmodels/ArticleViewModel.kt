@@ -17,6 +17,7 @@ class ArticleDetailViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private var currentUserId: String? = null
     private val _isBookmarked = MutableStateFlow(false)
 
     init {
@@ -42,8 +43,11 @@ class ArticleDetailViewModel(
     }
 
     private suspend fun updateBookmarkStatus() {
+        val userId = currentUserId ?: return
+
         _article.value?.let { article ->
-            _isBookmarked.value = bookmarkRepository.isBookmarked(article.url)
+            _isBookmarked.value =
+                bookmarkRepository.isBookmarked(article.url, userId)
         }
     }
 }

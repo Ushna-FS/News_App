@@ -7,13 +7,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,11 +26,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.shared.data.models.Article
 import com.example.shared.ui.components.ArticleWebView
 import com.example.shared.viewmodels.ArticleDetailViewModel
 import com.example.shared.viewmodels.NewsViewModel
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.auth
 import me.sample.library.resources.Res
 import me.sample.library.resources.article_load_error
 import me.sample.library.resources.bookmark
@@ -50,11 +56,14 @@ fun ArticleDetailContent(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
                         text = article.title,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
                     )
                 },
                 navigationIcon = {
@@ -62,7 +71,7 @@ fun ArticleDetailContent(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = null,
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.surface
                         )
                     }
                 },
@@ -74,13 +83,13 @@ fun ArticleDetailContent(
                             else
                                 Icons.Outlined.BookmarkBorder,
                             contentDescription = stringResource(Res.string.bookmark),
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.surface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Blue,
-                    titleContentColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
                 )
             )
         }
@@ -126,11 +135,11 @@ fun ArticleDetailScreen(
     var isLoading by remember { mutableStateOf(true) }
     var showError by remember { mutableStateOf(false) }
 
-    val bookmarkFlow = remember(article.url) {
-        newsViewModel.isArticleBookmarked(article.url)
-    }
+    val bookmarkedUrls by newsViewModel
+        .getAllBookmarkedUrls()
+        .collectAsState(initial = emptySet())
 
-    val isBookmarked by bookmarkFlow.collectAsState(initial = false)
+    val isBookmarked = bookmarkedUrls.contains(article.url)
 
     val uiMessage by newsViewModel.uiMessage.collectAsState(null)
     uiMessage?.let {
@@ -143,6 +152,13 @@ fun ArticleDetailScreen(
 
     LaunchedEffect(article) {
         viewModel.setArticle(article)
+    }
+
+    LaunchedEffect(Unit) {
+        val userId = Firebase.auth.currentUser?.uid
+        if (userId != null) {
+            newsViewModel.setCurrentUser(userId)
+        }
     }
 
     ArticleDetailContent(
