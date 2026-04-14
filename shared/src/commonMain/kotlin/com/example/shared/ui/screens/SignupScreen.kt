@@ -7,8 +7,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -20,12 +23,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.shared.navigation.Routes
 import com.example.shared.viewmodels.AuthViewModel
+import kotlinx.coroutines.launch
 import me.sample.library.resources.Res
 import me.sample.library.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -66,12 +75,18 @@ fun SignupScreen(
     val accCreated = stringResource(Res.string.account_created_successfully)
 
     var signupError by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
 
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp),
+            .padding(16.dp)
+            .imePadding(),
         contentAlignment = Alignment.Center
     ) {
 
@@ -82,7 +97,8 @@ fun SignupScreen(
         ) {
 
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
@@ -177,7 +193,6 @@ fun SignupScreen(
 
                 Button(
                     onClick = {
-
                         // Reset errors
                         emailError = null
                         passwordError = null
@@ -218,8 +233,15 @@ fun SignupScreen(
                                 isLoading = false
 
                                 signupError = accCreated
-                                navController.navigate(Routes.Login) {
-                                    popUpTo(Routes.Signup) { inclusive = true }
+
+                                coroutineScope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        accCreated,
+                                        duration = SnackbarDuration.Short
+                                    )
+                                    navController.navigate(Routes.MainTabs) {
+                                        popUpTo(Routes.Signup) { inclusive = true }
+                                    }
                                 }
                             },
                             onError = { message ->
@@ -229,6 +251,7 @@ fun SignupScreen(
                             }
                         )
                     },
+                    enabled = !isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
@@ -240,14 +263,6 @@ fun SignupScreen(
                         Text(stringResource(Res.string.create_account))
                     }
                 }
-                signupError?.let {
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = it,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
 
                 Spacer(Modifier.height(12.dp))
 
@@ -257,4 +272,5 @@ fun SignupScreen(
             }
         }
     }
+}
 }

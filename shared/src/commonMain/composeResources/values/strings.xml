@@ -101,9 +101,9 @@
     <string name="password_lenght_err">Password must be at least 6 characters</string>
     <string name="account_created_successfully">Account created successfully ✅</string>
     <string name="already_have_an_account_login">Already have an account? Login</string>
-    <string name="no_account_sign_up">Don\'t have an account? Sign Up</string>
+    <string name="no_account_sign_up">Don't have an account? Sign Up</string>
     <string name="login_to_continue">Login to continue</string>
-    <string name="welcome_back">Welcome Back 👋</string>
+    <string name="welcome_back">Welcome Back ! </string>
     <string name="login">Login</string>
     <string name="failed_to_save_user">Failed to save user</string>
     <string name="user_id_not_found">User ID not found</string>
@@ -116,5 +116,6 @@
     <string name="server_err">Server Error occurred. Please Try again.</string>
     <string name="unauthorized">Unknown Error occurred.</string>
     <string name="not_found">Unable to find.</string>
-    <string name="api_rate_limit_err">You have reached the maximum number of requests. Please wait a moment.</string>
+    <string name="api_rate_limit_err">You have reached the maximum number of requests. Please wait few hours.</string>
+    <string name="logout_message">Do you want to Log out ?</string>
 </resources>
