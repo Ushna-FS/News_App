@@ -40,6 +40,31 @@ fun AppDrawer(
 
 ) {
 
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text(stringResource(Res.string.logout)) },
+            text = { Text(stringResource(Res.string.logout_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogoutClick()
+                    }
+                ) {
+                    Text("Yes")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLogoutDialog = false }
+                ) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            }
+        )
+    }
     ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.7f)) {
         AppDrawerHeader(authViewModel)
 
@@ -70,7 +95,7 @@ fun AppDrawer(
             label = { Text(stringResource(Res.string.logout)) },
             selected = false,
             icon = { Icon(Icons.AutoMirrored.Filled.Logout, null) },
-            onClick = onLogoutClick
+            onClick = { showLogoutDialog = true }
         )
     }
 }
