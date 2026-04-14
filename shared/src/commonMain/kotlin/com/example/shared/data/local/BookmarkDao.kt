@@ -9,20 +9,20 @@ interface BookmarkDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBookmark(article: BookmarkedArticle)
 
-    @Query("SELECT * FROM bookmarked_articles ORDER BY bookmarkedAt DESC")
-    fun getAllBookmarks(): Flow<List<BookmarkedArticle>>
-
     @Query("SELECT * FROM bookmarked_articles WHERE url = :url")
     suspend fun getBookmarkByUrl(url: String): BookmarkedArticle?
 
-    @Query("SELECT COUNT(*) FROM bookmarked_articles WHERE url = :url")
-    suspend fun isArticleBookmarked(url: String): Int
+    @Query("SELECT * FROM bookmarked_articles WHERE userId = :userId ORDER BY bookmarkedAt DESC")
+    fun getAllBookmarks(userId: String): Flow<List<BookmarkedArticle>>
 
-    @Query("DELETE FROM bookmarked_articles WHERE url = :url")
-    suspend fun deleteBookmarkByUrl(url: String)
+    @Query("SELECT COUNT(*) FROM bookmarked_articles WHERE url = :url AND userId = :userId")
+    suspend fun isArticleBookmarked(url: String, userId: String): Int
 
-    @Query("SELECT * FROM bookmarked_articles WHERE isSynced = 0")
-    suspend fun getUnsyncedBookmarks(): List<BookmarkedArticle>
+    @Query("DELETE FROM bookmarked_articles WHERE url = :url AND userId = :userId")
+    suspend fun deleteBookmarkByUrl(url: String, userId: String)
+
+    @Query("SELECT * FROM bookmarked_articles WHERE userId = :userId AND isSynced = 0")
+    suspend fun getUnsyncedBookmarks(userId: String): List<BookmarkedArticle>
 
     @Query("UPDATE bookmarked_articles SET isSynced = 1 WHERE url = :url")
     suspend fun markAsSynced(url: String)
@@ -32,6 +32,10 @@ interface BookmarkDao {
 
     @Query("DELETE FROM bookmarked_articles")
     suspend fun clearBookmarks()
-    @Query("SELECT * FROM bookmarked_articles")
-    suspend fun getAllBookmarksOnce(): List<BookmarkedArticle>
+
+    @Query("SELECT * FROM bookmarked_articles WHERE userId = :userId")
+    suspend fun getAllBookmarksOnce(userId: String): List<BookmarkedArticle>
+
+    @Query("DELETE FROM bookmarked_articles WHERE userId = :userId")
+    suspend fun clearBookmarks(userId: String)
 }

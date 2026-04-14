@@ -21,7 +21,7 @@ class BookmarkSyncWorker(
 
         val userId = inputData.getString("USER_ID") ?: return Result.retry()
 
-        val unsynced = bookmarkDao.getUnsyncedBookmarks()
+        val unsynced = bookmarkDao.getUnsyncedBookmarks(userId)
 
         Log.d("BookmarkWorker", "Unsynced bookmarks: ${unsynced.size}")
 

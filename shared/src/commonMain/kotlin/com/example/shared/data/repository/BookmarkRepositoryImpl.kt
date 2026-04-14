@@ -30,7 +30,7 @@ class BookmarkRepositoryImpl(
 
     override suspend fun addBookmark(article: Article, userId: String) {
 
-        val bookmarked = article.toBookmarkedArticle().copy(isSynced = false)
+        val bookmarked = article.toBookmarkedArticle(userId).copy(isSynced = false)
 
         bookmarkDao.insertBookmark(bookmarked)
 
@@ -41,7 +41,7 @@ class BookmarkRepositoryImpl(
 
     override suspend fun removeBookmark(url: String, userId: String) {
 
-        bookmarkDao.deleteBookmarkByUrl(url)
+        bookmarkDao.deleteBookmarkByUrl(url, userId)
 
         firestore.collection("users")
             .document(userId)
@@ -52,12 +52,12 @@ class BookmarkRepositoryImpl(
         _bookmarkUpdates.emit(url)
     }
 
-    override suspend fun isBookmarked(url: String): Boolean {
-        return bookmarkDao.isArticleBookmarked(url) > 0
+    override suspend fun isBookmarked(url: String, userId: String): Boolean {
+        return bookmarkDao.isArticleBookmarked(url, userId) > 0
     }
 
-    override fun getAllBookmarks(): Flow<List<BookmarkedArticle>> {
-        return bookmarkDao.getAllBookmarks()
+    override fun getAllBookmarks(userId: String): Flow<List<BookmarkedArticle>> {
+        return bookmarkDao.getAllBookmarks(userId)
     }
 
     // 🔹 Fetch bookmarks from Firebase once
@@ -69,11 +69,11 @@ class BookmarkRepositoryImpl(
             .get()
 
         val bookmarks = snapshot.documents.map {
-            it.data<BookmarkedArticle>()
+            it.data<BookmarkedArticle>().copy(userId = userId) // ✅ ensure userId
         }
 
-        bookmarkDao.clearBookmarks()
 
+        bookmarkDao.clearBookmarks(userId)
         bookmarkDao.insertBookmarks(
             bookmarks.map { it.copy(isSynced = true) }
         )
@@ -96,24 +96,23 @@ class BookmarkRepositoryImpl(
                     it.data<BookmarkedArticle>()
                 }
 
-                val local = bookmarkDao.getAllBookmarksOnce()
+                val local = bookmarkDao.getAllBookmarksOnce(userId)
 
                 val remoteUrls = bookmarks.map { it.url }.toSet()
                 val localUrls = local.map { it.url }.toSet()
 
-                if (remoteUrls != localUrls && bookmarks.isNotEmpty()) {
-
-                    bookmarkDao.clearBookmarks()
+                if (remoteUrls != localUrls) {
+                    bookmarkDao.clearBookmarks(userId)
 
                     bookmarkDao.insertBookmarks(
-                        bookmarks.map { it.copy(isSynced = true) }
+                        bookmarks.map { it.copy(userId = userId, isSynced = true) }
                     )
                 }
             }
         }
     }
 
-     override fun stopRealtimeSync() {
+    override fun stopRealtimeSync() {
         syncJob?.cancel()
         syncJob = null
     }
