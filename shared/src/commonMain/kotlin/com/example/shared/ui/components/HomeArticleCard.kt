@@ -23,7 +23,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,7 +34,7 @@ import com.example.shared.data.models.getCategory
 import com.example.shared.utils.Category
 import com.example.shared.utils.DateFormatter
 import me.sample.library.resources.Res
-import me.sample.library.resources.*
+import me.sample.library.resources.read_more
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -53,7 +52,10 @@ fun HomeArticleItem(
             .padding(bottom = 16.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(1.dp)
+        elevation = CardDefaults.cardElevation(1.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier
@@ -140,7 +142,7 @@ fun HomeArticleItem(
                 AssistChip(
                     onClick = {},
                     label = { Text(displayCategoryName) },
-                    border = BorderStroke(1.dp, Color.Blue)
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
                 )
 
                 Spacer(Modifier.weight(1f))
