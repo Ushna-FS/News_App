@@ -16,18 +16,17 @@ class NewsRepository(
     val apiService: NewsApiService,
     private val dateFormatter: DateFormatter
 ) {
-
     fun getCombinedNewsStream(
         categories: List<String> = emptyList(),
         sources: List<String> = emptyList(),
         sortType: SortType = SortType.NEWEST_FIRST
     ): Flow<PagingData<Article>> {
-        val isOldest = sortType == SortType.OLDEST_FIRST
+
         return Pager(
             config = PagingConfig(
-                pageSize = if (isOldest) 20 else 10,      // Increased for oldest to get more data
-                initialLoadSize = if (isOldest) 60 else 20, // Load more initially for oldest
-                prefetchDistance = if (isOldest) 10 else 2,
+                pageSize = 10,
+                prefetchDistance = 2,
+                initialLoadSize = 10,
                 enablePlaceholders = false
             ),
             pagingSourceFactory = {
@@ -46,7 +45,7 @@ class NewsRepository(
         return Pager(
             config = PagingConfig(
                 pageSize = 10,
-                enablePlaceholders = true,
+                enablePlaceholders = false,
                 prefetchDistance = 2,
                 initialLoadSize = 10
             ),
@@ -60,7 +59,7 @@ class NewsRepository(
         return Pager(
             config = PagingConfig(
                 pageSize = 10,
-                enablePlaceholders = true,
+                enablePlaceholders = false,
                 prefetchDistance = 2,
                 initialLoadSize = 10
             ),
@@ -76,7 +75,7 @@ class NewsRepository(
         return Pager(
             config = PagingConfig(
                 pageSize = 10,
-                enablePlaceholders = true,
+                enablePlaceholders = false,
                 prefetchDistance = 2,
                 initialLoadSize = 10
             ), pagingSourceFactory = {

@@ -12,7 +12,5 @@ sealed class NetworkError : Exception() {
 
     class NotFound : NetworkError()
 
-    class PaginationEnd : NetworkError()
-
     data class Unknown(val error: Throwable) : NetworkError()
 }

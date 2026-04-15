@@ -5,7 +5,7 @@ import me.sample.library.resources.Res
 import me.sample.library.resources.*
 import org.jetbrains.compose.resources.StringResource
 
-fun mapErrorToMessage(error: Throwable): StringResource {
+fun mapErrorToMessage(error: NetworkError): StringResource {
 
     return when (error) {
 

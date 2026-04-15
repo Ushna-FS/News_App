@@ -66,13 +66,28 @@ class NewsPagingSource(
                 )
             }
 
-            val articles = response.articles
-            val total = response.totalResults
+            val rawArticles = response.articles
+            val totalResults = response.totalResults
 
-            val endReached = page * pageSize >= total
+            val currentLoadedItems = page * pageSize
 
+            val MAX_PAGE =  10 // News Api limitation(can't load more than 100 articles at once means max pages 10)
+
+            val endReached = currentLoadedItems >= totalResults || page >= MAX_PAGE
+
+            // added logs to debug actual issue
+            println(
+                ("""
+            PagingDebug ->
+            page: $page
+            rawArticles.size: ${rawArticles.size}
+            totalResults: $totalResults
+            currentLoadedItems: $currentLoadedItems
+            endReached: $endReached
+            """.trimIndent())
+            )
             LoadResult.Page(
-                data = articles,
+                data = rawArticles,
                 prevKey = if (page == 1) null else page - 1,
                 nextKey = if (endReached) null else page + 1
             )
@@ -120,7 +135,9 @@ class FilteredCombinedNewsPagingSource(
                 pageSize = pageSize
             )
 
-            var articles = response.articles.filter {
+            val rawArticles = response.articles
+
+            var articles = rawArticles.filter {
                 it.title != "[Removed]"
             }
 
@@ -151,11 +168,27 @@ class FilteredCombinedNewsPagingSource(
                 }
             }
 
-            val total = response.totalResults
-            val endReached = page * pageSize >= total
+            val totalResults = response.totalResults
+            val currentLoadedItems = page * pageSize
+
+            val MAX_PAGE = 10
+
+            val endReached = currentLoadedItems >= totalResults || page >= MAX_PAGE
+
+            println(
+                ("""
+            PagingDebug ->
+            page: $page
+            rawArticles.size: ${rawArticles.size}
+            totalResults: $totalResults
+            currentLoadedItems: $currentLoadedItems
+            endReached: $endReached
+            """.trimIndent())
+            )
+
 
             LoadResult.Page(
-                data = articles.take(pageSize),
+                data = articles,
                 prevKey = if (page == 1) null else page - 1,
                 nextKey = if (endReached) null else page + 1
             )

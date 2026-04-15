@@ -47,6 +47,7 @@ import com.example.shared.ui.components.EmptyState
 import com.example.shared.ui.components.HomeArticleItem
 import com.example.shared.utils.Category
 import com.example.shared.utils.DateFormatter
+import com.example.shared.utils.ErrorMapper.mapToNetworkError
 import com.example.shared.utils.mapErrorToMessage
 import com.example.shared.viewmodels.AuthViewModel
 import com.example.shared.viewmodels.NewsViewModel
@@ -55,6 +56,7 @@ import dev.gitlive.firebase.auth.auth
 import me.sample.library.resources.Res
 import me.sample.library.resources.hello_user
 import me.sample.library.resources.home_desc
+import me.sample.library.resources.pagination_end
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -184,12 +186,12 @@ fun HomeScreenContent(
 
                 is LoadState.Error -> {
 
-                    val error = (articles.loadState.refresh as LoadState.Error)
-                        .error
-                        .let { it as? NetworkError ?: NetworkError.Unknown(it) }
+                    val error = (articles.loadState.refresh as LoadState.Error).error
+                    val mappedError = mapToNetworkError(error)
+
                     EmptyState(
-                        error = error,
-                        message = stringResource(mapErrorToMessage(error)),
+                        error = mappedError,
+                        message = stringResource(mapErrorToMessage(mappedError)),
                         onRetry = { articles.retry() }
                     )
                 }
@@ -259,15 +261,13 @@ fun HomeScreenContent(
 
                             is LoadState.Error -> {
 
-                                val error = (articles.loadState.append as? LoadState.Error)
-                                    ?.error
-                                    ?.let { it as? NetworkError ?: NetworkError.Unknown(it) }
-                                    ?: NetworkError.Unknown(Throwable("Unknown paging error"))
+                                val error = (articles.loadState.append as LoadState.Error).error
+                                val mappedError = mapToNetworkError(error)
 
                                 item {
                                     EmptyState(
-                                        error = error,
-                                        message = stringResource(mapErrorToMessage(error)),
+                                        error = mappedError,
+                                        message = stringResource(mapErrorToMessage(mappedError)),
                                         onRetry = { articles.retry() }
                                     )
                                 }
@@ -275,6 +275,24 @@ fun HomeScreenContent(
 
                             else -> Unit
                         }
+                        //end reached
+                     if (articles.loadState.append is LoadState.NotLoading &&
+                        articles.loadState.append.endOfPaginationReached &&
+                        articles.itemCount > 0
+                    ) {
+
+                             println("UI DEBUG -> End reached triggered. itemCount=${articles.itemCount}")
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(stringResource(Res.string.pagination_end))
+                            }
+                        }
+                    }
                     }
                 }
             }
