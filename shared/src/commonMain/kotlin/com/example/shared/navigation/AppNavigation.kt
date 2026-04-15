@@ -7,6 +7,8 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
+import androidx.compose.material3.ListItemDefaults.containerColor
+import androidx.compose.material3.ListItemDefaults.contentColor
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -164,25 +166,38 @@ fun MainTabs(rootNavController: NavHostController, padding: PaddingValues) {
                 }
             },
             bottomBar = {
-                NavigationBar {
+                NavigationBar( containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary) {
+
+                    val itemColors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                        selectedTextColor = MaterialTheme.colorScheme.onPrimary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
+                        unselectedTextColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                    )
                     NavigationBarItem(
                         selected = selectedTab == MainTab.HOME,
                         onClick = { selectedTab = MainTab.HOME },
                         icon = { Icon(Icons.Default.Home, null) },
-                        label = { Text(stringResource(Res.string.home)) })
+                        label = { Text(stringResource(Res.string.home)) },
+                        colors = itemColors
+                    )
 
                     NavigationBarItem(
                         selected = selectedTab == MainTab.DISCOVER,
                         onClick = { selectedTab = MainTab.DISCOVER },
                         icon = { Icon(Icons.Default.Search, null) },
-                        label = { Text(stringResource(Res.string.discover)) }
+                        label = { Text(stringResource(Res.string.discover)) },
+                        colors = itemColors
                     )
 
                     NavigationBarItem(
                         selected = selectedTab == MainTab.BOOKMARK,
                         onClick = { selectedTab = MainTab.BOOKMARK },
                         icon = { Icon(Icons.Default.Bookmark, null) },
-                        label = { Text(stringResource(Res.string.saved)) }
+                        label = { Text(stringResource(Res.string.saved)) },
+                        colors = itemColors
                     )
                 }
             }

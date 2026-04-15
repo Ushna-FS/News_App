@@ -1,5 +1,7 @@
 package com.example.shared.ui.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -91,6 +93,7 @@ fun DiscoverScreen(
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
             // Search Bar
             DiscoverSearchBar(
                 text = localSearchText,
@@ -175,8 +178,9 @@ fun DiscoverSearchBar(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 3.dp),
         shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
         Row(
@@ -204,7 +208,7 @@ fun DiscoverSearchBar(
                     Text(
                         stringResource(Res.string.search_news),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                     )
                 }
 
@@ -213,7 +217,7 @@ fun DiscoverSearchBar(
                     onValueChange = onTextChange,
                     singleLine = true,
                     textStyle = MaterialTheme.typography.bodySmall.copy(
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.primary
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )

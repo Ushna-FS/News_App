@@ -20,7 +20,7 @@ val ChipTextLight = Color(0xFF0E1C6D)
 val ChipSelectedBgLight =Color(0xD32C3A7E)
 val ChipSelectedTextLight = Color(0xF8D2D2D2)
 val ChipUnselectedBgLight = Color(0xF8D2D2D2)
-
+val searchBarLight=Color(0xADE2E9FD)
 
 /* ---------- DARK THEME (values-night/colors.xml) ---------- */
 
@@ -39,3 +39,4 @@ val ChipTextDark = Color(0xFFF5F5F5)
 val ChipSelectedBgDark = Color(0xFF767373)
 val ChipSelectedTextDark = BlueMainDark
 val ChipUnselectedBgDark = Color(0x52393535)
+val searchBarDark= Color(0x86504C4C)

@@ -9,6 +9,7 @@ val LightColors = lightColorScheme(
 
     primary = BlueMainLight,
     onPrimary = White,
+    primaryContainer = searchBarLight,
 
     secondary = LightBlueLight,
     onSecondary = Black,
@@ -33,6 +34,7 @@ val DarkColors = darkColorScheme(
 
     primary = BlueMainDark,
     onPrimary = WhiteDark,
+    primaryContainer = searchBarDark,
 
     secondary = LightBlueDark,
     onSecondary = BlackDark,
