@@ -25,6 +25,8 @@ import com.example.shared.data.mock.bookmarkedArticleMock
 import com.example.shared.ui.actions.shareBookmark
 import com.example.shared.ui.components.BookmarkItem
 import com.example.shared.viewmodels.NewsViewModel
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.auth
 import me.sample.library.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -40,8 +42,8 @@ fun BookmarksScreenContent(
 ) {
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { padding ->
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -101,6 +103,14 @@ fun BookmarksScreen(
 
         LaunchedEffect(message) {
             snackbarHostState.showSnackbar(messageText)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        val userId = Firebase.auth.currentUser?.uid
+        if (userId != null) {
+            newsViewModel.setCurrentUser(userId)
+            newsViewModel.startBookmarkSync(userId)
         }
     }
 

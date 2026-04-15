@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -67,12 +67,11 @@ class NewsViewModel(
     init {
         viewModelScope.launch {
             bookmarkRepository.bookmarkUpdates.collect { url ->
-                val isBookmarked = bookmarkRepository.isBookmarked(url)
+
+                val userId = currentUserId ?: return@collect
+                val isBookmarked = bookmarkRepository.isBookmarked(url, userId)
+
                 _bookmarkStateChanged.emit(Pair(url, isBookmarked))
-                if (!isBookmarked) {
-                    // show toast when removed from BookmarksFragment
-                    _uiMessage.emit(Res.string.bookmark_removed)
-                }
             }
         }
     }
@@ -151,9 +150,6 @@ class NewsViewModel(
 
     private var currentUserId: String? = null
 
-    fun setCurrentUser(userId: String) {
-        currentUserId = userId
-    }
 
     private fun updateActiveFilters() {
         val hasCustomCategories = _selectedCategories.value.isNotEmpty()
@@ -245,8 +241,7 @@ class NewsViewModel(
         val userId = currentUserId ?: Firebase.auth.currentUser?.uid ?: return
         viewModelScope.launch {
 
-            val isBookmarked = bookmarkRepository.isBookmarked(article.url)
-
+            val isBookmarked = bookmarkRepository.isBookmarked(article.url, userId)
             if (isBookmarked) {
                 bookmarkRepository.removeBookmark(article.url, userId)
                 _uiMessage.emit(Res.string.bookmark_removed)
@@ -257,22 +252,34 @@ class NewsViewModel(
         }
     }
 
-    fun getAllBookmarkedUrls(): Flow<Set<String>> = flow {
-        bookmarkRepository.getAllBookmarks().collect { bookmarks ->
-            emit(bookmarks.map { it.url }.toSet())
+    fun getAllBookmarkedUrls(): Flow<Set<String>> =
+        _currentUserId.flatMapLatest { userId ->
+            if (userId == null) flowOf(emptySet())
+            else bookmarkRepository.getAllBookmarks(userId)
+                .map { it.map { it.url }.toSet() }
         }
-    }.flowOn(Dispatchers.IO)
 
-    fun isArticleBookmarked(url: String): Flow<Boolean> {
-        return bookmarkRepository.getAllBookmarks()
-            .map { bookmarks ->
-                bookmarks.any { it.url == url }
-            }
-            .distinctUntilChanged()
+
+    fun isArticleBookmarked(url: String): Flow<Boolean> =
+        _currentUserId.flatMapLatest { userId ->
+            if (userId == null) flowOf(false)
+            else bookmarkRepository.getAllBookmarks(userId)
+                .map { bookmarks -> bookmarks.any { it.url == url } }
+        }.distinctUntilChanged()
+
+
+    private val _currentUserId = MutableStateFlow<String?>(null)
+
+    fun setCurrentUser(userId: String) {
+        currentUserId = userId
+        _currentUserId.value = userId
     }
 
     val bookmarks: Flow<List<BookmarkedArticle>> =
-        bookmarkRepository.getAllBookmarks().flowOn(Dispatchers.IO)
+        _currentUserId.flatMapLatest { userId ->
+            if (userId == null) emptyFlow()
+            else bookmarkRepository.getAllBookmarks(userId)
+        }.flowOn(Dispatchers.IO)
 
     fun hasActiveFilters(): Boolean {
         val hasCustomCategories = _selectedCategories.value.isNotEmpty()

@@ -1,17 +1,21 @@
 package com.example.shared.navigation
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
+import androidx.compose.material3.ListItemDefaults.containerColor
+import androidx.compose.material3.ListItemDefaults.contentColor
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
+import com.example.shared.ui.components.MainToolbar
 import com.example.shared.ui.screens.LoginScreen
 import com.example.shared.ui.screens.SignupScreen
 import com.example.shared.ui.screens.SplashScreen
@@ -33,11 +37,12 @@ enum class MainTab {
 }
 
 @Composable
-fun RootNavigation() {
+fun RootNavigation(padding: PaddingValues, modifier: Modifier = Modifier) {
 
     val navController = rememberNavController()
 
     NavHost(
+        modifier = modifier,
         navController = navController,
         startDestination = Routes.Splash
     ) {
@@ -54,14 +59,14 @@ fun RootNavigation() {
         }
 
         composable<Routes.MainTabs> {
-            MainTabs(navController)
+            MainTabs(navController, padding)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainTabs(rootNavController: NavHostController) {
+fun MainTabs(rootNavController: NavHostController, padding: PaddingValues) {
 
     val newsViewModel: NewsViewModel = koinViewModel()
     val authViewModel: AuthViewModel = koinViewModel()
@@ -101,6 +106,26 @@ fun MainTabs(rootNavController: NavHostController) {
     val currentRoute = navBackStackEntry?.destination?.route ?: ""
     val isDetailScreen = currentRoute.contains("ArticleDetail")
 
+    handleBackPress {
+        when {
+            drawerState.isOpen -> {
+                scope.launch { drawerState.close() }
+            }
+
+            currentNavController.popBackStack() -> {
+
+            }
+
+            selectedTab != MainTab.HOME -> {
+                selectedTab = MainTab.HOME
+            }
+
+            else -> {
+                exitApp()
+            }
+        }
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = !isDetailScreen,
@@ -130,43 +155,49 @@ fun MainTabs(rootNavController: NavHostController) {
             topBar = {
                 if (!isDetailScreen) {
 
-                    TopAppBar(
-                        title = { Text(stringResource(Res.string.newsmate)) },
-                        navigationIcon = {
-
-                            IconButton(
-                                onClick = {
-                                    scope.launch {
-                                        drawerState.open()
-                                    }
-                                }
-                            ) {
-                                Icon(Icons.Default.Menu, null)
+                    MainToolbar(
+                        title = stringResource(Res.string.newsmate),
+                        onMenuClick = {
+                            scope.launch {
+                                drawerState.open()
                             }
                         }
                     )
                 }
             },
             bottomBar = {
-                NavigationBar {
+                NavigationBar( containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary) {
+
+                    val itemColors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                        selectedTextColor = MaterialTheme.colorScheme.onPrimary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
+                        unselectedTextColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f),
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                    )
                     NavigationBarItem(
                         selected = selectedTab == MainTab.HOME,
                         onClick = { selectedTab = MainTab.HOME },
                         icon = { Icon(Icons.Default.Home, null) },
-                        label = { Text(stringResource(Res.string.home)) })
+                        label = { Text(stringResource(Res.string.home)) },
+                        colors = itemColors
+                    )
 
                     NavigationBarItem(
                         selected = selectedTab == MainTab.DISCOVER,
                         onClick = { selectedTab = MainTab.DISCOVER },
                         icon = { Icon(Icons.Default.Search, null) },
-                        label = { Text(stringResource(Res.string.discover)) }
+                        label = { Text(stringResource(Res.string.discover)) },
+                        colors = itemColors
                     )
 
                     NavigationBarItem(
                         selected = selectedTab == MainTab.BOOKMARK,
                         onClick = { selectedTab = MainTab.BOOKMARK },
                         icon = { Icon(Icons.Default.Bookmark, null) },
-                        label = { Text(stringResource(Res.string.saved)) }
+                        label = { Text(stringResource(Res.string.saved)) },
+                        colors = itemColors
                     )
                 }
             }

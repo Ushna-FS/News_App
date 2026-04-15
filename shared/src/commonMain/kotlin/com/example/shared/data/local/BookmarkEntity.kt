@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Entity(
     tableName = "bookmarked_articles",
-    indices = [Index(value = ["url"], unique = true)]
+    indices = [Index(value =  ["url", "userId"], unique = true)]
 )
 
 data class BookmarkedArticle(
@@ -20,6 +20,8 @@ data class BookmarkedArticle(
     val id: Long = 0L,
 
     val url: String = "",
+
+    val userId: String = "",
 
     val title: String = "",
 
@@ -43,10 +45,11 @@ data class BookmarkedArticle(
 )
 
 // Extension function to convert Article to BookmarkedArticle
-fun Article.toBookmarkedArticle(): BookmarkedArticle {
+fun Article.toBookmarkedArticle(userId: String): BookmarkedArticle {
     return BookmarkedArticle(
         id = 0,
         url = this.url,
+        userId=userId,
         title = this.title,
         description = this.description,
         urlToImage = this.urlToImage,

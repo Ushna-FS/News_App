@@ -10,6 +10,7 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.FirebaseAuthException
 import dev.gitlive.firebase.auth.auth
 import dev.gitlive.firebase.firestore.firestore
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 
@@ -19,6 +20,8 @@ class AuthViewModel(
 ) : ViewModel() {
 
     private val auth = Firebase.auth
+    private val _username = MutableStateFlow<String?>(null)
+    val username = _username
 
     fun login(
         email: String,
@@ -163,6 +166,24 @@ class AuthViewModel(
     }
     fun currentUser() = auth.currentUser
 
+    fun loadUsername() {
+        val userId = auth.currentUser?.uid ?: return
+
+        viewModelScope.launch {
+            try {
+                val document = Firebase.firestore
+                    .collection("users")
+                    .document(userId)
+                    .get()
+
+                val name = document.data<Map<String, String>>()["username"]
+                _username.value = name
+
+            } catch (_: Exception) {
+                _username.value = null
+            }
+        }
+    }
     fun getCurrentUsername(onResult: (String?) -> Unit) {
 
         val userId = auth.currentUser?.uid

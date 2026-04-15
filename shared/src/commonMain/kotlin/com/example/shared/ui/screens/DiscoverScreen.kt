@@ -1,9 +1,12 @@
 package com.example.shared.ui.screens
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Close
@@ -14,21 +17,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
-import com.example.shared.data.repository.SortType
-import kotlinx.coroutines.delay
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.tooling.preview.Preview
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
 import com.example.shared.NewsAppTheme
 import com.example.shared.data.models.Article
 import com.example.shared.data.models.NetworkError
+import com.example.shared.data.repository.SortType
+import com.example.shared.ui.components.DiscoverNewsCard
+import com.example.shared.ui.components.EmptyState
+import com.example.shared.ui.components.FilterPanel
 import com.example.shared.ui.components.SortMenuDialog
 import com.example.shared.utils.mapErrorToMessage
 import com.example.shared.viewmodels.NewsViewModel
-import me.sample.library.resources.Res
+import dev.gitlive.firebase.Firebase
+import dev.gitlive.firebase.auth.auth
+import kotlinx.coroutines.delay
 import me.sample.library.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -55,15 +61,21 @@ fun DiscoverScreen(
 
     val uiMessage by viewModel.uiMessage.collectAsState(null)
 
+    LaunchedEffect(Unit) {
+        val userId = Firebase.auth.currentUser?.uid
+        if (userId != null) {
+            viewModel.setCurrentUser(userId)
+            viewModel.startBookmarkSync(userId)
+        }
+    }
     // Update local search when ViewModel search changes
     LaunchedEffect(searchQuery) {
         localSearchText = searchQuery
     }
 
-    // Debounce search
     LaunchedEffect(localSearchText) {
         delay(800)
-        if (localSearchText != searchQuery) {
+        if (localSearchText.isNotBlank() && localSearchText != searchQuery) {
             viewModel.searchNews(localSearchText)
         }
     }
@@ -77,11 +89,11 @@ fun DiscoverScreen(
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { padding ->
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+            Spacer(modifier = Modifier.height(8.dp))
             // Search Bar
             DiscoverSearchBar(
                 text = localSearchText,
@@ -124,7 +136,7 @@ fun DiscoverScreen(
             onDismissRequest = { showFilterSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ) {
-            _root_ide_package_.com.example.shared.ui.components.FilterPanel(
+            FilterPanel(
                 viewModel = viewModel,
                 onApply = {
                     showFilterSheet = false
@@ -164,43 +176,62 @@ fun DiscoverSearchBar(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(28.dp),
+            .padding(horizontal = 16.dp, vertical = 3.dp),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.primaryContainer
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .height(44.dp)
+                .padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 Icons.Default.Search,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp)
             )
 
-            TextField(
-                value = text,
-                onValueChange = onTextChange,
-                placeholder = { Text(stringResource(Res.string.search_news)) },
+            Spacer(Modifier.width(6.dp))
+
+            Box(
                 modifier = Modifier.weight(1f),
-                singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+                contentAlignment = Alignment.CenterStart
+            ) {
+
+                if (text.isEmpty()) {
+                    Text(
+                        stringResource(Res.string.search_news),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
+                    )
+                }
+
+                BasicTextField(
+                    value = text,
+                    onValueChange = onTextChange,
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.primary
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 )
-            )
+            }
 
             if (text.isNotEmpty()) {
-                IconButton(onClick = onClear) {
+                IconButton(
+                    onClick = onClear,
+                    modifier = Modifier.size(35.dp)
+                ) {
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = (stringResource(Res.string.clear_search))
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
@@ -216,6 +247,7 @@ fun DiscoverNewsList(
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
+
     val bookmarkedUrls by viewModel.getAllBookmarkedUrls()
         .collectAsState(initial = emptySet())
     val searchQuery by viewModel.searchQuery.collectAsState()
@@ -249,7 +281,7 @@ fun DiscoverNewsList(
                 .let { it as? NetworkError ?: NetworkError.Unknown(it) }
 
             item {
-                _root_ide_package_.com.example.shared.ui.components.EmptyState(
+                EmptyState(
                     error = error,
                     message = stringResource(mapErrorToMessage(error)),
                     onRetry = { pagingItems.retry() }
@@ -261,10 +293,12 @@ fun DiscoverNewsList(
         else if (pagingItems.itemCount > 0) {
             items(
                 count = pagingItems.itemCount,
-                key = { index ->
-                    val article = pagingItems[index]
-                    "${article?.url}_${index}"
+                { index ->
+                    val article = pagingItems.peek(index)
+                    "${article?.url}_${article?.publishedAt}_$index"
                 }
+
+
             ) { index ->
 
                 val article = pagingItems[index]
@@ -274,7 +308,7 @@ fun DiscoverNewsList(
 
                     val isBookmarked = bookmarkedUrls.contains(article.url)
 
-                    _root_ide_package_.com.example.shared.ui.components.DiscoverNewsCard(
+                    DiscoverNewsCard(
                         article = article,
                         isBookmarked = isBookmarked,
                         onClick = { onArticleClick(article) },
@@ -295,15 +329,31 @@ fun DiscoverNewsList(
                     }
                 }
             }
+            //end reached
+            else if (pagingItems.loadState.append is LoadState.NotLoading &&
+                pagingItems.loadState.append.endOfPaginationReached &&
+                pagingItems.itemCount > 0
+            ) {
+                item {
+                    println("UI DEBUG -> End reached triggered. itemCount=${pagingItems.itemCount}")
 
-            if (pagingItems.loadState.append is LoadState.Error) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(stringResource(Res.string.pagination_end))
+                    }
+                }
+            } else if (pagingItems.loadState.append is LoadState.Error) {
                 val errorState = pagingItems.loadState.append as LoadState.Error
 
                 val error = errorState.error
                     .let { it as? NetworkError ?: NetworkError.Unknown(it) }
 
                 item {
-                    _root_ide_package_.com.example.shared.ui.components.EmptyState(
+                    EmptyState(
                         error = error,
                         message = stringResource(mapErrorToMessage(error)),
                         onRetry = { pagingItems.retry() }
@@ -341,7 +391,7 @@ fun FilterSummary(
     val searchQuery by viewModel.searchQuery.collectAsState()
 
     val summaryText = when {
-        searchQuery.isNotEmpty() -> "Search: \"$searchQuery\""
+        searchQuery.isNotEmpty() -> "Search results for \"$searchQuery\""
         categories.isEmpty() && sources.isEmpty() -> "All News"
         categories.size == 1 && sources.isEmpty() -> "${categories.first()} News"
         categories.size > 1 && sources.isEmpty() -> "Selected Categories"
@@ -379,7 +429,7 @@ fun FilterSortRow(
         OutlinedButton(
             onClick = onFilterClick,
             modifier = Modifier.weight(1f),
-            colors = if (hasActiveFilters || isSearching) {
+            colors = if (hasActiveFilters) {
                 ButtonDefaults.outlinedButtonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = Color.White
@@ -398,7 +448,6 @@ fun FilterSortRow(
                 text = when {
                     hasActiveFilters && isSearching -> "Filter + Search"
                     hasActiveFilters -> "Filter"
-                    isSearching -> "Searching"
                     else -> "Filter"
                 }
             )

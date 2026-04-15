@@ -7,7 +7,7 @@ import androidx.room.migration.Migration
 
 @Database(
     entities = [BookmarkedArticle::class],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class NewsDatabase : RoomDatabase() {

@@ -7,8 +7,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -40,6 +43,7 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.auth
 import me.sample.library.resources.Res
 import me.sample.library.resources.*
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -56,15 +60,14 @@ fun LoginScreen(navController: NavController) {
 
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
-    var loginError by remember { mutableStateOf<String?>(null) }
 
-
-
+    var loginError by remember { mutableStateOf<StringResource?>(null) }
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(24.dp),
+            .padding(16.dp)
+            .imePadding(),
         contentAlignment = Alignment.Center
     ) {
 
@@ -75,8 +78,10 @@ fun LoginScreen(navController: NavController) {
         ) {
 
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier.padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
+
             ) {
 
                 Text(
@@ -179,7 +184,7 @@ fun LoginScreen(navController: NavController) {
                             },
                             onError = { message ->
                                 isLoading = false
-                                loginError = message.toString()
+                                loginError = message
                             }
                         )
                     },
@@ -200,7 +205,7 @@ fun LoginScreen(navController: NavController) {
                 loginError?.let {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = it,
+                        text = stringResource(it),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )

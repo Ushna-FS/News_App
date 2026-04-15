@@ -4,12 +4,15 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.shared.NewsAppTheme
+import com.example.shared.ui.theme.*
 import com.example.shared.utils.Category
 
 @Composable
@@ -27,13 +30,21 @@ fun CategoryChips(
 
         categories.forEach { category ->
 
+            val isLight = MaterialTheme.colorScheme.background == GrayLightLight
+
             FilterChip(
                 selected = selectedCategory == category,
                 onClick = { onCategorySelected(category) },
                 label = { Text(category) },
-                modifier = Modifier.padding(end = 8.dp)
-            )
+                modifier = Modifier.padding(end = 8.dp),
 
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = if (isLight) ChipSelectedBgLight else ChipSelectedBgDark,
+                    selectedLabelColor = if (isLight) ChipSelectedTextLight else ChipSelectedTextDark,
+                    containerColor = if (isLight) ChipUnselectedBgLight else ChipUnselectedBgDark,
+                    labelColor = if (isLight) ChipTextLight else ChipTextDark
+                )
+            )
         }
     }
 }

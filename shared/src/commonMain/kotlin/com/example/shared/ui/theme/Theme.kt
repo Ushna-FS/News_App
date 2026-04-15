@@ -1,6 +1,7 @@
 package com.example.shared.ui.theme
 
-import androidx.compose.material3.*
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 
 /* ---------- Light Theme ---------- */
 
@@ -8,14 +9,15 @@ val LightColors = lightColorScheme(
 
     primary = BlueMainLight,
     onPrimary = White,
+    primaryContainer = searchBarLight,
 
     secondary = LightBlueLight,
     onSecondary = Black,
 
-    background = White,
+    background = GrayLightLight,
     onBackground = Black,
 
-    surface = GrayLightLight,
+    surface = White,
     onSurface = Black,
 
     error = RedLight,
@@ -32,6 +34,7 @@ val DarkColors = darkColorScheme(
 
     primary = BlueMainDark,
     onPrimary = WhiteDark,
+    primaryContainer = searchBarDark,
 
     secondary = LightBlueDark,
     onSecondary = BlackDark,
@@ -45,4 +48,3 @@ val DarkColors = darkColorScheme(
     error = RedDark,
     onError = Black
 )
-

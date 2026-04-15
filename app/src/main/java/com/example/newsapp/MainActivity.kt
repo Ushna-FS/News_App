@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -11,7 +12,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import com.example.shared.NewsAppTheme
 import com.example.shared.navigation.RootNavigation
 import com.example.shared.ui.theme.LightColors
@@ -41,7 +44,8 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     snackbarHost = {
                         SnackbarHost(
-                            hostState = snackbarHostState
+                            hostState = snackbarHostState,
+                            modifier = Modifier.padding(bottom = 80.dp)
                         ) { data ->
                             // Determine color based on snackbar type
                             val containerColor = when {
@@ -65,8 +69,10 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
-                ) {
-                    RootNavigation()
+                ) { padding ->
+                    RootNavigation(
+                        padding = padding
+                    )
                 }
             }
         }
