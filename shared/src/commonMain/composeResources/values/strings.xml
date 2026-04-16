@@ -116,6 +116,11 @@
     <string name="server_err">Server Error occurred. Please Try again.</string>
     <string name="unauthorized">Unknown Error occurred.</string>
     <string name="not_found">Unable to find.</string>
-    <string name="api_rate_limit_err">You have reached the maximum number of requests. Please wait few hours.</string>
+    <string name="api_rate_limit_err">You have reached the maximum number of requests. Please retry.</string>
     <string name="logout_message">Do you want to Log out ?</string>
+    <string name="all_api_keys_exhausted">All API keys are exhausted.Please wait few hours..</string>
+    <string name="switch_key">Switch API Key</string>
+    <string name="retry_with_another_key">Retry with another key</string>
+
+
 </resources>

@@ -64,6 +64,9 @@ class NewsViewModel(
     private val _bookmarkStateChanged = MutableSharedFlow<Pair<String, Boolean>>(replay = 1)
     val bookmarkStateChanged = _bookmarkStateChanged.asSharedFlow()
 
+    private val refreshTrigger = MutableStateFlow(0)
+    val isApiReady: StateFlow<Boolean> = repository.apiService.isReady
+
     init {
         viewModelScope.launch {
             bookmarkRepository.bookmarkUpdates.collect { url ->
@@ -78,18 +81,14 @@ class NewsViewModel(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-
-    @OptIn(ExperimentalCoroutinesApi::class)
     val homeNewsPagingData: Flow<PagingData<Article>> =
-        selectedHomeCategory
+        combine(selectedHomeCategory, refreshTrigger) { category, _ -> category }
             .flatMapLatest { category ->
-
                 repository.getAllNewsStream().map { pagingData ->
                     if (category == "All") pagingData
                     else pagingData.filter {
                         it.getCategory().displayName == category
                     }
-
                 }
             }
             .cachedIn(viewModelScope)
@@ -110,8 +109,8 @@ class NewsViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val combinedNewsPagingData: Flow<PagingData<Article>> = combine(
-        selectedCategories, selectedSources, sortType
-    ) { categories, sources, sortType ->
+        selectedCategories, selectedSources, sortType, refreshTrigger
+    ) { categories, sources, sortType, _ ->
         Triple(categories, sources, sortType)
     }.distinctUntilChanged() // Only emit when something changes
         .flatMapLatest { (categories, sources, sortType) ->
@@ -289,5 +288,19 @@ class NewsViewModel(
 
     fun startBookmarkSync(userId: String) {
         bookmarkRepository.startRealtimeSync(userId)
+    }
+
+    fun onRetryWithAnotherKey() {
+        viewModelScope.launch {
+            _homeCategoryLoader.value = true   // show loader
+
+            val rotated = repository.apiService.rotateKey()
+
+            if (rotated) {
+                refreshTrigger.value++   // reload paging
+            }
+
+            _homeCategoryLoader.value = false
+        }
     }
 }

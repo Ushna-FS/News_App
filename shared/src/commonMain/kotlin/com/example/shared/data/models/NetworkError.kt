@@ -6,6 +6,8 @@ sealed class NetworkError : Exception() {
 
     class RateLimit : NetworkError()
 
+    class AllKeysExhausted : NetworkError()
+
     class ServerError : NetworkError()
 
     class Unauthorized : NetworkError()

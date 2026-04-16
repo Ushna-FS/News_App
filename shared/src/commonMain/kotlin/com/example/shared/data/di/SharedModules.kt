@@ -13,7 +13,7 @@ val httpModule: Module = module {
     single {
         NewsApiService(
             client = get(),
-            apiKey = get()
+            apiKeyManager = get()
         )
     }
 }

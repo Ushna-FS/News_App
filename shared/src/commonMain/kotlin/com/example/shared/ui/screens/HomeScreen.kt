@@ -35,6 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import app.cash.paging.compose.LazyPagingItems
 import app.cash.paging.compose.collectAsLazyPagingItems
@@ -75,7 +76,6 @@ fun HomeScreen(
 
     val uiMessage by viewModel.uiMessage.collectAsState(null)
 
-//    var username by remember { mutableStateOf<String?>(null) }
     val username by authViewModel.username.collectAsState()
 
     LaunchedEffect(Unit) {
@@ -103,6 +103,7 @@ fun HomeScreen(
     ) {
         padding ->
         HomeScreenContent(
+            viewModel = viewModel,
             articles = articles,
             bookmarkedUrls = bookmarkedUrls,
             onArticleClick = onArticleClick,
@@ -116,6 +117,7 @@ fun HomeScreen(
 //stateless
 @Composable
 fun HomeScreenContent(
+    viewModel: NewsViewModel,
     articles: LazyPagingItems<Article>,
     bookmarkedUrls: Set<String>,
     onArticleClick: (Article) -> Unit,
@@ -131,6 +133,17 @@ fun HomeScreenContent(
     val listState = rememberLazyListState()
 
 
+    val isReady by viewModel.isApiReady.collectAsState()
+
+    if (!isReady) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -192,7 +205,19 @@ fun HomeScreenContent(
                     EmptyState(
                         error = mappedError,
                         message = stringResource(mapErrorToMessage(mappedError)),
-                        onRetry = { articles.retry() }
+                        onRetry = {
+                            when (mappedError) {
+                                is NetworkError.RateLimit,
+                                is NetworkError.Unauthorized -> {
+                                    viewModel.onRetryWithAnotherKey()
+                                   articles.refresh()
+                                }
+
+                                else -> {
+                                    articles.retry()
+                                }
+                            }
+                        }
                     )
                 }
 
@@ -268,7 +293,18 @@ fun HomeScreenContent(
                                     EmptyState(
                                         error = mappedError,
                                         message = stringResource(mapErrorToMessage(mappedError)),
-                                        onRetry = { articles.retry() }
+                                        onRetry = {
+                                            when (mappedError) {
+                                                is NetworkError.RateLimit,
+                                                is NetworkError.Unauthorized -> {
+                                                    viewModel.onRetryWithAnotherKey()
+                                                }
+
+                                                else -> {
+                                                    articles.retry()
+                                                }
+                                            }
+                                        }
                                     )
                                 }
                             }

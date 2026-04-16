@@ -20,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.shared.data.models.NetworkError
+import me.sample.library.resources.Res
+import me.sample.library.resources.*
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun EmptyState(
@@ -35,6 +38,7 @@ fun EmptyState(
         is NetworkError.RateLimit -> Icons.Default.Timer
         is NetworkError.NotFound -> Icons.Default.SearchOff
         is NetworkError.Unauthorized -> Icons.Default.Lock
+        is NetworkError.AllKeysExhausted -> Icons.Default.Block
         else -> Icons.Default.Error
     }
 
@@ -64,12 +68,29 @@ fun EmptyState(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (error !is NetworkError.RateLimit) {
-            Spacer(modifier = Modifier.height(16.dp))
+        when (error) {
 
-            Button(onClick = onRetry) {
-                Text("Retry")
+            is NetworkError.RateLimit -> {
+                Button(onClick = onRetry) {
+                    Text(stringResource(Res.string.retry_with_another_key))
+                }
+            }
+
+            is NetworkError.Unauthorized -> {
+                Button(onClick = onRetry) {
+                    Text(stringResource(Res.string.switch_key))
+                }
+            }
+
+            is NetworkError.AllKeysExhausted -> {
+
+                Text(stringResource(Res.string.all_api_keys_exhausted))
+            }
+
+            else -> {
+                Button(onClick = onRetry) {
+                    Text(stringResource(Res.string.retry))
+                }
             }
         }
-    }
-}
+    }}

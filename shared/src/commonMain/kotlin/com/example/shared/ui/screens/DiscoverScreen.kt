@@ -1,7 +1,6 @@
 package com.example.shared.ui.screens
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -246,6 +245,17 @@ fun DiscoverNewsList(
     onArticleClick: (Article) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val isReady by viewModel.isApiReady.collectAsState()
+
+    if (!isReady) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
     val listState = rememberLazyListState()
 
     val bookmarkedUrls by viewModel.getAllBookmarkedUrls()
@@ -284,7 +294,20 @@ fun DiscoverNewsList(
                 EmptyState(
                     error = error,
                     message = stringResource(mapErrorToMessage(error)),
-                    onRetry = { pagingItems.retry() }
+
+                    onRetry = {
+                        when (error) {
+                            is NetworkError.RateLimit,
+                            is NetworkError.Unauthorized -> {
+                                viewModel.onRetryWithAnotherKey()
+                                pagingItems.refresh()
+                            }
+
+                            else -> {
+                                pagingItems.retry()
+                            }
+                        }
+                    }
                 )
 
             }
@@ -356,7 +379,18 @@ fun DiscoverNewsList(
                     EmptyState(
                         error = error,
                         message = stringResource(mapErrorToMessage(error)),
-                        onRetry = { pagingItems.retry() }
+                        onRetry = {
+                            when (error) {
+                                is NetworkError.RateLimit,
+                                is NetworkError.Unauthorized -> {
+                                    viewModel.onRetryWithAnotherKey()
+                                }
+
+                                else -> {
+                                    pagingItems.retry()
+                                }
+                            }
+                        }
                     )
 
                 }
