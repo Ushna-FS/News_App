@@ -1,3 +1,5 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
@@ -5,6 +7,14 @@ plugins {
     id("com.android.kotlin.multiplatform.library")
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    id("com.codingfeline.buildkonfig")
+}
+
+buildkonfig {
+    packageName = "com.example.newsapp"
+    defaultConfigs {
+        buildConfigField(STRING, "API_KEY", "159b885b18104900b02c921bebf1fce8")
+    }
 }
 
 ksp {
@@ -72,70 +82,42 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(libs.kotlin.stdlib)
-                // Add KMP dependencies here
-                // Ktor core
-                implementation(libs.ktor.client.core)
 
-                // serialization
-                implementation(libs.ktor.serialization.kotlinx.json)
-                implementation(libs.ktor.client.content.negotiation)
-
-                // logging
-                implementation(libs.ktor.client.logging)
-
-                // json
-                implementation(libs.kotlinx.serialization.json)
-
-                // Koin Core (Multiplatform)
-                implementation(libs.koin.core)
-                //koin VM
-
-                implementation(libs.koin.compose)
-                implementation(libs.koin.compose.viewmodel)
 
                 // Material Icons
                 implementation(libs.material.icons.extended)
 
-                //firebase
-                implementation(libs.gitlive.firebase.auth)
-                implementation(libs.gitlive.firebase.firestore)
-                implementation(libs.gitlive.firebase.crashlytics)
-
-                //paging
-                implementation(libs.paging.compose.common)
-                implementation(libs.paging.common)
-
-                //room
-                implementation(libs.androidx.room.runtime)
-                implementation(libs.androidx.sqlite.bundled)
-
-                implementation(libs.kotlinx.datetime)
-
                 // Compose Multiplatform
                 implementation(libs.compose.material3)
-                implementation(libs.compose.ui)
-                implementation(libs.compose.components.resources)
-                implementation(libs.compose.foundation)
-
-                // Compose lifecycle
-                implementation(libs.lifecycle.viewmodel.compose)
 
                 // Compose navigation (multiplatform)
                 implementation(libs.navigation.compose)
 
-                // Compose ViewModel
-                implementation(libs.lifecycle.viewmodel)
-
-                // Compose coroutine support
-                implementation(libs.kotlinx.coroutines.core)
                 //preview
                 implementation(libs.jetbrains.ui.tooling.preview)
                 implementation(libs.lifecycle.runtime.compose)
 
-                //coil
-                implementation(libs.coil.compose)
-                implementation(libs.coil.network.ktor)
+                //ktor
+                implementation(libs.bundles.ktor)
+                //koin
+                implementation(libs.bundles.koin.common)
+                //compose
+                implementation(libs.bundles.compose.common)
+                //lifecycle
+                implementation(libs.bundles.lifecycle)
+                //firebase/gitlive
+                implementation(libs.bundles.firebase.common)
+                //paging
+                implementation(libs.bundles.paging)
+                //room
+                implementation(libs.bundles.room)
+                //coil and coroutines
+                implementation(libs.bundles.coil)
+                implementation(libs.bundles.coroutines)
 
+                //serialization
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.kotlinx.datetime)
             }
         }
 
@@ -150,20 +132,15 @@ kotlin {
                 // Add Android-specific dependencies here. Note that this source set depends on
                 // commonMain by default and will correctly pull the Android artifacts of any KMP
                 // dependencies declared in commonMain.
-                implementation(libs.ktor.client.okhttp)
-                // Android specific Koin features
-                implementation(libs.koin.android)
+
                 //firebase
                 implementation(project.dependencies.platform(libs.firebase.bom))
+                //ktor
+                implementation(libs.bundles.ktor.android)
+                implementation(libs.bundles.koin.android)
 
-                //room
-                implementation(libs.androidx.room.runtime)
-                //worker
+
                 implementation(libs.androidx.work.runtime.ktx)
-                implementation(libs.koin.androidx.workmanager)
-
-                // json
-                implementation(libs.kotlinx.serialization.json)
             }
         }
 
@@ -187,7 +164,7 @@ kotlin {
                 // on common by default and will correctly pull the iOS artifacts of any
                 // KMP dependencies declared in commonMain.
 
-                implementation(libs.ktor.client.darwin)
+                implementation(libs.bundles.ktor.ios)
                 implementation(libs.androidx.sqlite.bundled)
             }
         }

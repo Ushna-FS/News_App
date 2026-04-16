@@ -8,6 +8,7 @@ plugins {
     id("com.google.firebase.crashlytics") version "3.0.6" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.3.20" apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
+    id("com.codingfeline.buildkonfig") version "0.18.0" apply false
 }
 buildscript {
     dependencies {
