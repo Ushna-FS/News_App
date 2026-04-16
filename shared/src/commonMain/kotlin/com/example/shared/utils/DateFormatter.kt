@@ -1,6 +1,11 @@
 package com.example.shared.utils
 
-import kotlinx.datetime.*
+
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 
 class DateFormatter {
@@ -11,7 +16,7 @@ class DateFormatter {
             val instant = Instant.parse(publishedAt)
             val dateTime = instant.toLocalDateTime(TimeZone.currentSystemDefault())
 
-            val day = dateTime.dayOfMonth.toString().padStart(2, '0')
+            val day = dateTime.day.toString().padStart(2, '0')
             val month = dateTime.month.name.lowercase()
                 .replaceFirstChar { it.uppercase() }
             val year = dateTime.year
@@ -27,7 +32,7 @@ class DateFormatter {
                 val datePart = publishedAt.substringBefore("T")
                 val localDate = LocalDate.parse(datePart)
 
-                val day = localDate.dayOfMonth.toString().padStart(2, '0')
+                val day = localDate.day.toString().padStart(2, '0')
                 val month = localDate.month.name.lowercase()
                     .replaceFirstChar { it.uppercase() }
                 val year = localDate.year
