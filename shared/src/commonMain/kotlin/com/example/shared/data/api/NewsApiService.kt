@@ -1,16 +1,20 @@
 package com.example.shared.data.api
 
+import com.example.shared.data.config.ApiKeyManager
 import com.example.shared.data.models.NewsResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import kotlinx.coroutines.flow.StateFlow
 
 class NewsApiService(
     private val client: HttpClient,
-    private val apiKey: String
+    private val apiKeyManager: ApiKeyManager
 ) {
 
+    val isReady: StateFlow<Boolean>
+        get() = apiKeyManager.isReady
     private val BASE_URL = "https://newsapi.org/v2/"
 
     suspend fun getTopHeadlines(
@@ -25,7 +29,7 @@ class NewsApiService(
             parameter("category", category)
             parameter("page", page)
             parameter("pageSize", pageSize)
-            parameter("apiKey", apiKey)
+            parameter("apiKey", apiKeyManager.currentKey)
         }.body()
     }
 
@@ -38,7 +42,7 @@ class NewsApiService(
             parameter("sources", "techcrunch")
             parameter("page", page)
             parameter("pageSize", pageSize)
-            parameter("apiKey", apiKey)
+            parameter("apiKey", apiKeyManager.currentKey)
         }.body()
     }
 
@@ -54,7 +58,11 @@ class NewsApiService(
             parameter("language", "en")
             parameter("page", page)
             parameter("pageSize", pageSize)
-            parameter("apiKey", apiKey)
+            parameter("apiKey", apiKeyManager.currentKey)
         }.body()
+    }
+
+    fun rotateKey(): Boolean {
+        return apiKeyManager.rotateToNextKey()
     }
 }

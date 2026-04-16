@@ -3,6 +3,7 @@ activityCompose = "1.13.0"
 activityKtx = "1.13.0"
 agp = "9.1.0"
 firebaseAuth = "2.4.0"
+firebaseConfig = "2.4.0"
 firebaseCrashlytics = "2.4.0"
 koinAndroid = "4.2.0"
 koinAndroidxCompose = "4.2.0"
@@ -97,6 +98,7 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "fir
 
 firebase-auth-ktx = { module = "com.google.firebase:firebase-auth-ktx", version.ref = "firebaseAuth" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-config = { module = "dev.gitlive:firebase-config", version.ref = "firebaseConfig" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 firebase-crashlytics-gradle = { module = "com.google.firebase:firebase-crashlytics-gradle", version.ref = "firebaseCrashlyticsGradle" }
 gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle" }
@@ -153,6 +155,35 @@ compose-material3 = { module = "org.jetbrains.compose.material3:material3", vers
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-plugin" }
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-plugin" }
 
+
+[bundles]
+
+ktor = ["ktor-client-core", "ktor-client-content-negotiation", "ktor-serialization-kotlinx-json",
+    "ktor-client-logging"]
+
+ktor-android = ["ktor-client-okhttp"]
+
+ktor-ios = ["ktor-client-darwin"]
+
+koin-common = ["koin-core", "koin-compose", "koin-compose-viewmodel"]
+
+koin-android = ["koin-android", "koin-androidx-workmanager"]
+
+compose-common = ["compose-ui", "compose-material3", "compose-foundation",
+    "compose-components-resources"]
+
+lifecycle = ["lifecycle-viewmodel", "lifecycle-viewmodel-compose", "lifecycle-runtime-compose"]
+
+firebase-common = ["gitlive-firebase-auth", "gitlive-firebase-firestore", "gitlive-firebase-crashlytics",
+    "firebase-config"]
+
+room = ["androidx-room-runtime", "androidx-sqlite-bundled"]
+
+paging = ["paging-common", "paging-compose-common"]
+
+coil = ["coil-compose", "coil-network-ktor"]
+
+coroutines = ["kotlinx-coroutines-core"]
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

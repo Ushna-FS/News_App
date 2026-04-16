@@ -13,6 +13,8 @@ fun mapErrorToMessage(error: NetworkError): StringResource {
 
         is NetworkError.RateLimit -> Res.string.api_rate_limit_err
 
+        is NetworkError.AllKeysExhausted -> Res.string.all_api_keys_exhausted
+
         is NetworkError.ServerError -> Res.string.server_err
 
         is NetworkError.Unauthorized -> Res.string.unauthorized

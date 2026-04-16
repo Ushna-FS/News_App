@@ -2,6 +2,7 @@ package com.example.newsapp
 
 import android.app.Application
 import androidx.work.Configuration
+import com.example.shared.data.config.ApiKeyManager
 import com.example.shared.data.di.androidModule
 import com.example.shared.data.di.utilsModule
 import com.example.shared.data.di.viewModelModule
@@ -12,11 +13,16 @@ import com.example.shared.data.di.networkModule
 import com.example.shared.data.di.repositoryModule
 import com.example.shared.data.di.workerModule
 import com.example.shared.ui.actions.initializeAppContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.workmanager.koin.workManagerFactory
+import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 
 class NewsApp : Application(), Configuration.Provider {
+
 
     override fun onCreate() {
         super.onCreate()
@@ -27,7 +33,7 @@ class NewsApp : Application(), Configuration.Provider {
             androidContext(this@NewsApp)
             workManagerFactory()
             modules(
-                apiModule(BuildConfig.NEWS_API_KEY),
+                apiModule(),
                 httpModule,
                 networkModule,
                 androidModule,
@@ -37,6 +43,11 @@ class NewsApp : Application(), Configuration.Provider {
                 viewModelModule,
                 workerModule
             )
+        }
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val apiKeyManager: ApiKeyManager = GlobalContext.get().get()
+            apiKeyManager.fetchKeys()
         }
     }
 

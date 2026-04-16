@@ -9,6 +9,8 @@ object ErrorMapper {
     fun mapToNetworkError(throwable: Throwable): NetworkError {
         return when (throwable) {
 
+            is NetworkError.AllKeysExhausted -> NetworkError.AllKeysExhausted()
+
             is NetworkError -> throwable
 
             // Network issues (no internet, socket, etc.)
